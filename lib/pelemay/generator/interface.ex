@@ -1,6 +1,5 @@
 defmodule Pelemay.Generator.Interface do
   alias Pelemay.Db
-  alias SumMag.Opt
   @nif_ex "lib/interact_nif.ex"
 
   def generate do

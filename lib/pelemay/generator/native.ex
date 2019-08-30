@@ -1,6 +1,5 @@
 defmodule Pelemay.Generator.Native do
   alias Pelemay.Db
-  alias SumMag.Opt
 
   @nif_c "native/lib.c"
   @nif_module "PelemayNif"
@@ -41,12 +40,6 @@ defmodule Pelemay.Generator.Native do
       "", 
       fn x, acc -> acc <> to_string(x) end)
   end
-
-  # defp declare(str, func_name) do
-  #   str <> """
-  #   static void ERL_NIF_TERM #{func_name}(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
-  #   """
-  # end
 
   defp func_list do
     fl = Db.get_functions
@@ -190,7 +183,6 @@ defmodule Pelemay.Generator.Native do
 
   # defp enum_map_(str, operator, num)
   defp enum_map(info) do
-    IO.puts "Generate SIMD Instruction."
     %{
       nif_name: nif_name,
       module: _,

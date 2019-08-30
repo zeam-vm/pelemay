@@ -1,6 +1,4 @@
 defmodule SumMag do
-  alias SumMag.Opt
-
   @moduledoc """
   SumMag: a meta-programming library for Hastega and Cockatorice.
   """
@@ -243,7 +241,7 @@ defmodule SumMag do
   defp iced_block(funcs), do: [ do: { :__block__, [], funcs } ]
 
   # @spec map(ast, element -> any))) :: ast
-  def map(definitions, optimizer \\ &no_ret/1) when is_function(optimizer) do
+  def map(definitions, optimizer) when is_function(optimizer) do
     definitions
     |> melt_block
     |> Enum.map( & &1 |> optimize_func( optimizer ) )
@@ -259,8 +257,8 @@ defmodule SumMag do
     {:def, meta, [arg_info, ret]}
   end
 
-  defp apply_optimizer( expr, optimizer ) do
-    expr
+  defp apply_optimizer( exprs, optimizer ) do
+    exprs
     |> Macro.unpipe
     |> optimizer.()
     |> pipe
@@ -277,26 +275,6 @@ defmodule SumMag do
 
     :lists.foldl(fun, h, t)
   end
-
-  # version keyword-list 
-  def exploration(
-    [
-      {:tree, dungeon},
-      {:enum_map },
-      {:func_meta, _func_meta},
-      {:func,      _function},
-      {:level, }
-    ]),  do: dungeon |> exploration
- 
-  # defp exploration({:|>, _, literal}, acc) do
-  #   case literal do
-  #     [ {:|>, _, _}, _child ] -> 
-  #       literal |> IO.inspect(label: "literal")
-  #       # buf = child |> 
-  #      _  -> 
-  #       literal |> IO.inspect(label: "literal")
-  #   end
-  # end
 
   def quoted_var?({:&, _, [1]}) do
     true

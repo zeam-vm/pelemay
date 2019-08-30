@@ -49,42 +49,31 @@ defmodule Pelemay do
 
     # This is proto-type
     # |> fusion_function
-    |> to_nif
-
+    |> Enum.map(& replace_expr(&1) )
   end
 
-  def to_nif(exprs) when is_list(exprs) do
-    exprs
-    |> Enum.map(& &1 |> replace_term)
-  end
-
-  defp replace_term({{atom, _, nil}, _pos} = arg) 
+  @doc """
+        iex> 
+  """
+  defp replace_expr({{atom, _, nil}, _pos} = arg) 
     when atom |> is_atom do
      arg
   end
 
-  defp replace_term({quoted, position}) do
+  defp replace_expr({quoted, pos}) do
     ret = quoted
     |> Pelemay.Enum.replace_expr
 
-    {ret, position}
+    {ret, pos}
   end
 
 end
 
 defmodule Pelemay.Enum do
-
-  defstruct operator: [:map, :chunk_every]
-
-  # import SumMag
-  # import Pelemay.Db
-
   alias Pelemay.Db
   alias Pelemay.Func
 
   def replace_expr({quoted, :map}) do
-    IO.puts "Find Enum.map! Try to replace code."
-    
     # include ast of Enum.map
     {_enum_map, _, anonymous_func} = quoted
 
