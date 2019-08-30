@@ -1,21 +1,18 @@
-# Hastega
+# Pelemay
+**Pelemay = The Penta (Five) “Elemental Way”: Freedom, Insight, Beauty, Efficiency and Robustness**
 
-**Hastega: Hyper Accelerator of Spreading Tasks for Elixir with GPU Activation**
-
-For example, the following code of the function `map_square` will be compiled to native code using SIMD instructions by Hastega.
+For example, the following code of the function `map_square` will be compiled to native code using SIMD instructions by Pelemay.
 
 ```elixir
 defmodule M do
-  require Hastega
-  import Hastega
+  require Pelemay
+  import Pelemay
 
   defhastega do
     def map_square (list) do
       list
       |> Enum.map(& &1 * &1)
     end
-
-    hastegastub
   end
 end
 ```
@@ -24,12 +21,12 @@ end
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `hastega` to your list of dependencies in `mix.exs`:
+by adding `pelemay` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:hastega, "~> 0.0.1"}
+    {:pelemay, "~> 0.0.0"}
   ]
 end
 ```

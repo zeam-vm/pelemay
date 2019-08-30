@@ -33,15 +33,15 @@ defmodule Hastega.MixProject do
   end
 
   defp description() do
-    
+    "Pelemay = The Penta (Five) “Elemental Way”: Freedom, Insight, Beauty, Efficiency and Robustness"
   end
 
   defp package() do
     [
       name: "pelemay",
-      maintainers: ["Susumu Yamazaki", "Masakazu Mori", "Yoshihiro Ueno", "Hideki Takase"],
+      maintainers: ["Susumu Yamazaki", "Masakazu Mori", "Yoshihiro Ueno", "Hideki Takase", "Yuki Hisae"],
       licenses: ["Apache 2.0"],
-      links: %{"GitHub" => "https://github.com/zeam-vm/hastega"}
+      links: %{"GitHub" => "https://github.com/zeam-vm/pelemay"}
     ]
   end
 end
