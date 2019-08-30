@@ -24,11 +24,11 @@ defmodule Hastega.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      { :flow, "~> 0.14.3" },
-      { :constants,   "~> 0.1.0" },
-      # { :sum_mag,     "~> 0.0.9" },
-      { :ex_doc,      ">= 0.0.0", only: :dev},
       { :benchfella, "~> 0.3.5" },
+      { :flow, "~> 0.14.3" },
+      
+      # Docs dependencies
+      { :ex_doc,      ">= 0.0.0", only: :dev},
     ]
   end
 
