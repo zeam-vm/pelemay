@@ -1,6 +1,4 @@
 defmodule SumMag do
-  alias SumMag.Opt
-
   @moduledoc """
   SumMag: a meta-programming library for Hastega and Cockatorice.
   """
@@ -243,7 +241,7 @@ defmodule SumMag do
   defp iced_block(funcs), do: [ do: { :__block__, [], funcs } ]
 
   # @spec map(ast, element -> any))) :: ast
-  def map(definitions, optimizer \\ &no_ret/1) when is_function(optimizer) do
+  def map(definitions, optimizer) when is_function(optimizer) do
     definitions
     |> melt_block
     |> Enum.map( & &1 |> optimize_func( optimizer ) )
@@ -262,7 +260,8 @@ defmodule SumMag do
   defp apply_optimizer( expr, optimizer ) do
     expr
     |> Macro.unpipe
-    |> optimizer.()
+    |> Enum.map(fn {expr, pos} -> 
+      {optimizer.(expr), pos} end)
     |> pipe
   end
 
@@ -278,119 +277,6 @@ defmodule SumMag do
     :lists.foldl(fun, h, t)
   end
 
-  # defp pipe(unpipe_list) do
-  #   pipe_meta = [context: Elixir, import: Kernel]
-
-  #   {arg, 0} = hd unpipe_list
-  #   func = tl unpipe_list
-
-  #   acc = {:|>, [], [arg, nil] }
-
-  #   {:|>, [], ret} = func
-  #   |> Enum.reduce(acc, 
-  #     fn x, acc -> 
-  #       {func, 0} = x
-
-  #       acc
-  #       |> Macro.prewalk( fn 
-  #         {:|>, [], [left, nil]} -> {:|>, [], [{:|>, pipe_meta, [left, func]}, nil]}
-  #         other -> other
-  #       end)
-  #     end)
-  #   [ret, nil] = ret 
-    
-  #   ret
-  # end
-
-  # defp map_block_keyword(definitions, func \\ &no_ret/1) when is_function(func) do
-  #   definitions
-  #   |> melt_block # many definition function
-  #   |> map_def( func ) # apply optimizer to each def 
-  #   |> iced_block
-  # end
-
-  # defp map1(expressions, func \\ &no_ret/1) when is_function(func) do
-  #   ret = expressions
-  #   |> Enum.map( func )
-  #   |> 
-
-
-  #   ret
-  # end
-
-  # def apply_func({:def, meta, [arg_info, process]}, func \\ &no_ret/1) when is_function(func) do
-  #   ret = process
-  #   |> map_block_keyword
-  # end
-
-  # def replace_function({:def, meta, [arg_info, process]}) do
-  #   ret = process 
-  #   |> SumMag.map(& native/1)
-
-  #   {:def, meta, [arg_info, ret]}
-  # end
-
-  defp no_ret( ast ), do: ast 
-
-  # def replace_function(_), do: raise "syntax error"
-
-  # ASTを再帰的に走査して，パイプライン演算子のネストを検知する\n
-  # 最低2個連なっていれば，Map/Map Fusionを試みる\n
-  # find nests of pipe line operator by recursive.\n
-  # If ast have more than 2 nest layer, try optimizing expressions with Map/Map Fusion\n
-  def exploration(
-    {:|>, _meta1,[ 
-        {:|>, _meta2, _args} = left, 
-        _right
-    ]} = input) do
-      input |> Opt.inspect(label: "verify")
-      
-      left 
-      |> exploration 
-      |> Opt.inspect(label: "explorated")
-
-      # argsにEnum.mapを含むか？
-      # if left_args_has_enum_map and right_is_enum_map do
-      # ret = merge_functions(left |> mapping , right |> mapping )
-      # else
-      #   input
-      # end
-
-      # ret |> Opt.inspect(label: "explorating")
-      input
-  end
-
-  def exploration(
-    {:|>, _meta1,[ 
-      _literal, 
-      _right
-    ]} = input) do 
-
-    input |> Opt.inspect(label: "Innermost elements of AST")
-    
-    {:ok, input}
-  end
-
-  # version keyword-list 
-  def exploration(
-    [
-      {:tree, dungeon},
-      {:enum_map },
-      {:func_meta, _func_meta},
-      {:func,      _function},
-      {:level, }
-    ]),  do: dungeon |> exploration
- 
-  # defp exploration({:|>, _, literal}, acc) do
-  #   case literal do
-  #     [ {:|>, _, _}, _child ] -> 
-  #       literal |> IO.inspect(label: "literal")
-  #       # buf = child |> 
-  #      _  -> 
-  #       literal |> IO.inspect(label: "literal")
-  #   end
-  # end
-
   def quoted_var?({:&, _, [1]}) do
     true
   end
@@ -402,7 +288,7 @@ defmodule SumMag do
 
   def quoted_var?(other) when other |> is_number, do: true
 
-  def quoted_var?(other), do: false
+  def quoted_var?(_other), do: false
 
   def quoted_vars?(left, right) do
     quoted_var?(left) && quoted_var?(right)
