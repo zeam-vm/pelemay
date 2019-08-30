@@ -5,7 +5,7 @@ defmodule Hastega.MixProject do
     [
       app: :pelemay,
       version: "0.0.0",
-      elixir: "~> 1.6",
+      elixir: "~> 1.9",
       compilers: Mix.compilers() ++ [:native],
       start_permanent: Mix.env() == :prod,
       description: description(),

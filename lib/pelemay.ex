@@ -7,7 +7,6 @@ defmodule Pelemay do
   alias Pelemay.Generator
   alias Pelemay.Db
   alias Pelemay.Func
-  alias SumMag.Opt
 
   @moduledoc """
   ## Pelemay: Hyper Accelerator of Spreading Tasks for Elixir with GPU Activation
@@ -81,7 +80,6 @@ defmodule Pelemay.Enum do
   # import Pelemay.Db
 
   alias Pelemay.Db
-  alias SumMag.Opt
   alias Pelemay.Func
 
   def replace_expr({quoted, :map}) do
@@ -97,7 +95,7 @@ defmodule Pelemay.Enum do
 
   def replace_expr({quoted, :chunk_every}) do
     IO.puts "Find Enum.chunk_every"
-    {_enum, _, num} = quoted |> Opt.inspect(label: "input")
+    {_enum, _, num} = quoted
     
     call_nif(num, :chunk_every)
   end
@@ -211,14 +209,12 @@ end
 
 defmodule Pelemay.Func do
   import SumMag
-  alias SumMag.Opt
 
   defmodule Env do
     defstruct operator: [:+, :-, :*, :/, :rem]
   end
 
   def supported?([{:&, _, [1]}] = ast) do
-    Opt.inspect "This is captured val."
     {:value, ast}
   end
 
@@ -233,7 +229,7 @@ defmodule Pelemay.Func do
   end
 
   defp supported_expr?({_atom, _, [_left, _right]} = ast) do
-    expr_map = ast |> polynomial |> Opt.inspect(label: "supported_exprs")
+    expr_map = ast |> polynomial
 
     if supported_operators?(expr_map) do
       {:ok, expr_map}

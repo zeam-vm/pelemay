@@ -150,7 +150,7 @@ defmodule Pelemay.Generator.Native do
     if type == "double" && String.contains?(expr, "%") do
       "(vec_double[i])"
     else
-      enclosure(expr <> last_arg) |> Opt.inspect
+      enclosure(expr <> last_arg)
     end
   end
 

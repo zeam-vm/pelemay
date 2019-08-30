@@ -28,7 +28,6 @@ defmodule Pelemay.Generator.Interface do
 
   defp generate_functions do
     Db.get_functions
-    # |> Opt.inspect(label: "DB")
     |> Enum.map(& &1 |> generate_function)
     |> List.to_string
   end
@@ -48,7 +47,6 @@ defmodule Pelemay.Generator.Interface do
     """
       def #{nif_name}(#{args}), do: raise "NIF #{nif_name}/#{num} not implemented"
     """
-    |> Opt.inspect
   end
 
   defp generate_string_arguments(num) do
