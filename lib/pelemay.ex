@@ -1,15 +1,11 @@
 defmodule Pelemay do
   import SumMag
-  # import Pelemay.Db
-  # import Pelemay.Generator
-  import SumMag
 
-  alias Pelemay.Generator
+  alias Generator
   alias Pelemay.Db
-  alias Pelemay.Func
 
   @moduledoc """
-  ## Pelemay: Hyper Accelerator of Spreading Tasks for Elixir with GPU Activation
+  ## Pelemay: The Penta (Five) “Elemental Way”: Freedom, Insight, Beauty, Efficiency and Robustness
 
   For example, the following code of the function `map_square` will be compiled to native code using SIMD instructions by Pelemay.
 
@@ -23,28 +19,39 @@ defmodule Pelemay do
         list
         |> Enum.map(& &1 * &1)
       end
-
-      pelemaystub
     end
   ```
+  
+  1. Find Enum.map with a specific macro
+  2. Analyze internal anonymous functions
+  3. Register(ETS) following information as Map.
+    - Module
+    - Original function name
+    - Function name for NIF
+    - Value of Anonymous Function
+  4. Insert NIF in AST
+  5. Do Step 1 ~ 4 to each macro
+  6. Receiving Map from ETS, and...
+  7. Generate NIF Code
+  8. Generate Elixir's functions
+  9. Compile NIF as Custom Mix Task, using Clang
   """
   defmacro defpelemay(functions) do
     Db.init
 
     functions
-    |> SumMag.map(& accelerate(&1))
+    |> SumMag.map(& Analyzer.replace_exprs(&1))
     |> pelemaystub
   end
 
-  def pelemaystub(ret) do
+  defp pelemaystub(ret) do
     Generator.generate
     ret
   end
+end
 
-  @doc """
-        iex> 
-  """
-  def accelerate(exprs) when is_list(exprs) do
+defmodule Analyzer do
+  def replace_exprs(exprs) do
     exprs
 
     # This is proto-type
@@ -52,9 +59,6 @@ defmodule Pelemay do
     |> Enum.map(& replace_expr(&1) )
   end
 
-  @doc """
-        iex> 
-  """
   defp replace_expr({{atom, _, nil}, _pos} = arg) 
     when atom |> is_atom do
      arg
@@ -62,28 +66,26 @@ defmodule Pelemay do
 
   defp replace_expr({quoted, pos}) do
     ret = quoted
-    |> Pelemay.Enum.replace_expr
+    |> Analyzer.Enum.replace_expr
 
     {ret, pos}
   end
-
 end
 
-defmodule Pelemay.Enum do
+defmodule Analyzer.Enum do
   alias Pelemay.Db
-  alias Pelemay.Func
+  alias Analyzer.AFunc
 
   def replace_expr({quoted, :map}) do
     # include ast of Enum.map
     {_enum_map, _, anonymous_func} = quoted
 
     anonymous_func
-    |> Func.supported?
+    |> AFunc.supported?
     |> call_nif(:map)
   end
 
   def replace_expr({quoted, :chunk_every}) do
-    IO.puts "Find Enum.chunk_every"
     {_enum, _, num} = quoted
     
     call_nif(num, :chunk_every)
@@ -194,14 +196,19 @@ defmodule Pelemay.Enum do
   end
 end
 
-
-
-defmodule Pelemay.Func do
+defmodule Analyzer.AFunc do
   import SumMag
 
-  defmodule Env do
-    defstruct operator: [:+, :-, :*, :/, :rem]
-  end
+  @moduledoc """
+    Provides analyzer for anonymous functions.
+  """
+
+  defp operator(:+),   do: :+
+  defp operator(:-),   do: :-
+  defp operator(:/),   do: :/
+  defp operator(:*),   do: :*
+  defp operator(:rem), do: :%
+  defp operator(_),    do: false
 
   def supported?([{:&, _, [1]}] = ast) do
     {:value, ast}
@@ -242,16 +249,9 @@ defmodule Pelemay.Func do
       args: args
     } = acc
 
-    %Pelemay.Func.Env{}.operator
-    |> Enum.find_value(fn x -> x == atom end)
-
-    operators = case atom do
-      :+ ->   [:+  | operators]
-      :- ->   [:-  | operators]
-      :* ->   [:*  | operators]
-      :/ ->   [:/  | operators]
-      :rem -> [:rem  | operators]
-      _ ->    operators
+    operators = case operator(atom) do
+      false -> operators
+      atom -> [atom | operators]
     end
 
     args = args

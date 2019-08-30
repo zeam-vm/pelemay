@@ -287,7 +287,7 @@ defmodule SumMag do
 
   def quoted_var?(other) when other |> is_number, do: true
 
-  def quoted_var?(other), do: false
+  def quoted_var?(_other), do: false
 
   def quoted_vars?(left, right) do
     quoted_var?(left) && quoted_var?(right)

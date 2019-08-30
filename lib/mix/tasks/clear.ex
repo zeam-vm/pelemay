@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Clear do
+defmodule Mix.Tasks.Pelemay do
   use Mix.Task
 
   @shortdoc "Remove Glue functions"
