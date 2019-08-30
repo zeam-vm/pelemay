@@ -20,8 +20,7 @@ end
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `pelemay` to your list of dependencies in `mix.exs`:
+Add `pelemay` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
