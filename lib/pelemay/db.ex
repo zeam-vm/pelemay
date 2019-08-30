@@ -1,7 +1,6 @@
 defmodule Pelemay.Db do
   # @on_load :init
   @table_name :nif_func
-  alias SumMag.Opt
 
   @moduledoc """
   Documentation for Hastega.Generator.
@@ -27,7 +26,7 @@ defmodule Pelemay.Db do
   end
 
   def validate(func_name) do
-    registered = get_functions
+    registered = get_functions()
     |> List.flatten
     
     case registered do
