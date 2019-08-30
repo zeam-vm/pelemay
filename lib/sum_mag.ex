@@ -257,10 +257,11 @@ defmodule SumMag do
     {:def, meta, [arg_info, ret]}
   end
 
-  defp apply_optimizer( exprs, optimizer ) do
-    exprs
+  defp apply_optimizer( expr, optimizer ) do
+    expr
     |> Macro.unpipe
-    |> optimizer.()
+    |> Enum.map(fn {expr, pos} -> 
+      {optimizer.(expr), pos} end)
     |> pipe
   end
 

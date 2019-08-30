@@ -1,7 +1,7 @@
 defmodule Pelemay do
   import SumMag
 
-  alias Generator
+  alias Pelemay.Generator
   alias Pelemay.Db
 
   @moduledoc """
@@ -40,7 +40,7 @@ defmodule Pelemay do
     Db.init
 
     functions
-    |> SumMag.map(& Analyzer.replace_exprs(&1))
+    |> SumMag.map(& Optimizer.replace_expr(&1))
     |> pelemaystub
   end
 
@@ -50,29 +50,23 @@ defmodule Pelemay do
   end
 end
 
-defmodule Analyzer do
-  def replace_exprs(exprs) do
-    exprs
+defmodule Optimizer do
 
-    # This is proto-type
-    # |> fusion_function
-    |> Enum.map(& replace_expr(&1) )
-  end
-
-  defp replace_expr({{atom, _, nil}, _pos} = arg) 
+  @moduledoc """
+    Provides a optimizer for [AST](https://elixirschool.com/en/lessons/advanced/metaprogramming/)
+  """
+  def replace_expr({atom, _, nil} = arg) 
     when atom |> is_atom do
      arg
   end
 
-  defp replace_expr({quoted, pos}) do
+  def replace_expr(quoted) do
     ret = quoted
-    |> Analyzer.Enum.replace_expr
-
-    {ret, pos}
+    |> Optimizer.Enum.replace_expr
   end
 end
 
-defmodule Analyzer.Enum do
+defmodule Optimizer.Enum do
   alias Pelemay.Db
   alias Analyzer.AFunc
 
@@ -200,14 +194,13 @@ defmodule Analyzer.AFunc do
   import SumMag
 
   @moduledoc """
-    Provides analyzer for anonymous functions.
+    Provides optimizer for anonymous functions.
   """
-
   defp operator(:+),   do: :+
   defp operator(:-),   do: :-
   defp operator(:/),   do: :/
   defp operator(:*),   do: :*
-  defp operator(:rem), do: :%
+  defp operator(:rem), do: :rem
   defp operator(_),    do: false
 
   def supported?([{:&, _, [1]}] = ast) do
