@@ -3,7 +3,7 @@ defmodule Pelemay.Db do
   @table_name :nif_func
 
   @moduledoc """
-  Documentation for Hastega.Generator.
+  Documentation for Pelemay.Generator.
   """
   def init do
     @table_name

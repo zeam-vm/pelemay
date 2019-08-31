@@ -23,13 +23,13 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-hastega-*.tar
+pelemay-*.tar
 
 # Ignore snapshot for benchfella.
 /snapshots/
 *.snapshot
 
-# Ignore 
+# Ignore
 *.so
 *.plist
 
@@ -38,4 +38,4 @@ hastega-*.tar
 
 # Ignore NIF Code
 interact_nif.ex
-/native/ 
+/native/

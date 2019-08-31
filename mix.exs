@@ -1,4 +1,4 @@
-defmodule Hastega.MixProject do
+defmodule Pelemay.MixProject do
   use Mix.Project
 
   def project do
