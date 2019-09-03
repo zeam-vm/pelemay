@@ -11,7 +11,7 @@ defmodule Pelemay.Generator.Interface do
       @on_load :load_nifs
 
       def load_nifs do
-        :erlang.load_nif('./priv/libnif', 0)
+        :erlang.load_nif(:code.priv_dir(:pelemay) ++ '/libnif', 0)
       end
 
     #{funcs}
