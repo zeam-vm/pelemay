@@ -6,7 +6,9 @@ defmodule Hastega.MixProject do
       app: :pelemay,
       version: "0.0.1",
       elixir: "~> 1.9",
-      compilers: Mix.compilers() ++ [:native],
+      compilers: [:elixir_make | Mix.compilers()],
+      make_targets: ["all"],
+      make_clean: ["clean"],
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
@@ -26,6 +28,7 @@ defmodule Hastega.MixProject do
     [
       { :benchfella, "~> 0.3.5" },
       { :flow, "~> 0.14.3" },
+      {:elixir_make, "~> 0.6.0", runtime: false},
 
       # Docs dependencies
       { :ex_doc,      ">= 0.0.0", only: :dev},

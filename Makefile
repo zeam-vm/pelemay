@@ -1,6 +1,9 @@
 MIX := mix
 CC := clang
 
+PREFIX = $(MIX_APP_PATH)/priv
+BUILD  = $(MIX_APP_PATH)/obj
+
 CFLAGS := -Ofast -g -ansi -pedantic -femit-all-decls
 
 ERLANG_PATH = $(shell erl -eval 'io:format("~s", [lists:concat([code:root_dir(), "/erts-", erlang:system_info(version), "/include"])])' -s init stop -noshell)
@@ -17,20 +20,24 @@ ifneq ($(OS),Windows_NT)
 		endif
 endif
 
+calling_from_make:
+	mix compile
+
 .PHONY: all libnifvec clean
 
-all: libnif # native/lib.s
-
-
-libnif:
-		$(MIX) compile
+all: $(BUILD) $(PREFIX) $(PREFIX)/libnif.so
 
 # native/lib.s: native/lib.c
 # 		$(CC) $(CFLAGS) -c -S -o $@ $^
 
-priv/libnif.so: native/lib.c
+$(PREFIX)/libnif.so: native/lib.c
 		$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
 
+$(PREFIX):
+	mkdir -p $@
+
+$(BUILD):
+	mkdir -p $@
+
 clean:
-		$(MIX) clean
-		$(RM) -rf priv/*
+		$(RM) -rf $(PREFIX)/*
