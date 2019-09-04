@@ -1,14 +1,14 @@
 defmodule SumMag do
   @moduledoc """
-  SumMag: a meta-programming library for Hastega and Cockatorice.
+  SumMag: a meta-programming library for Pelemay and Cockatorice.
   """
 
   @doc """
       ## Examples
-      iex> quote do end |> SumMag.parse(%{target: :hastega})
+      iex> quote do end |> SumMag.parse(%{target: :pelemay})
       []
 
-      iex> (quote do: def func(a), do: a) |> SumMag.parse(%{target: :hastega})
+      iex> (quote do: def func(a), do: a) |> SumMag.parse(%{target: :pelemay})
       [[function_name: :func, is_public: true, args: [:a], do: [{:a, [], SumMagTest}], is_nif: false ]]
 
       iex> (quote do
@@ -16,7 +16,7 @@ defmodule SumMag do
       ...>      list
       ...>      |> Enum.map(& &1)
       ...>    end
-      ...> end) |> SumMag.parse(%{target: :hastega})
+      ...> end) |> SumMag.parse(%{target: :pelemay})
       [[function_name: :func, is_public: true, args: [:list], do: [{:|>, [context: SumMagTest, import: Kernel], [{:list, [], SumMagTest}, {{:., [], [{:__aliases__, [alias: false], [:Enum]}, :map]}, [], [{:&, [], [{:&, [], [1]}]}]}]}], is_nif: false ]]
   """
   def parse({:__block__, _e, []}, _env), do: []
@@ -160,8 +160,8 @@ defmodule SumMag do
   @doc """
     ## Examples
 
-    iex> :hastega |> SumMag.concat_name_stub(%{})
-    :hastegastub
+    iex> :pelemay |> SumMag.concat_name_stub(%{})
+    :pelemaystub
   """
   def concat_name_stub(name, _env) do
     name |> Atom.to_string |> Kernel.<>("stub") |> String.to_atom

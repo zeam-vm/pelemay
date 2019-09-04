@@ -10,11 +10,11 @@ use Mix.Config
 
 # You can configure your application as:
 #
-#     config :hastega, key: :value
+#     config :pelemay, key: :value
 #
 # and access this configuration in your application as:
 #
-#     Application.get_env(:hastega, :key)
+#     Application.get_env(:pelemay, :key)
 #
 # You can also configure a 3rd-party app:
 #
