@@ -8,7 +8,7 @@ defmodule M do
   require Pelemay
   import Pelemay
 
-  defhastega do
+  defpelemay do
     def map_square (list) do
       list
       |> Enum.map(& &1 * &1)
