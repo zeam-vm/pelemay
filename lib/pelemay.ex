@@ -60,9 +60,8 @@ defmodule Optimizer do
   end
 
   def replace_expr(quoted) do
-    ret =
-      quoted
-      |> Optimizer.Enum.replace_expr()
+    quoted
+    |> Optimizer.Enum.replace_expr()
   end
 end
 
