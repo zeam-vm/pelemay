@@ -13,9 +13,8 @@ defmodule Pelemay.Db do
     |> :ets.insert({:func_num, 1})
   end
 
-  def register(info) when 
-    info |> is_map do
-
+  def register(info)
+      when info |> is_map do
     id = get_func_num()
     key = generate_key(id)
 
@@ -26,31 +25,36 @@ defmodule Pelemay.Db do
   end
 
   def validate(func_name) do
-    registered = get_functions()
-    |> List.flatten
-    
+    registered =
+      get_functions()
+      |> List.flatten()
+
     case registered do
-      [] -> nil
-      other -> other 
-      |> Enum.map(& Map.get(&1, :nif_name) == func_name)
-      |> only_one?
+      [] ->
+        nil
+
+      other ->
+        other
+        |> Enum.map(&(Map.get(&1, :nif_name) == func_name))
+        |> only_one?
     end
   end
 
   defp only_one?(list) do
-    !Enum.find_value(list, false, & &1 == true)
+    !Enum.find_value(list, false, &(&1 == true))
   end
 
   def get_functions do
     num = get_func_num() - 1
 
-    (1..num)
-    |> Enum.map(& &1 |> get_function)
+    1..num
+    |> Enum.map(&(&1 |> get_function))
   end
 
   def get_function(id) do
-    ret = @table_name
-    |> :ets.match({generate_key(id), :"$1"})
+    ret =
+      @table_name
+      |> :ets.match({generate_key(id), :"$1"})
 
     case ret do
       [] -> []
@@ -61,7 +65,7 @@ defmodule Pelemay.Db do
   def get_function([]), do: ""
 
   defp generate_key(id) do
-    "function_#{id}" |> String.to_atom
+    "function_#{id}" |> String.to_atom()
   end
 
   defp get_func_num do
@@ -72,8 +76,8 @@ defmodule Pelemay.Db do
 
   defp update do
     id = get_func_num()
-    @table_name |> :ets.insert({:func_num, id+1})
-  end 
+    @table_name |> :ets.insert({:func_num, id + 1})
+  end
 
   # def on_load do
   #   case :mnesia.start do
@@ -104,5 +108,4 @@ defmodule Pelemay.Db do
   # def all_functions() do
   #   :mnesia.dirty_all_keys(:functions)
   # end
-
 end

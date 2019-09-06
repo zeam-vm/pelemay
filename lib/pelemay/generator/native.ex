@@ -7,25 +7,26 @@ defmodule Pelemay.Generator.Native do
 
   def generate do
     File.mkdir("native")
+
     @nif_c
     |> write
   end
 
   defp write(file) do
-    str = 
-    init_nif() 
-    |> basic() 
-    |> generate_functions() 
-    |> erl_nif_init()
+    str =
+      init_nif()
+      |> basic()
+      |> generate_functions()
+      |> erl_nif_init()
 
     file |> File.write(str)
   end
 
   defp generate_functions(str) do
-    definition_func = 
-    Db.get_functions
-    |> Enum.map(& &1 |> generate_function)
-    |> to_str_code
+    definition_func =
+      Db.get_functions()
+      |> Enum.map(&(&1 |> generate_function))
+      |> to_str_code
 
     str <> definition_func <> func_list()
   end
@@ -37,17 +38,21 @@ defmodule Pelemay.Generator.Native do
   defp to_str_code(list) when list |> is_list do
     list
     |> Enum.reduce(
-      "", 
-      fn x, acc -> acc <> to_string(x) end)
+      "",
+      fn x, acc -> acc <> to_string(x) end
+    )
   end
 
   defp func_list do
-    fl = Db.get_functions
-    |> Enum.reduce(
-      "", 
-      fn x, acc -> 
-        str = x |> erl_nif_func
-        acc <> "#{str},"end)
+    fl =
+      Db.get_functions()
+      |> Enum.reduce(
+        "",
+        fn x, acc ->
+          str = x |> erl_nif_func
+          acc <> "#{str},"
+        end
+      )
 
     """
     static
@@ -60,7 +65,7 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp erl_nif_func([info]) do
-     %{
+    %{
       nif_name: nif_name,
       module: _,
       function: _,
@@ -110,9 +115,10 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp erl_nif_init(str) do
-    str <> """
-    ERL_NIF_INIT(Elixir.#{@nif_module}, nif_funcs, &load, &reload, &upgrade, &unload)
-    """
+    str <>
+      """
+      ERL_NIF_INIT(Elixir.#{@nif_module}, nif_funcs, &load, &reload, &upgrade, &unload)
+      """
   end
 
   defp basic(str) do
@@ -129,17 +135,18 @@ defmodule Pelemay.Generator.Native do
     "(#{str})"
   end
 
-  defp make_expr(operators, args, type) 
-  when is_list(operators) and is_list(args) do
-    args = args      |> to_string(:args, type)
+  defp make_expr(operators, args, type)
+       when is_list(operators) and is_list(args) do
+    args = args |> to_string(:args, type)
 
     operators = operators |> to_string(:op)
 
     last_arg = List.last(args)
 
-    expr = Enum.zip(args, operators)
-    |> Enum.reduce("", &make_expr/2)
-    
+    expr =
+      Enum.zip(args, operators)
+      |> Enum.reduce("", &make_expr/2)
+
     if type == "double" && String.contains?(expr, "%") do
       "(vec_double[i])"
     else
@@ -153,17 +160,17 @@ defmodule Pelemay.Generator.Native do
 
   defp to_string(args, :args, "double") do
     args
-    |> Enum.map(& &1 |> arg_to_string("double"))
+    |> Enum.map(&(&1 |> arg_to_string("double")))
   end
 
   defp to_string(args, :args, type) do
     args
-    |> Enum.map(& &1 |> arg_to_string(type))
+    |> Enum.map(&(&1 |> arg_to_string(type)))
   end
-  
+
   defp to_string(operators, :op) do
     operators
-    |> Enum.map(& &1 |> operator_to_string)
+    |> Enum.map(&(&1 |> operator_to_string))
   end
 
   defp arg_to_string(arg, type) do
@@ -191,7 +198,6 @@ defmodule Pelemay.Generator.Native do
       args: args,
       operators: operators
     } = info
-
 
     expr_d = make_expr(operators, args, "double")
     expr_l = make_expr(operators, args, "long")
