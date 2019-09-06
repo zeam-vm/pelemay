@@ -21,7 +21,7 @@ defmodule Pelemay do
       end
     end
   ```
-  
+
   1. Find Enum.map with a specific macro
   2. Analyze internal anonymous functions
   3. Register(ETS) following information as Map.
@@ -55,13 +55,13 @@ defmodule Optimizer do
   @moduledoc """
     Provides a optimizer for [AST](https://elixirschool.com/en/lessons/advanced/metaprogramming/)
   """
-  def replace_expr({atom, _, nil} = arg) 
+  def replace_expr({atom, _, nil} = arg)
     when atom |> is_atom do
      arg
   end
 
   def replace_expr(quoted) do
-    ret = quoted
+    quoted
     |> Optimizer.Enum.replace_expr
   end
 end
@@ -81,7 +81,7 @@ defmodule Optimizer.Enum do
 
   def replace_expr({quoted, :chunk_every}) do
     {_enum, _, num} = quoted
-    
+
     call_nif(num, :chunk_every)
   end
 
@@ -100,7 +100,7 @@ defmodule Optimizer.Enum do
 
   defp which_enum_func?(ast) do
     {_, flag} = Macro.prewalk(ast, false,
-      fn 
+      fn
       ({:__aliases__, _,[:Enum]} = ast, _) -> {ast, true}
       (other, acc) -> {other, acc}
       end)
@@ -113,7 +113,7 @@ defmodule Optimizer.Enum do
 
   defp which_function?(ast) do
     {_, func} = Macro.prewalk(ast, false,
-      fn 
+      fn
       (:map = ast, _acc) -> {ast, :map}
       (:chunk_every = ast, _acc) ->{ast, :chunk_every}
       (other, acc) -> {other, acc}
@@ -135,14 +135,14 @@ defmodule Optimizer.Enum do
     func_name = generate_function_name(:map, operators)
 
     case Db.validate(func_name) do
-      nil -> 
+      nil ->
       (# plan to fix this data
         info = %{
           module: :enum,
           function: :map,
           nif_name: func_name,
           arg_num: 1,
-          args: args, 
+          args: args,
           operators: operators
         }
 
@@ -153,7 +153,7 @@ defmodule Optimizer.Enum do
           function: :map,
           nif_name: func_name,
           arg_num: 1,
-          args: args, 
+          args: args,
           operators: operators
         }
 
@@ -228,7 +228,7 @@ defmodule Analyzer.AFunc do
   end
 
   def polynomial(ast) do
-    acc = %{ 
+    acc = %{
       operators: [],
       args: []
     }
@@ -237,7 +237,7 @@ defmodule Analyzer.AFunc do
   end
 
   defp numerical?({atom, _, [left, right]} = ast, acc) do
-    %{ 
+    %{
       operators: operators,
       args: args
     } = acc

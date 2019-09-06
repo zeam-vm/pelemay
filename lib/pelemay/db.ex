@@ -13,7 +13,7 @@ defmodule Pelemay.Db do
     |> :ets.insert({:func_num, 1})
   end
 
-  def register(info) when 
+  def register(info) when
     info |> is_map do
 
     id = get_func_num()
@@ -28,10 +28,10 @@ defmodule Pelemay.Db do
   def validate(func_name) do
     registered = get_functions()
     |> List.flatten
-    
+
     case registered do
       [] -> nil
-      other -> other 
+      other -> other
       |> Enum.map(& Map.get(&1, :nif_name) == func_name)
       |> only_one?
     end
@@ -48,6 +48,7 @@ defmodule Pelemay.Db do
     |> Enum.map(& &1 |> get_function)
   end
 
+  def get_function([]), do: ""
   def get_function(id) do
     ret = @table_name
     |> :ets.match({generate_key(id), :"$1"})
@@ -58,7 +59,6 @@ defmodule Pelemay.Db do
     end
   end
 
-  def get_function([]), do: ""
 
   defp generate_key(id) do
     "function_#{id}" |> String.to_atom
@@ -73,7 +73,7 @@ defmodule Pelemay.Db do
   defp update do
     id = get_func_num()
     @table_name |> :ets.insert({:func_num, id+1})
-  end 
+  end
 
   # def on_load do
   #   case :mnesia.start do
