@@ -3,7 +3,7 @@ defmodule Pelemay.Generator do
   alias Pelemay.Generator.Native
 
   def generate do
-    Interface.generate
-    Native.generate
+    Interface.generate()
+    Native.generate()
   end
 end

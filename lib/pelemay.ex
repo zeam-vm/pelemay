@@ -37,32 +37,31 @@ defmodule Pelemay do
   9. Compile NIF as Custom Mix Task, using Clang
   """
   defmacro defpelemay(functions) do
-    Db.init
+    Db.init()
 
     functions
-    |> SumMag.map(& Optimizer.replace_expr(&1))
+    |> SumMag.map(&Optimizer.replace_expr(&1))
     |> pelemaystub
   end
 
   defp pelemaystub(ret) do
-    Generator.generate
+    Generator.generate()
     ret
   end
 end
 
 defmodule Optimizer do
-
   @moduledoc """
     Provides a optimizer for [AST](https://elixirschool.com/en/lessons/advanced/metaprogramming/)
   """
   def replace_expr({atom, _, nil} = arg)
-    when atom |> is_atom do
-     arg
+      when atom |> is_atom do
+    arg
   end
 
   def replace_expr(quoted) do
     quoted
-    |> Optimizer.Enum.replace_expr
+    |> Optimizer.Enum.replace_expr()
   end
 end
 
@@ -75,7 +74,7 @@ defmodule Optimizer.Enum do
     {_enum_map, _, anonymous_func} = quoted
 
     anonymous_func
-    |> AFunc.supported?
+    |> AFunc.supported?()
     |> call_nif(:map)
   end
 
@@ -88,7 +87,7 @@ defmodule Optimizer.Enum do
   def replace_expr({quoted, _func}) do
     str = Macro.to_string(quoted)
 
-    IO.puts "Sorry, #{str} not supported yet."
+    IO.puts("Sorry, #{str} not supported yet.")
     quoted
   end
 
@@ -99,10 +98,10 @@ defmodule Optimizer.Enum do
   end
 
   defp which_enum_func?(ast) do
-    {_, flag} = Macro.prewalk(ast, false,
-      fn
-      ({:__aliases__, _,[:Enum]} = ast, _) -> {ast, true}
-      (other, acc) -> {other, acc}
+    {_, flag} =
+      Macro.prewalk(ast, false, fn
+        {:__aliases__, _, [:Enum]} = ast, _ -> {ast, true}
+        other, acc -> {other, acc}
       end)
 
     case flag do
@@ -112,11 +111,11 @@ defmodule Optimizer.Enum do
   end
 
   defp which_function?(ast) do
-    {_, func} = Macro.prewalk(ast, false,
-      fn
-      (:map = ast, _acc) -> {ast, :map}
-      (:chunk_every = ast, _acc) ->{ast, :chunk_every}
-      (other, acc) -> {other, acc}
+    {_, func} =
+      Macro.prewalk(ast, false, fn
+        :map = ast, _acc -> {ast, :map}
+        :chunk_every = ast, _acc -> {ast, :chunk_every}
+        other, acc -> {other, acc}
       end)
 
     func
@@ -128,15 +127,15 @@ defmodule Optimizer.Enum do
 
   def call_nif({:ok, asm}, :map) do
     %{
-        operators: operators,
-        args: args
-      } = asm
+      operators: operators,
+      args: args
+    } = asm
 
     func_name = generate_function_name(:map, operators)
 
     case Db.validate(func_name) do
       nil ->
-      (# plan to fix this data
+        # plan to fix this data
         info = %{
           module: :enum,
           function: :map,
@@ -146,8 +145,10 @@ defmodule Optimizer.Enum do
           operators: operators
         }
 
-        Db.register(info))
-      true -> (# plan to fix this data
+        Db.register(info)
+
+      # plan to fix this data
+      true ->
         info = %{
           module: :enum,
           function: :map,
@@ -157,11 +158,13 @@ defmodule Optimizer.Enum do
           operators: operators
         }
 
-        Db.register(info))
-      false -> nil
+        Db.register(info)
+
+      false ->
+        nil
     end
 
-    func_name = func_name |> String.to_atom
+    func_name = func_name |> String.to_atom()
 
     quote do: PelemayNif.unquote(func_name)
   end
@@ -171,22 +174,23 @@ defmodule Optimizer.Enum do
   end
 
   defp generate_function_name(func, operators) do
-    ret = operators
-    |> Enum.map(& &1 |> operator_to_string)
-    |> Enum.reduce("", fn x, acc -> acc <> "_#{x}" end)
+    ret =
+      operators
+      |> Enum.map(&(&1 |> operator_to_string))
+      |> Enum.reduce("", fn x, acc -> acc <> "_#{x}" end)
 
     Atom.to_string(func) <> ret
   end
 
   defp operator_to_string(operator)
-    when operator |> is_atom do
-      case operator do
-        :* -> "mult"
-        :+ -> "plus"
-        :- -> "minus"
-        :/ -> "div"
-        :rem -> "mod"
-      end
+       when operator |> is_atom do
+    case operator do
+      :* -> "mult"
+      :+ -> "plus"
+      :- -> "minus"
+      :/ -> "div"
+      :rem -> "mod"
+    end
   end
 end
 
@@ -196,19 +200,19 @@ defmodule Analyzer.AFunc do
   @moduledoc """
     Provides optimizer for anonymous functions.
   """
-  defp operator(:+),   do: :+
-  defp operator(:-),   do: :-
-  defp operator(:/),   do: :/
-  defp operator(:*),   do: :*
+  defp operator(:+), do: :+
+  defp operator(:-), do: :-
+  defp operator(:/), do: :/
+  defp operator(:*), do: :*
   defp operator(:rem), do: :rem
-  defp operator(_),    do: false
+  defp operator(_), do: false
 
   def supported?([{:&, _, [1]}] = ast) do
     {:value, ast}
   end
 
   # Anonymous functions by fn
-  def supported?( [{:fn, _, [{:->, _, [_arg, expr]}]}] ) do
+  def supported?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
     supported_expr?(expr)
   end
 
@@ -242,14 +246,16 @@ defmodule Analyzer.AFunc do
       args: args
     } = acc
 
-    operators = case operator(atom) do
-      false -> operators
-      atom -> [atom | operators]
-    end
+    operators =
+      case operator(atom) do
+        false -> operators
+        atom -> [atom | operators]
+      end
 
-    args = args
-    |> listing_literal(right)
-    |> listing_literal(left)
+    args =
+      args
+      |> listing_literal(right)
+      |> listing_literal(left)
 
     ret = %{
       operators: operators,
@@ -281,7 +287,7 @@ defmodule Analyzer.AFunc do
   end
 
   def supported_operators?(%{operators: operators, args: args}) do
-    if length(operators) != (length(args)-1) do
+    if length(operators) != length(args) - 1 do
       false
     else
       true

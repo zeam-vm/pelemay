@@ -26,12 +26,12 @@ defmodule Pelemay.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      { :benchfella, "~> 0.3.5" },
-      { :flow, "~> 0.14.3" },
+      {:benchfella, "~> 0.3.5"},
+      {:flow, "~> 0.14.3"},
       {:elixir_make, "~> 0.6.0", runtime: false},
 
       # Docs dependencies
-      { :ex_doc,      ">= 0.0.0", only: :dev},
+      {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
 
@@ -42,7 +42,13 @@ defmodule Pelemay.MixProject do
   defp package() do
     [
       name: "pelemay",
-      maintainers: ["Susumu Yamazaki", "Masakazu Mori", "Yoshihiro Ueno", "Hideki Takase", "Yuki Hisae"],
+      maintainers: [
+        "Susumu Yamazaki",
+        "Masakazu Mori",
+        "Yoshihiro Ueno",
+        "Hideki Takase",
+        "Yuki Hisae"
+      ],
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => "https://github.com/zeam-vm/pelemay"}
     ]
