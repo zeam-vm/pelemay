@@ -22,23 +22,27 @@ defmodule SumMag do
   def parse({:__block__, _e, []}, _env), do: []
 
   def parse({:def, _e, body}, env) do
-    [[
-      function_name: parse_function_name(body, env),
-      is_public: true,
-      args: parse_args(body, env),
-      do: parse_do(body, env),
-      is_nif: false
-    ]]
+    [
+      [
+        function_name: parse_function_name(body, env),
+        is_public: true,
+        args: parse_args(body, env),
+        do: parse_do(body, env),
+        is_nif: false
+      ]
+    ]
   end
 
   def parse({:defp, _e, body}, env) do
-    [[
-      function_name: parse_function_name(body, env),
-      is_public: false,
-      args: parse_args(body, env),
-      do: parse_do(body, env),
-      is_nif: false
-    ]]
+    [
+      [
+        function_name: parse_function_name(body, env),
+        is_public: false,
+        args: parse_args(body, env),
+        do: parse_do(body, env),
+        is_nif: false
+      ]
+    ]
   end
 
   @doc """
@@ -86,7 +90,7 @@ defmodule SumMag do
     iex> [{:a, [], Elixir}, {:b, [], Elixir}] |> SumMag.convert_args(%{})
     [:a, :b]
   """
-  def convert_args(arg_list, _env), do: arg_list |> Enum.map(& elem(&1, 0))
+  def convert_args(arg_list, _env), do: arg_list |> Enum.map(&elem(&1, 0))
 
   @doc """
     ## Examples
@@ -114,9 +118,11 @@ defmodule SumMag do
 
   defp parse_do_body({:__block__, _e, body_list}, env) do
     body_list
-    |> Enum.map(& &1
-      |> parse_do_body(env)
-      |> hd() )
+    |> Enum.map(
+      &(&1
+        |> parse_do_body(env)
+        |> hd())
+    )
   end
 
   defp parse_do_body(value, _env), do: [value]
@@ -144,7 +150,7 @@ defmodule SumMag do
     :fl_2
   """
   def concat_name_num(name, %{num: num}) do
-    name |> Atom.to_string |> Kernel.<>("_#{num}") |> String.to_atom
+    name |> Atom.to_string() |> Kernel.<>("_#{num}") |> String.to_atom()
   end
 
   @doc """
@@ -154,7 +160,7 @@ defmodule SumMag do
     :func_nif
   """
   def concat_name_nif(name, _env) do
-    name |> Atom.to_string |> Kernel.<>("_nif") |> String.to_atom
+    name |> Atom.to_string() |> Kernel.<>("_nif") |> String.to_atom()
   end
 
   @doc """
@@ -164,7 +170,7 @@ defmodule SumMag do
     :pelemaystub
   """
   def concat_name_stub(name, _env) do
-    name |> Atom.to_string |> Kernel.<>("stub") |> String.to_atom
+    name |> Atom.to_string() |> Kernel.<>("stub") |> String.to_atom()
   end
 
   @doc """
@@ -174,7 +180,7 @@ defmodule SumMag do
     [function_name: :func_1]
   """
   def func_with_num(kl, env) do
-    Keyword.put(kl, :function_name, (kl[:function_name] |> SumMag.concat_name_num(env)))
+    Keyword.put(kl, :function_name, kl[:function_name] |> SumMag.concat_name_num(env))
   end
 
   @doc """
@@ -197,9 +203,9 @@ defmodule SumMag do
 
   @doc """
   "defmacro do" take the following code.
-  
+
   If you define a function:
-  
+
   ```
   [ 
     do: {def, _line, [
@@ -232,42 +238,44 @@ defmodule SumMag do
         ...> end 
         
   """
-  def melt_block([ do: { :__block__, [], []    } ]), do: []
-  def melt_block([ do: { :__block__, [], funcs } ]), do: funcs
-  def melt_block([ do: func]), do: [func] 
+  def melt_block(do: {:__block__, [], []}), do: []
+  def melt_block(do: {:__block__, [], funcs}), do: funcs
+  def melt_block(do: func), do: [func]
   def melt_block(other), do: other
 
-  defp iced_block([func]), do: [ do: func]
-  defp iced_block(funcs), do: [ do: { :__block__, [], funcs } ]
+  defp iced_block([func]), do: [do: func]
+  defp iced_block(funcs), do: [do: {:__block__, [], funcs}]
 
   # @spec map(ast, element -> any))) :: ast
   def map(definitions, optimizer) when is_function(optimizer) do
     definitions
     |> melt_block
-    |> Enum.map( & &1 |> optimize_func( optimizer ) )
+    |> Enum.map(&(&1 |> optimize_func(optimizer)))
     |> iced_block
   end
 
-  defp optimize_func( {:def, meta, [arg_info, exprs]}, optimizer) do
-    ret = exprs
+  defp optimize_func({:def, meta, [arg_info, exprs]}, optimizer) do
+    ret =
+      exprs
       |> melt_block
-      |> Enum.map( & apply_optimizer(&1, optimizer) )
+      |> Enum.map(&apply_optimizer(&1, optimizer))
       |> iced_block
 
     {:def, meta, [arg_info, ret]}
   end
 
-  defp apply_optimizer( expr, optimizer ) do
+  defp apply_optimizer(expr, optimizer) do
     expr
-    |> Macro.unpipe
-    |> Enum.map(fn {expr, pos} -> 
-      {optimizer.(expr), pos} end)
+    |> Macro.unpipe()
+    |> Enum.map(fn {expr, pos} ->
+      {optimizer.(expr), pos}
+    end)
     |> pipe
   end
 
   defp pipe(unpipe_list) do
     # Following code from `|>` definition
-    
+
     [{h, _} | t] = unpipe_list
 
     fun = fn {x, pos}, acc ->
@@ -281,9 +289,9 @@ defmodule SumMag do
     true
   end
 
-  def quoted_var?({atom, _meta, nil}) 
-    when atom |> is_atom do
-      true
+  def quoted_var?({atom, _meta, nil})
+      when atom |> is_atom do
+    true
   end
 
   def quoted_var?(other) when other |> is_number, do: true
@@ -296,15 +304,15 @@ defmodule SumMag do
 
   def divide_meta(ast) do
     ast
-    |> Macro.prewalk([], fn 
-      ({atom, meta, tree}, acc) -> {{atom, tree}, acc ++ meta}
-      (other, acc) -> {other, acc}
+    |> Macro.prewalk([], fn
+      {atom, meta, tree}, acc -> {{atom, tree}, acc ++ meta}
+      other, acc -> {other, acc}
     end)
   end
-  
+
   def delete_meta(ast) do
     ast
-    |> Macro.prewalk( fn 
+    |> Macro.prewalk(fn
       {atom, _meta, tree} -> {atom, tree}
       other -> other
     end)

@@ -23,13 +23,13 @@ defmodule Pelemay.Generator.Interface do
     |> File.write(str)
 
     @nif_ex
-    |> Code.compile_file
+    |> Code.compile_file()
   end
 
   defp generate_functions do
-    Db.get_functions
-    |> Enum.map(& &1 |> generate_function)
-    |> List.to_string
+    Db.get_functions()
+    |> Enum.map(&(&1 |> generate_function))
+    |> List.to_string()
   end
 
   defp generate_function([func_info]) do
@@ -50,12 +50,13 @@ defmodule Pelemay.Generator.Interface do
   end
 
   defp generate_string_arguments(num) do
-    (1..num)
+    1..num
     |> Enum.reduce(
       "",
       fn
-       x, "" -> "_arg#{x}"
-       x, acc -> acc <> ", _arg#{x}"
-      end)
+        x, "" -> "_arg#{x}"
+        x, acc -> acc <> ", _arg#{x}"
+      end
+    )
   end
 end
