@@ -23,7 +23,7 @@ endif
 calling_from_make:
 	mix compile
 
-.PHONY: all libnifvec clean
+.PHONY: all libnif clean
 
 all: $(BUILD) $(PREFIX) $(PREFIX)/libnif.so
 

@@ -6,7 +6,7 @@ defmodule Pelemay.MixProject do
       app: :pelemay,
       version: "0.0.1",
       elixir: "~> 1.9",
-      compilers: [:elixir_make | Mix.compilers()],
+      compilers: Mix.compilers() ++ [:elixir_make],
       make_targets: ["all"],
       make_clean: ["clean"],
       start_permanent: Mix.env() == :prod,
