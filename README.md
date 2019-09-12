@@ -17,6 +17,26 @@ defmodule M do
 end
 ```
 
+## Supported Platforms
+
+We've tested it on the following OS:
+
+* macOS
+* Linux
+
+We've NOT tested it on the following OS (your help is nedded):
+
+* Windows (including WSL, cygwin, etc.)
+
+We've tested it on the following Elixir versions:
+
+* 1.9
+
+We've tested it on the following OTP versions:
+
+* 22
+* 21
+* 20
 
 ## Installation
 
