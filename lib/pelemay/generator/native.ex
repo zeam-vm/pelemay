@@ -122,8 +122,7 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp basic(str) do
-    current_dir = __ENV__.file |> :filename.dirname()
-    {:ok, ret} = File.read(current_dir <> "/native/basic.c")
+    {:ok, ret} = File.read(__DIR__ <> "/native/basic.c")
 
     str <> ret
   end
