@@ -4,7 +4,6 @@ defmodule Pelemay.Generator.Native do
   @nif_c "native/lib.c"
   @nif_module "PelemayNif"
   @dir "lib/pelemay/generator/native/"
-  @deps_dir Path.expand("./deps/pelemay/")
 
   def generate do
     File.mkdir("native")
@@ -123,13 +122,10 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp basic(str) do
-    basic = @dir <> "basic.c"
-    case File.read(Path.expand(basic)) do
-      {:ok, ret} -> str <> ret
-      {:error, :enoent} -> 
-        {:ok, ret} = File.read(@deps_dir <> basic)
-        str <> ret
-    end
+    current_dir = __ENV__.file |> :filename.dirname()
+    {:ok, ret} = File.read(current_dir <> "/native/basic.c")
+
+    str <> ret
   end
 
   # defp arithmetic(str) do
