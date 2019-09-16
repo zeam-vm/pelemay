@@ -60,9 +60,8 @@ defmodule Optimizer do
   end
 
   def replace_expr(quoted) do
-    ret =
-      quoted
-      |> Optimizer.Enum.replace_expr()
+    quoted
+    |> Optimizer.Enum.replace_expr()
   end
 end
 
@@ -198,22 +197,25 @@ end
 defmodule Analyzer.AFunc do
   import SumMag
 
-  @moduledoc """
-    Provides optimizer for anonymous functions.
-  """
-  defp operator(:+), do: :+
-  defp operator(:-), do: :-
-  defp operator(:/), do: :/
-  defp operator(:*), do: :*
-  defp operator(:rem), do: :rem
-  defp operator(_), do: false
+  @type asm :: %{args: list(any), operators: list(atom)}
 
-  def supported?([{:&, _, [1]}] = ast) do
-    {:value, ast}
+  @moduledoc """
+  Provides optimizer for anonymous functions.
+  """
+
+  @doc """
+  Check if expressions can be optimzed.
+
+  When the expression is enable to optimize, {:ok, map} is returned.
+  The map is shape following: %{args: _, operators: _}.
+
+  """
+  @spec supported?( Macro.t() ) :: asm
+  def supported?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
+    supported_expr?(expr)
   end
 
-  # Anonymous functions by fn
-  def supported?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
+  def supported?({:fn, _, [{:->, _, [_arg, expr]}]}) do
     supported_expr?(expr)
   end
 
@@ -222,8 +224,14 @@ defmodule Analyzer.AFunc do
     other |> hd |> supported_expr?
   end
 
+  def supported?({:&, _, other}) do
+    other |> hd |> supported_expr?
+  end
+
+  def supported?(other), do: {:error, other}
+
   defp supported_expr?({_atom, _, [_left, _right]} = ast) do
-    expr_map = ast |> polynomial
+    expr_map = ast |> polynomial_map
 
     if supported_operators?(expr_map) do
       {:ok, expr_map}
@@ -232,7 +240,7 @@ defmodule Analyzer.AFunc do
     end
   end
 
-  def polynomial(ast) do
+  def polynomial_map(ast) do
     acc = %{
       operators: [],
       args: []
@@ -240,6 +248,13 @@ defmodule Analyzer.AFunc do
 
     Macro.prewalk(ast, acc, &numerical?/2) |> elem(1)
   end
+
+  defp operator(:+), do: :+
+  defp operator(:-), do: :-
+  defp operator(:/), do: :/
+  defp operator(:*), do: :*
+  defp operator(:rem), do: :rem
+  defp operator(_), do: false
 
   defp numerical?({atom, _, [left, right]} = ast, acc) do
     %{
@@ -281,13 +296,7 @@ defmodule Analyzer.AFunc do
     end
   end
 
-  def supported_polinomial?(ast) do
-    ast
-    |> polynomial
-    |> supported_operators?
-  end
-
-  def supported_operators?(%{operators: operators, args: args}) do
+  defp supported_operators?(%{operators: operators, args: args}) do
     if length(operators) != length(args) - 1 do
       false
     else
