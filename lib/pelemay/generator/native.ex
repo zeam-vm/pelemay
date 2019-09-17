@@ -3,7 +3,7 @@ defmodule Pelemay.Generator.Native do
 
   @nif_c "native/lib.c"
   @nif_module "PelemayNif"
-  @dir "lib/pelemay/generator/native/"
+  # @dir "lib/pelemay/generator/native/"
 
   def generate do
     Application.app_dir(:pelemay, "native")

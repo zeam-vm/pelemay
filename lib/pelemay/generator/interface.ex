@@ -1,6 +1,6 @@
 defmodule Pelemay.Generator.Interface do
   alias Pelemay.Db
-  @nif_ex "lib/interact_nif.ex"
+  @nif_ex "priv/pelemay_nif.ex"
 
   def generate do
     funcs = generate_functions()
@@ -19,11 +19,16 @@ defmodule Pelemay.Generator.Interface do
     end
     """
 
-    @nif_ex
+    Application.app_dir(:pelemay, "priv")
+    |> File.mkdir()
+
+    Application.app_dir(:pelemay, @nif_ex)
     |> File.write(str)
 
-    @nif_ex
-    |> Code.compile_file()
+    Application.app_dir(:pelemay, @nif_ex)
+    |> Code.compile_file(Application.app_dir(:pelemay, "ebin"))
+
+    Code.append_path(Application.app_dir(:pelemay, "ebin"))
   end
 
   defp generate_functions do
