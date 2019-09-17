@@ -3,6 +3,7 @@ CC := clang
 
 PREFIX = $(MIX_APP_PATH)/priv
 BUILD  = $(MIX_APP_PATH)/obj
+CODE = $(MIX_APP_PATH)/native
 
 CFLAGS := -Ofast -g -ansi -pedantic -femit-all-decls
 
@@ -30,7 +31,7 @@ all: $(BUILD) $(PREFIX) $(PREFIX)/libnif.so
 # native/lib.s: native/lib.c
 # 		$(CC) $(CFLAGS) -c -S -o $@ $^
 
-$(PREFIX)/libnif.so: native/lib.c
+$(PREFIX)/libnif.so: $(CODE)/lib.c
 		$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
 
 $(PREFIX):

@@ -3,12 +3,13 @@ defmodule Pelemay.Generator.Native do
 
   @nif_c "native/lib.c"
   @nif_module "PelemayNif"
-  @dir "lib/pelemay/generator/native/"
+#  @dir "lib/pelemay/generator/native/"
 
   def generate do
-    File.mkdir("native")
+    Application.app_dir(:pelemay, "native")
+    |> File.mkdir()
 
-    @nif_c
+    Application.app_dir(:pelemay, @nif_c)
     |> write
   end
 
@@ -122,7 +123,7 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp basic(str) do
-    {:ok, ret} = File.read(@dir <> "basic.c")
+    {:ok, ret} = File.read(__DIR__ <> "/native/basic.c")
 
     str <> ret
   end
