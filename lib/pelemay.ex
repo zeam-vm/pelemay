@@ -41,11 +41,11 @@ defmodule Pelemay do
 
     functions
     |> SumMag.map(&Optimizer.replace_expr(&1))
-    |> pelemaystub
+    |> pelemaystub(__MODULE__)
   end
 
-  defp pelemaystub(ret) do
-    Generator.generate()
+  defp pelemaystub(ret, module) do
+    Generator.generate(module)
     ret
   end
 end

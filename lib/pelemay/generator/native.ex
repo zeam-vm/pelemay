@@ -1,15 +1,10 @@
 defmodule Pelemay.Generator.Native do
   alias Pelemay.Db
 
-  @nif_c "native/lib.c"
   @nif_module "PelemayNif"
-  # @dir "lib/pelemay/generator/native/"
 
-  def generate do
-    Application.app_dir(:pelemay, "native")
-    |> File.mkdir()
-
-    Application.app_dir(:pelemay, @nif_c)
+  def generate(module) do
+    Application.app_dir(:pelemay, "priv/libnif#{String.downcase(module |> Atom.to_string() |> String.replace(".", ""))}.c")
     |> write
   end
 

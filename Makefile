@@ -3,7 +3,8 @@ CC := clang
 
 PREFIX = $(MIX_APP_PATH)/priv
 BUILD  = $(MIX_APP_PATH)/obj
-CODE = $(MIX_APP_PATH)/native
+
+include $(PREFIX)/generated.mk
 
 CFLAGS := -Ofast -g -ansi -pedantic -femit-all-decls
 
@@ -26,13 +27,13 @@ calling_from_make:
 
 .PHONY: all libnif clean
 
-all: $(BUILD) $(PREFIX) $(PREFIX)/libnif.so
+all: $(BUILD) $(PREFIX) $(TARGET_LIBS)
 
 # native/lib.s: native/lib.c
 # 		$(CC) $(CFLAGS) -c -S -o $@ $^
 
-$(PREFIX)/libnif.so: $(CODE)/lib.c
-		$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
+%.so: %.c
+	$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
 
 $(PREFIX):
 	mkdir -p $@
