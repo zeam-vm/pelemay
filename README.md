@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/zeam-vm/pelemay/tree/master.svg?style=svg)](https://circleci.com/gh/zeam-vm/pelemay/tree/master)
 # Pelemay
 **Pelemay = The Penta (Five) “Elemental Way”: Freedom, Insight, Beauty, Efficiency and Robustness**
 

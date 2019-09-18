@@ -1,6 +1,7 @@
 defmodule Pelemay.Generator.Interface do
   alias Pelemay.Generator
   alias Pelemay.Db
+  alias Pelemay.Generator
 
   def generate(module) do
     funcs = generate_functions()

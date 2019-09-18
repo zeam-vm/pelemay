@@ -4,7 +4,9 @@ CC := clang
 PREFIX = $(MIX_APP_PATH)/priv
 BUILD  = $(MIX_APP_PATH)/obj
 
-include $(PREFIX)/generated.mk
+ifneq ("$(wildcard $(PREFIX/generated.mk))", "")
+	include $(PREFIX)/generated.mk
+endif
 
 CFLAGS := -Ofast -g -ansi -pedantic -femit-all-decls
 
