@@ -40,12 +40,12 @@ defmodule Pelemay do
     Db.init()
 
     functions
-    |> SumMag.map(&Optimizer.replace_expr(&1))
-    |> pelemaystub
+    |> SumMag.map(&Optimizer.replace_expr(&1, __CALLER__.module |> Generator.elixir_nif_module() |> String.to_atom()))
+    |> pelemaystub(__CALLER__.module)
   end
 
-  defp pelemaystub(ret) do
-    Generator.generate()
+  defp pelemaystub(ret, module) do
+    Generator.generate(module)
     ret
   end
 end
@@ -54,14 +54,14 @@ defmodule Optimizer do
   @moduledoc """
     Provides a optimizer for [AST](https://elixirschool.com/en/lessons/advanced/metaprogramming/)
   """
-  def replace_expr({atom, _, nil} = arg)
+  def replace_expr({atom, _, nil} = arg, _module)
       when atom |> is_atom do
     arg
   end
 
-  def replace_expr(quoted) do
+  def replace_expr(quoted, module) do
     quoted
-    |> Optimizer.Enum.replace_expr()
+    |> Optimizer.Enum.replace_expr(module)
   end
 end
 
@@ -69,32 +69,32 @@ defmodule Optimizer.Enum do
   alias Pelemay.Db
   alias Analyzer.AFunc
 
-  def replace_expr({quoted, :map}) do
+  def replace_expr({quoted, :map}, module) do
     # include ast of Enum.map
     {_enum_map, _, anonymous_func} = quoted
 
     anonymous_func
     |> AFunc.supported?()
-    |> call_nif(:map)
+    |> call_nif(:map, module)
   end
 
-  def replace_expr({quoted, :chunk_every}) do
+  def replace_expr({quoted, :chunk_every}, module) do
     {_enum, _, num} = quoted
 
-    call_nif(num, :chunk_every)
+    call_nif(num, :chunk_every, module)
   end
 
-  def replace_expr({quoted, _func}) do
+  def replace_expr({quoted, _func}, _module) do
     str = Macro.to_string(quoted)
 
     IO.puts("Sorry, #{str} not supported yet.")
     quoted
   end
 
-  def replace_expr(other) do
+  def replace_expr(other, module) do
     other
     |> which_enum_func?
-    |> replace_expr
+    |> replace_expr(module)
   end
 
   defp which_enum_func?(ast) do
@@ -121,11 +121,11 @@ defmodule Optimizer.Enum do
     func
   end
 
-  def call_nif(num, :chunk_every) do
-    quote do: PelemayNif.chunk_every(unquote(num))
+  def call_nif(num, :chunk_every, module) do
+    quote do: unquote(module).chunk_every(unquote(num))
   end
 
-  def call_nif({:ok, asm}, :map) do
+  def call_nif({:ok, asm}, :map, module) do
     %{
       operators: operators,
       args: args
@@ -166,10 +166,10 @@ defmodule Optimizer.Enum do
 
     func_name = func_name |> String.to_atom()
 
-    quote do: PelemayNif.unquote(func_name)
+    quote do: unquote(module).unquote(func_name)
   end
 
-  def call_nif({:error, asm}, _atom) do
+  def call_nif({:error, asm}, _atom, _module) do
     asm
   end
 

@@ -5,7 +5,7 @@ defmodule Pelemay.Generator.Native do
   @nif_module "PelemayNif"
   @dir "lib/pelemay/generator/native/"
 
-  def generate do
+  def generate(_module) do
     File.mkdir("native")
 
     @nif_c
