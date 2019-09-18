@@ -1,3 +1,10 @@
+install_hex_rebar: &install_hex_rebar
+  run:
+    name: Install hex and rebar
+    command: |
+      mix local.hex --force
+      mix local.rebar --force
+
 # Elixir CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-elixir/ for more details
@@ -20,6 +27,7 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
+      - <<: *install_hex_rebar 
       - run: mix deps.get
       - run: mix fotrmat --check-formatted
       - run: mix test
