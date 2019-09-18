@@ -1,8 +1,8 @@
 defmodule Pelemay.Generator.Interface do
   alias Pelemay.Db
-  @nif_ex "lib/interact_nif.ex"
+  alias Pelemay.Generator
 
-  def generate do
+  def generate(module) do
     funcs = generate_functions()
 
     str = """
@@ -19,11 +19,11 @@ defmodule Pelemay.Generator.Interface do
     end
     """
 
-    @nif_ex
-    |> File.write(str)
+    Generator.stub(module) |> File.write(str)
 
-    @nif_ex
-    |> Code.compile_file()
+    Generator.stub(module) |> Code.compile_file(Generator.ebin())
+
+    Code.append_path(Generator.ebin())
   end
 
   defp generate_functions do

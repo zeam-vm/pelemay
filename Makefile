@@ -4,6 +4,10 @@ CC := clang
 PREFIX = $(MIX_APP_PATH)/priv
 BUILD  = $(MIX_APP_PATH)/obj
 
+ifneq ("$(wildcard $(PREFIX/generated.mk))", "")
+	include $(PREFIX)/generated.mk
+endif
+
 CFLAGS := -Ofast -g -ansi -pedantic -femit-all-decls
 
 ERLANG_PATH = $(shell erl -eval 'io:format("~s", [lists:concat([code:root_dir(), "/erts-", erlang:system_info(version), "/include"])])' -s init stop -noshell)
@@ -25,12 +29,12 @@ calling_from_make:
 
 .PHONY: all libnif clean
 
-all: $(BUILD) $(PREFIX) $(PREFIX)/libnif.so
+all: $(BUILD) $(PREFIX) $(TARGET_LIBS)
 
 # native/lib.s: native/lib.c
 # 		$(CC) $(CFLAGS) -c -S -o $@ $^
 
-$(PREFIX)/libnif.so: native/lib.c
+%.so: %.c
 		$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
 
 $(PREFIX):
