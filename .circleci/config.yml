@@ -29,5 +29,5 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - <<: *install_hex_rebar 
       - run: mix deps.get
-      - run: mix fotrmat --check-formatted
+      - run: mix format --check-formatted
       - run: mix test
