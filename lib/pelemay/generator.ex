@@ -15,6 +15,10 @@ defmodule Pelemay.Generator do
     "PelemayNif#{module_replaced_non(module)}"
   end
 
+  def elixir_nif_module(module) do
+    "Elixir.PelemayNif#{module_replaced_non(module)}"
+  end
+
   def module_downcase_non(module) do
     module |> module_replaced_non() |> String.downcase()
   end

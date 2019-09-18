@@ -40,8 +40,8 @@ defmodule Pelemay do
     Db.init()
 
     functions
-    |> SumMag.map(&Optimizer.replace_expr(&1, ("Elixir.PelemayNif" <> (__MODULE__ |> Generator.module_replaced_non())) |> String.to_atom()))
-    |> pelemaystub(__MODULE__)
+    |> SumMag.map(&Optimizer.replace_expr(&1, __CALLER__.module |> Generator.elixir_nif_module() |> String.to_atom()))
+    |> pelemaystub(__CALLER__.module)
   end
 
   defp pelemaystub(ret, module) do
