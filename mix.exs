@@ -26,8 +26,6 @@ defmodule Pelemay.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:benchfella, "~> 0.3.5"},
-      {:flow, "~> 0.14.3"},
       {:elixir_make, "~> 0.6.0", runtime: false},
 
       # Docs dependencies
