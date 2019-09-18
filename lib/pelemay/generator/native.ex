@@ -1,19 +1,17 @@
 defmodule Pelemay.Generator.Native do
   alias Pelemay.Db
-
-  @nif_module "PelemayNif"
+  alias Pelemay.Generator
 
   def generate(module) do
-    Application.app_dir(:pelemay, "priv/libnif#{String.downcase(module |> Atom.to_string() |> String.replace(".", ""))}.c")
-    |> write
+    Generator.libc(module) |> write(module)
   end
 
-  defp write(file) do
+  defp write(file, module) do
     str =
       init_nif()
       |> basic()
       |> generate_functions()
-      |> erl_nif_init()
+      |> erl_nif_init(module)
 
     file |> File.write(str)
   end
@@ -110,10 +108,10 @@ defmodule Pelemay.Generator.Native do
     """
   end
 
-  defp erl_nif_init(str) do
+  defp erl_nif_init(str, module) do
     str <>
       """
-      ERL_NIF_INIT(Elixir.#{@nif_module}, nif_funcs, &load, &reload, &upgrade, &unload)
+      ERL_NIF_INIT(Elixir.#{Generator.nif_module(module)}, nif_funcs, &load, &reload, &upgrade, &unload)
       """
   end
 
