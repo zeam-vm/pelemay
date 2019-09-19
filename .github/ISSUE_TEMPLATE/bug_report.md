@@ -12,10 +12,9 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+1. Use Pelemay in the source code '...'
+2. Run in the command '....'
+3. See error
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
@@ -24,9 +23,9 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
+ - Pelemay Version: 
  - Elixir & Erlang/OTP versions (`elixir --version`):
- - OS: 
- - Version: 
+ - OS (OS name & version, and `uname -a`): 
 
 **Additional context**
 Add any other context about the problem here.
