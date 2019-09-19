@@ -1,4 +1,3 @@
-[![CircleCI](https://circleci.com/gh/zeam-vm/pelemay/tree/master.svg?style=svg)](https://circleci.com/gh/zeam-vm/pelemay/tree/master)
 # Pelemay
 **Pelemay = The Penta (Five) “Elemental Way”: Freedom, Insight, Beauty, Efficiency and Robustness**
 
@@ -41,16 +40,18 @@ We've tested it on the following OTP versions:
 
 ## Installation
 
+We recommend using Pelemay got from the master branch of GitHub directly for the present, because of current unstable development.
+
 Add `pelemay` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:pelemay, "~> 0.0.1"}
+    {:pelemay, git: "https://github.com/zeam-vm/pelemay.git", branch: "master"},
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
+Documentation is generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
+and published on [HexDocs](https://hexdocs.pm). The docs will
 be found at [https://hexdocs.pm/pelemay](https://hexdocs.pm/pelemay).
