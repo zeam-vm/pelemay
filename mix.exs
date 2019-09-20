@@ -48,7 +48,15 @@ defmodule Pelemay.MixProject do
         "Yuki Hisae"
       ],
       licenses: ["Apache 2.0"],
-      links: %{"GitHub" => "https://github.com/zeam-vm/pelemay"}
+      links: %{"GitHub" => "https://github.com/zeam-vm/pelemay"},
+      files: [
+        # These are the default files
+        "lib",
+        "LICENSE",
+        "mix.exs",
+        "README.md",
+        "Makefile"
+      ]
     ]
   end
 end

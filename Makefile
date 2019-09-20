@@ -4,7 +4,7 @@ CC := clang
 PREFIX = $(MIX_APP_PATH)/priv
 BUILD  = $(MIX_APP_PATH)/obj
 
-ifneq ("$(wildcard $(PREFIX/generated.mk))", "")
+ifneq ("$(wildcard $(PREFIX)/generated.mk)", "")
 	include $(PREFIX)/generated.mk
 endif
 
@@ -35,7 +35,7 @@ all: $(BUILD) $(PREFIX) $(TARGET_LIBS)
 # 		$(CC) $(CFLAGS) -c -S -o $@ $^
 
 %.so: %.c
-		$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
 
 $(PREFIX):
 	mkdir -p $@

@@ -4,7 +4,11 @@ defmodule Mix.Tasks.Pelemay do
   @shortdoc "Remove Glue functions"
   def run(_) do
     File.rm(Application.app_dir(:pelemay, "priv/generated.mk"))
-    File.rm("lib/interact_nif.ex")
+
+    Application.app_dir(:pelemay, "priv/pelemay_nif_*.ex")
+    |> Path.wildcard()
+    |> Enum.map(&File.rm(&1))
+
     :ok
   end
 end
