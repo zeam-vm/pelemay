@@ -19,7 +19,6 @@ defmodule Pelemay.Generator do
     module |> module_replaced_underscore() |> String.downcase()
   end
 
-
   def stub(module) do
     Application.app_dir(:pelemay, "priv/pelemay_nif_#{module_downcase_underscore(module)}.ex")
   end
@@ -29,8 +28,8 @@ defmodule Pelemay.Generator do
   end
 
   def generate(module) do
-  	Application.app_dir(:pelemay, "priv")
-  	|> File.mkdir()
+    Application.app_dir(:pelemay, "priv")
+    |> File.mkdir()
 
     Interface.generate(module)
     Native.generate(module)
