@@ -52,6 +52,7 @@ defmodule Pelemay.Db do
   end
 
   def get_function([]), do: ""
+
   def get_function(id) do
     ret =
       @table_name
@@ -62,7 +63,6 @@ defmodule Pelemay.Db do
       other -> hd(other)
     end
   end
-
 
   defp generate_key(id) do
     "function_#{id}" |> String.to_atom()
@@ -108,5 +108,4 @@ defmodule Pelemay.Db do
   # def all_functions() do
   #   :mnesia.dirty_all_keys(:functions)
   # end
-
 end

@@ -50,9 +50,13 @@ defmodule Pelemay.MixProject do
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => "https://github.com/zeam-vm/pelemay"},
       files: [
-        "lib", "LICENSE", "mix.exs", "README.md", # These are the default files
-        "Makefile",
-      ],
+        # These are the default files
+        "lib",
+        "LICENSE",
+        "mix.exs",
+        "README.md",
+        "Makefile"
+      ]
     ]
   end
 end
