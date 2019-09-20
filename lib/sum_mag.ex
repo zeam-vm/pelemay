@@ -293,11 +293,11 @@ defmodule SumMag do
       when atom |> is_atom do
     true
   end
+
   def quoted_var?({atom, [], _context})
       when atom |> is_atom do
     true
   end
-
 
   def quoted_var?(other) when other |> is_number, do: true
 

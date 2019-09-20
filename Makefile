@@ -35,7 +35,7 @@ all: $(BUILD) $(PREFIX) $(TARGET_LIBS)
 # 		$(CC) $(CFLAGS) -c -S -o $@ $^
 
 %.so: %.c
-		$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
 
 $(PREFIX):
 	mkdir -p $@

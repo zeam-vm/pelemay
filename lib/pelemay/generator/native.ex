@@ -1,23 +1,17 @@
 defmodule Pelemay.Generator.Native do
   alias Pelemay.Db
+  alias Pelemay.Generator
 
-  @nif_c "native/lib.c"
-  @nif_module "PelemayNif"
-  @dir "lib/pelemay/generator/native/"
-
-  def generate(_module) do
-    File.mkdir("native")
-
-    @nif_c
-    |> write
+  def generate(module) do
+    Generator.libc(module) |> write(module)
   end
 
-  defp write(file) do
+  defp write(file, module) do
     str =
       init_nif()
       |> basic()
       |> generate_functions()
-      |> erl_nif_init()
+      |> erl_nif_init(module)
 
     file |> File.write(str)
   end
@@ -114,15 +108,15 @@ defmodule Pelemay.Generator.Native do
     """
   end
 
-  defp erl_nif_init(str) do
+  defp erl_nif_init(str, module) do
     str <>
       """
-      ERL_NIF_INIT(Elixir.#{@nif_module}, nif_funcs, &load, &reload, &upgrade, &unload)
+      ERL_NIF_INIT(Elixir.#{Generator.nif_module(module)}, nif_funcs, &load, &reload, &upgrade, &unload)
       """
   end
 
   defp basic(str) do
-    {:ok, ret} = File.read(@dir <> "basic.c")
+    {:ok, ret} = File.read(__DIR__ <> "/native/basic.c")
 
     str <> ret
   end

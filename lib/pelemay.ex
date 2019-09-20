@@ -40,7 +40,12 @@ defmodule Pelemay do
     Db.init()
 
     functions
-    |> SumMag.map(&Optimizer.replace_expr(&1, __CALLER__.module |> Generator.elixir_nif_module() |> String.to_atom()))
+    |> SumMag.map(
+      &Optimizer.replace_expr(
+        &1,
+        __CALLER__.module |> Generator.elixir_nif_module() |> String.to_atom()
+      )
+    )
     |> pelemaystub(__CALLER__.module)
   end
 
@@ -210,7 +215,7 @@ defmodule Analyzer.AFunc do
   The map is shape following: %{args: _, operators: _}.
 
   """
-  @spec supported?( Macro.t() ) :: asm
+  @spec supported?(Macro.t()) :: asm
   def supported?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
     supported_expr?(expr)
   end
