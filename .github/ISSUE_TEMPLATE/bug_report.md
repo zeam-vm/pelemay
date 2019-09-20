@@ -26,6 +26,7 @@ If applicable, add screenshots to help explain your problem.
  - Pelemay Version: 
  - Elixir & Erlang/OTP versions (`elixir --version`):
  - OS (OS name & version, and `uname -a`): 
+ - Clang versions (`clang -v`):
 
 **Additional context**
 Add any other context about the problem here.
