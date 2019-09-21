@@ -107,6 +107,10 @@ defmodule Pelemay.Generator do
     Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.c")
   end
 
+  def libso(module) do
+    Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.so")
+  end
+
   def stub(module) do
     Application.app_dir(:pelemay, "priv/pelemay_nif_#{module_downcase_underscore(module)}.ex")
   end

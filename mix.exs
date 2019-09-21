@@ -49,8 +49,7 @@ defmodule Pelemay.MixProject do
         "lib",
         "LICENSE",
         "mix.exs",
-        "README.md",
-        "Makefile"
+        "README.md"
       ]
     ]
   end
