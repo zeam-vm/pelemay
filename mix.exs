@@ -7,6 +7,7 @@ defmodule Pelemay.MixProject do
       version: "0.0.1",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
       description: description(),
       package: package(),
       deps: deps()
@@ -53,4 +54,7 @@ defmodule Pelemay.MixProject do
       ]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
