@@ -121,5 +121,6 @@ defmodule Pelemay.Generator do
 
     Interface.generate(module)
     Native.generate(module)
+    Builder.generate(module)
   end
 end
