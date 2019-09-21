@@ -4,7 +4,7 @@ defmodule Pelemay.MixProject do
   def project do
     [
       app: :pelemay,
-      version: "0.0.1",
+      version: "0.0.2",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       description: description(),
@@ -47,7 +47,7 @@ defmodule Pelemay.MixProject do
       files: [
         # These are the default files
         "lib",
-        "LICENSE",
+        "LICENSE.txt",
         "mix.exs",
         "README.md"
       ]
