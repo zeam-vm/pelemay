@@ -6,9 +6,6 @@ defmodule Pelemay.MixProject do
       app: :pelemay,
       version: "0.0.1",
       elixir: "~> 1.9",
-      compilers: Mix.compilers() ++ [:elixir_make],
-      make_targets: ["all"],
-      make_clean: ["clean"],
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
@@ -26,8 +23,6 @@ defmodule Pelemay.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:elixir_make, "~> 0.6.0", runtime: false},
-
       # Docs dependencies
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
@@ -48,7 +43,14 @@ defmodule Pelemay.MixProject do
         "Yuki Hisae"
       ],
       licenses: ["Apache 2.0"],
-      links: %{"GitHub" => "https://github.com/zeam-vm/pelemay"}
+      links: %{"GitHub" => "https://github.com/zeam-vm/pelemay"},
+      files: [
+        # These are the default files
+        "lib",
+        "LICENSE",
+        "mix.exs",
+        "README.md"
+      ]
     ]
   end
 end
