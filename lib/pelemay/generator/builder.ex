@@ -32,7 +32,7 @@ defmodule Pelemay.Generator.Builder do
     options =
       cflags ++ ["-shared"] ++ ldflags ++ ["-o", Generator.libso(module), Generator.libc(module)]
 
-    IO.puts(Enum.join(options, " "))
+    IO.puts(Enum.join([@cc] ++ options, " "))
 
     {result, 0} = System.cmd(@cc, options)
 
