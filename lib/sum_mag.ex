@@ -250,18 +250,23 @@ defmodule SumMag do
   def map(definitions, optimizer) when is_function(optimizer) do
     definitions
     |> melt_block
-    |> Enum.map(&(&1 |> optimize_func(optimizer)))
+    |> Enum.map(&optimize_func(&1, optimizer))
     |> iced_block
   end
 
-  defp optimize_func({:def, meta, [arg_info, exprs]}, optimizer) do
-    ret =
-      exprs
-      |> melt_block
-      |> Enum.map(&apply_optimizer(&1, optimizer))
-      |> iced_block
+  defp optimize_func({def_key, meta, [arg_info, exprs]}, optimizer) do
+    case def_key do
+      :def -> {:def, meta, [arg_info, optimize_exprs(exprs, optimizer)]}
+      :defp -> {:dep, meta, [arg_info, optimize_exprs(exprs, optimizer)]}
+      _ -> raise ArgumentError
+    end
+  end
 
-    {:def, meta, [arg_info, ret]}
+  defp optimize_exprs(exprs, optimizer) do
+    exprs
+    |> melt_block
+    |> Enum.map(&apply_optimizer(&1, optimizer))
+    |> iced_block
   end
 
   defp apply_optimizer(expr, optimizer) do
