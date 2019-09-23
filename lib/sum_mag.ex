@@ -257,7 +257,7 @@ defmodule SumMag do
   defp optimize_func({def_key, meta, [arg_info, exprs]}, optimizer) do
     case def_key do
       :def -> {:def, meta, [arg_info, optimize_exprs(exprs, optimizer)]}
-      :defp -> {:dep, meta, [arg_info, optimize_exprs(exprs, optimizer)]}
+      :defp -> {:defp, meta, [arg_info, optimize_exprs(exprs, optimizer)]}
       _ -> raise ArgumentError
     end
   end
