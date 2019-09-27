@@ -111,6 +111,7 @@ defmodule Pelemay.Generator do
     case :os.type() do
       {:win32, :nt} -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.dll")
       _ -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.so")
+    end
   end
 
   def stub(module) do

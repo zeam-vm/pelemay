@@ -22,6 +22,7 @@ defmodule Pelemay.Generator.Builder do
         {:win32, :nt} -> cflags_t
         _ -> cflags_t ++ @cflags_non_windows
       end
+      
 
     ldflags =
       case :os.type() do
