@@ -23,10 +23,7 @@ We've tested it on the following OS:
 
 * macOS
 * Linux
-
-We've NOT tested it on the following OS (your help is nedded):
-
-* Windows (including WSL, cygwin, etc.)
+* Windows
 
 We've tested it on the following Elixir versions:
 
@@ -47,7 +44,7 @@ Add `pelemay` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pelemay, git: "https://github.com/zeam-vm/pelemay.git", branch: "master"},
+    {:pelemay, "~> 0.0", branch: "master"},
   ]
 end
 ```
