@@ -32,7 +32,7 @@ defmodule Pelemay.Generator.Builder do
     options =
       cflags ++ ["-shared"] ++ ldflags ++ ["-o", Generator.libso(module), Generator.libc(module)]
 
-    {result, 0} = System.cmd(@cc, options)
+    {_result, 0} = System.cmd(@cc, options)
   end
 
   def erlang_include_path() do
