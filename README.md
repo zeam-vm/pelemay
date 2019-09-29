@@ -37,14 +37,12 @@ We've tested it on the following OTP versions:
 
 ## Installation
 
-We recommend using Pelemay got from the master branch of GitHub directly for the present, because of current unstable development.
-
 Add `pelemay` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:pelemay, "~> 0.0", branch: "master"},
+    {:pelemay, "~> 0.0"},
   ]
 end
 ```
