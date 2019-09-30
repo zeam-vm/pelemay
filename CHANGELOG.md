@@ -4,6 +4,7 @@
 
 * Support to convert Range into List
 * Make Pelemay the docs index
+* Revise Installation in README.md
 * Create CHANGELOG.md
 * Refactor Pelemay, Optimizer module to remove "module" argument
 
