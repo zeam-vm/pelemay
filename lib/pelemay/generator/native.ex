@@ -78,6 +78,11 @@ defmodule Pelemay.Generator.Native do
     #include<erl_nif.h>
     #include<string.h>
 
+    ERL_NIF_TERM atom_struct;
+    ERL_NIF_TERM atom_range;
+    ERL_NIF_TERM atom_first;
+    ERL_NIF_TERM atom_last;
+
     static int load(ErlNifEnv *env, void **priv, ERL_NIF_TERM info);
     static void unload(ErlNifEnv *env, void *priv);
     static int reload(ErlNifEnv *env, void **priv, ERL_NIF_TERM info);
@@ -86,6 +91,10 @@ defmodule Pelemay.Generator.Native do
     static int
     load(ErlNifEnv *env, void **priv, ERL_NIF_TERM info)
     {
+      atom_struct = enif_make_atom(env, "__struct__");
+      atom_range = enif_make_atom(env, "Elixir.Range");
+      atom_first = enif_make_atom(env, "first");
+      atom_last = enif_make_atom(env, "last");
       return 0;
     }
 

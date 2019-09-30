@@ -12,6 +12,7 @@ const size_t size_t_highest_bit = ~(size_t_max >> 1);
 int enif_get_long_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, long **vec, size_t *vec_l);
 int enif_get_double_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, size_t *vec_l);
 int enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, size_t *vec_l);
+int enif_get_range(ErlNifEnv *env, ERL_NIF_TERM list, long *from, long *to);
 
 ERL_NIF_TERM enif_make_list_from_long_vec(ErlNifEnv *env, const long *vec, const size_t vec_l);
 ERL_NIF_TERM enif_make_list_from_double_vec(ErlNifEnv *env, const double *vec, const size_t vec_l);
@@ -52,7 +53,31 @@ enif_get_long_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, long **vec, size_
       *vec = NULL;
       return success;
     }
-    return fail;
+    long from, to;
+    if (__builtin_expect((enif_get_range(env, list, &from, &to) == fail), false)) {
+      return fail;
+    }
+    if (__builtin_expect((from <= to), true)) {
+      *vec_l = (size_t)(to - from + 1);
+    } else {
+      *vec_l = (size_t)(from - to + 1);
+    }
+    *vec = (long *)enif_alloc(sizeof(long) * *vec_l);
+    if (__builtin_expect((*vec == NULL), false)) {
+      return fail;
+    }
+    if (__builtin_expect((from <= to), true)) {
+//#pragma clang loop vectorize(enable)
+      for(size_t i = 0; i < *vec_l; i++) {
+        *(*vec + i) = from + (long) i;
+      }
+    } else {
+//#pragma clang loop vectorize(enable)
+      for(size_t i = 0; i < *vec_l; i++) {
+        *(*vec + i) = from - (long) i;
+      }
+    }
+    return success;
   }
   size_t n = init_size_long;
   size_t nn = cache_line_size;
@@ -272,3 +297,29 @@ enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double *
     }
   }
 }
+
+int
+enif_get_range(ErlNifEnv *env, ERL_NIF_TERM map, long *from, long *to)
+{
+  ERL_NIF_TERM value; 
+  if(__builtin_expect((enif_get_map_value(env, map, atom_struct, &value) == fail), false)) {
+    return fail;
+  }
+  if(__builtin_expect(!enif_is_identical(value, atom_range), false)) {
+    return fail;
+  }
+  if(__builtin_expect((enif_get_map_value(env, map, atom_first, &value) == fail), false)) {
+    return fail;
+  }
+  if(__builtin_expect((enif_get_int64(env, value, from) == fail), false)) {
+    return fail;
+  }
+  if(__builtin_expect((enif_get_map_value(env, map, atom_last, &value) == fail), false)) {
+    return fail;
+  }
+  if(__builtin_expect((enif_get_int64(env, value, to) == fail), false)) {
+    return fail;
+  }
+  return success;
+}
+
