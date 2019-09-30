@@ -56,7 +56,7 @@ defmodule Pelemay do
     Macro.prewalk(
       funcs,
       fn
-        {:__aliases__, [alias: false], [:Temp]} -> module
+        {:__aliases__, [alias: false], [:ReplaceModule]} -> module
         other -> other
       end
     )
@@ -135,7 +135,7 @@ defmodule Optimizer.Enum do
   end
 
   def call_nif(num, :chunk_every) do
-    quote do: Temp.chunk_every(unquote(num))
+    quote do: ReplaceModule.chunk_every(unquote(num))
   end
 
   def call_nif({:ok, asm}, :map) do
@@ -179,7 +179,7 @@ defmodule Optimizer.Enum do
 
     func_name = func_name |> String.to_atom()
 
-    quote do: Temp.unquote(func_name)
+    quote do: ReplaceModule.unquote(func_name)
   end
 
   def call_nif({:error, asm}, _atom) do
