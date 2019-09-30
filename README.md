@@ -41,6 +41,9 @@ We've tested it on the following OTP versions:
 * 21
 * 20
 
+We've tested it on Clang 6 or later.
+Potentially, Clang that supports auto-vectorization may support Pelemay.
+
 We heard the reports that it works on the following systems:
 
 * RasPi 4, 32bit Raspbian, Elixir 1.7.4 (with warning)
