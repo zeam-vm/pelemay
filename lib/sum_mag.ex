@@ -243,8 +243,8 @@ defmodule SumMag do
   def melt_block(do: func), do: [func]
   def melt_block(other), do: other
 
-  defp iced_block([func]), do: [do: func]
-  defp iced_block(funcs), do: [do: {:__block__, [], funcs}]
+  def iced_block([func]), do: [do: func]
+  def iced_block(funcs), do: [do: {:__block__, [], funcs}]
 
   # @spec map(ast, element -> any))) :: ast
   def map(definitions, optimizer) when is_function(optimizer) do

@@ -39,13 +39,11 @@ defmodule Pelemay do
   defmacro defpelemay(functions) do
     Db.init()
 
+    caller_name = __CALLER__.module |> Generator.elixir_nif_module() |> String.to_atom()
+
     functions
-    |> SumMag.map(
-      &Optimizer.replace_expr(
-        &1,
-        __CALLER__.module |> Generator.elixir_nif_module() |> String.to_atom()
-      )
-    )
+    |> SumMag.map(&Optimizer.replace_expr(&1))
+    |> consist_context(caller_name)
     |> pelemaystub(__CALLER__.module)
   end
 
@@ -53,20 +51,30 @@ defmodule Pelemay do
     Generator.generate(module)
     ret
   end
+
+  defp consist_context(funcs, module) do
+    Macro.prewalk(
+      funcs,
+      fn
+        {:__aliases__, [alias: false], [:ReplaceModule]} -> module
+        other -> other
+      end
+    )
+  end
 end
 
 defmodule Optimizer do
   @moduledoc """
     Provides a optimizer for [AST](https://elixirschool.com/en/lessons/advanced/metaprogramming/)
   """
-  def replace_expr({atom, _, nil} = arg, _module)
+  def replace_expr({atom, _, nil} = arg)
       when atom |> is_atom do
     arg
   end
 
-  def replace_expr(quoted, module) do
+  def replace_expr(quoted) do
     quoted
-    |> Optimizer.Enum.replace_expr(module)
+    |> Optimizer.Enum.replace_expr()
   end
 end
 
@@ -74,32 +82,32 @@ defmodule Optimizer.Enum do
   alias Pelemay.Db
   alias Analyzer.AFunc
 
-  def replace_expr({quoted, :map}, module) do
+  def replace_expr({quoted, :map}) do
     # include ast of Enum.map
     {_enum_map, _, anonymous_func} = quoted
 
     anonymous_func
     |> AFunc.supported?()
-    |> call_nif(:map, module)
+    |> call_nif(:map)
   end
 
-  def replace_expr({quoted, :chunk_every}, module) do
+  def replace_expr({quoted, :chunk_every}) do
     {_enum, _, num} = quoted
 
-    call_nif(num, :chunk_every, module)
+    call_nif(num, :chunk_every)
   end
 
-  def replace_expr({quoted, _func}, _module) do
+  def replace_expr({quoted, _func}) do
     str = Macro.to_string(quoted)
 
     IO.puts("Sorry, #{str} not supported yet.")
     quoted
   end
 
-  def replace_expr(other, module) do
+  def replace_expr(other) do
     other
     |> which_enum_func?
-    |> replace_expr(module)
+    |> replace_expr()
   end
 
   defp which_enum_func?(ast) do
@@ -126,11 +134,11 @@ defmodule Optimizer.Enum do
     func
   end
 
-  def call_nif(num, :chunk_every, module) do
-    quote do: unquote(module).chunk_every(unquote(num))
+  def call_nif(num, :chunk_every) do
+    quote do: ReplaceModule.chunk_every(unquote(num))
   end
 
-  def call_nif({:ok, asm}, :map, module) do
+  def call_nif({:ok, asm}, :map) do
     %{
       operators: operators,
       args: args
@@ -171,10 +179,10 @@ defmodule Optimizer.Enum do
 
     func_name = func_name |> String.to_atom()
 
-    quote do: unquote(module).unquote(func_name)
+    quote do: ReplaceModule.unquote(func_name)
   end
 
-  def call_nif({:error, asm}, _atom, _module) do
+  def call_nif({:error, asm}, _atom) do
     asm
   end
 
