@@ -1,5 +1,12 @@
 # Changelog for Pelemay
 
+## v0.0.4
+
+* Support to convert Range into List
+* Make Pelemay the docs index
+* Create CHANGELOG.md
+* Refactor Pelemay, Optimizer module to remove "module" argument
+
 ## v0.0.3
 
 * Support Windows.
