@@ -39,7 +39,6 @@ defmodule Pelemay.MixProject do
   defp package() do
     [
       name: "pelemay",
-      organization: "zeam_vm",
       maintainers: [
         "Susumu Yamazaki",
         "Masakazu Mori",
