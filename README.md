@@ -19,11 +19,17 @@ end
 
 ## Supported Platforms
 
-We've tested it on the following OS:
+Potentially, Pelemay may support any architectures that both Erlang and Clang are supported.
 
-* macOS
-* Linux
-* Windows
+We've tested it well on the following processor architectures:
+
+* x86_64
+
+We've tested it well on the following OS:
+
+* macOS (64bit)
+* Linux (64bit)
+* Windows (64bit)
 
 We've tested it on the following Elixir versions:
 
@@ -34,6 +40,17 @@ We've tested it on the following OTP versions:
 * 22
 * 21
 * 20
+
+We've tested it on Clang 6 or later.
+Potentially, Clang that supports auto-vectorization may support Pelemay.
+
+We heard the reports that it works on the following systems:
+
+* RasPi 4, 32bit Raspbian, Elixir 1.7.4 (with warning)
+
+## Pre-installation
+
+Pelemay requires Clang that supports auto-vectorization.
 
 ## Installation
 
