@@ -11,19 +11,21 @@ defmodule Pelemay.Generator.Builder do
   @ldflags_non_windows ["-dynamiclib", "-undefined", "dynamic_lookup"]
 
   def generate(module) do
-  	cc = System.get_env("CC")
+    cc = System.get_env("CC")
 
-    cc = if is_nil(System.find_executable(cc)) do 
-      @clang 
-    else
-      cc
-    end
+    cc =
+      if is_nil(System.find_executable(cc)) do
+        @clang
+      else
+        cc
+      end
 
-    cc = if is_nil(System.find_executable(cc)) do 
-      @gcc
-    else
-      cc
-    end
+    cc =
+      if is_nil(System.find_executable(cc)) do
+        @gcc
+      else
+        cc
+      end
 
     if is_nil(System.find_executable(cc)) do
       raise CompileError, message: "#{cc} is not installed."
