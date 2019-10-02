@@ -1,7 +1,7 @@
 defmodule Pelemay.Generator.Builder do
   alias Pelemay.Generator
 
-  @cc "clang"
+  @cc "gcc"
   @cflags ["-Ofast", "-g", "-ansi", "-pedantic", "-femit-all-decls"]
   @cflags_includes ["-I/usr/local/include", "-I/usr/include", "-L/usr/local/lib", "-L/usr/lib"]
   @cflags_after ["-std=c11", "-Wno-unused-function"]
