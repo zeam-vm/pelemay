@@ -58,16 +58,7 @@ defmodule Pelemay.Generator.Native do
     """
   end
 
-  defp erl_nif_func([info]) do
-    %{
-      nif_name: nif_name,
-      module: _,
-      function: _,
-      arg_num: num,
-      args: _,
-      operators: _
-    } = info
-
+  defp erl_nif_func([%{nif_name: nif_name, arg_num: num}]) do
     ~s/{"#{nif_name}", #{num}, #{nif_name}}/
   end
 
@@ -192,16 +183,7 @@ defmodule Pelemay.Generator.Native do
   end
 
   # defp enum_map_(str, operator, num)
-  defp enum_map(info) do
-    %{
-      nif_name: nif_name,
-      module: _,
-      function: _,
-      arg_num: _,
-      args: args,
-      operators: operators
-    } = info
-
+  defp enum_map(%{nif_name: nif_name, args: args, operators: operators}) do
     expr_d = make_expr(operators, args, "double")
     expr_l = make_expr(operators, args, "long")
 
