@@ -247,47 +247,45 @@ defmodule SumMag do
   def iced_block(funcs), do: [do: {:__block__, [], funcs}]
 
   # @spec map(ast, element -> any))) :: ast
-  def map(definitions, optimizer) when is_function(optimizer) do
+  def replace(definitions) do
     definitions
     |> melt_block
-    |> Enum.map(&optimize_func(&1, optimizer))
+    |> Enum.map(&optimize_func(&1))
     |> iced_block
   end
 
-  defp optimize_func({def_key, meta, [arg_info, exprs]}, optimizer) do
+  defp optimize_func({def_key, meta, [arg_info, exprs]}) do
     case def_key do
-      :def -> {:def, meta, [arg_info, optimize_exprs(exprs, optimizer)]}
-      :defp -> {:defp, meta, [arg_info, optimize_exprs(exprs, optimizer)]}
+      :def -> {:def, meta, [arg_info, optimize_exprs(exprs)]}
+      :defp -> {:defp, meta, [arg_info, optimize_exprs(exprs)]}
       _ -> raise ArgumentError
     end
   end
 
-  defp optimize_exprs(exprs, optimizer) do
+  defp optimize_exprs(exprs) do
     exprs
     |> melt_block
-    |> Enum.map(&apply_optimizer(&1, optimizer))
+    |> Enum.map(&optimize_expr(&1))
     |> iced_block
   end
 
-  defp apply_optimizer(expr, optimizer) do
+  defp optimize_expr(expr) do
     expr
     |> Macro.unpipe()
     |> Enum.map(fn {expr, pos} ->
-      {optimizer.(expr), pos}
+      {Optimizer.replace_expr(expr, [:enum]), pos}
     end)
     |> pipe
   end
 
   defp pipe(unpipe_list) do
-    # Following code from `|>` definition
-
     [{h, _} | t] = unpipe_list
 
     fun = fn {x, pos}, acc ->
       Macro.pipe(acc, x, pos)
     end
 
-    :lists.foldl(fun, h, t)
+    Enum.reduce(t, h, fun)
   end
 
   def quoted_var?({:&, _, [1]}) do
