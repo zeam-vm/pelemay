@@ -42,24 +42,13 @@ defmodule Pelemay do
     caller_name = __CALLER__.module |> Generator.elixir_nif_module() |> String.to_atom()
 
     functions
-    |> SumMag.replace()
-    |> consist_context(caller_name)
+    |> Optimizer.replace(caller_name)
     |> pelemaystub(__CALLER__.module)
   end
 
   defp pelemaystub(ret, module) do
     Generator.generate(module)
     ret
-  end
-
-  defp consist_context(funcs, module) do
-    Macro.prewalk(
-      funcs,
-      fn
-        {:__aliases__, [alias: false], [:ReplaceModule]} -> module
-        other -> other
-      end
-    )
   end
 end
 
@@ -102,7 +91,7 @@ defmodule Analyzer.AFunc do
   defp supported_expr?({_atom, _, [_left, _right]} = ast) do
     expr_map = ast |> polynomial_map
 
-    if supported_operators?(expr_map) do
+    if verify(expr_map) do
       {:ok, expr_map}
     else
       {:error, ast}
@@ -150,9 +139,7 @@ defmodule Analyzer.AFunc do
     {ast, ret}
   end
 
-  defp numerical?(other, acc) do
-    {other, acc}
-  end
+  defp numerical?(other, acc), do: {other, acc}
 
   defp listing_literal(acc, term) do
     if Macro.quoted_literal?(term) do
@@ -165,7 +152,7 @@ defmodule Analyzer.AFunc do
     end
   end
 
-  defp supported_operators?(%{operators: operators, args: args}) do
+  defp verify(%{operators: operators, args: args}) do
     if length(operators) != length(args) - 1 do
       false
     else

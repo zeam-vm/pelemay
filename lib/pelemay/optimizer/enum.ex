@@ -2,12 +2,12 @@ defmodule Optimizer.Enum do
   alias Pelemay.Db
   alias Analyzer.AFunc
 
-  def replace_expr({atom, _, nil} = arg)
+  def replace_term({atom, _, nil} = arg)
       when atom |> is_atom do
     arg
   end
 
-  def replace_expr({quoted, :map}) do
+  def replace_term({quoted, :map}) do
     # include ast of Enum.map
     {_enum_map, _, anonymous_func} = quoted
 
@@ -16,23 +16,23 @@ defmodule Optimizer.Enum do
     |> call_nif(:map)
   end
 
-  def replace_expr({quoted, :chunk_every}) do
+  def replace_term({quoted, :chunk_every}) do
     {_enum, _, num} = quoted
 
     call_nif(num, :chunk_every)
   end
 
-  def replace_expr({quoted, _func}) do
+  def replace_term({quoted, _func}) do
     str = Macro.to_string(quoted)
 
     IO.puts("Sorry, #{str} not supported yet.")
     quoted
   end
 
-  def replace_expr(other) do
+  def replace_term(other) do
     other
     |> which_enum_func?
-    |> replace_expr()
+    |> replace_term()
   end
 
   defp which_enum_func?(ast) do
