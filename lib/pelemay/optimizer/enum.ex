@@ -1,6 +1,6 @@
 defmodule Optimizer.Enum do
+  import Analyzer
   alias Pelemay.Db
-  alias Analyzer.AFunc
 
   def replace_term({atom, _, nil} = arg)
       when atom |> is_atom do
@@ -12,7 +12,7 @@ defmodule Optimizer.Enum do
     {_enum_map, _, anonymous_func} = quoted
 
     anonymous_func
-    |> AFunc.supported?()
+    |> supported?()
     |> call_nif(:map)
   end
 
