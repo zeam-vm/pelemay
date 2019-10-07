@@ -9,7 +9,6 @@ defmodule Optimizer do
   @doc """
   Optimize funcions which be enclosed `defptermay`, using `optimize_***` function.
   Input is funcion definitions.
-  # Example
   ```
   quote do
     def twice_plus(list) do
