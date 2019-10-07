@@ -246,13 +246,6 @@ defmodule SumMag do
   def iced_block([func]), do: [do: func]
   def iced_block(funcs), do: [do: {:__block__, [], funcs}]
 
-  @doc """
-    defpelemayで括られた関数群に最適化を行います．
-    `optimize_***`と名の付く関数によって，段階的に最適化が施されます．
-    optimizeに続く語を次のように定義しています
-    
-    ![写真.png](resource/field.png)
-  """
   def pipe(unpipe_list) do
     [{h, _} | t] = unpipe_list
 
