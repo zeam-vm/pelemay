@@ -1,6 +1,4 @@
 defmodule Pelemay do
-  import SumMag
-
   alias Pelemay.Generator
   alias Pelemay.Db
 
