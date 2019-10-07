@@ -2,12 +2,12 @@ defmodule Optimizer.Enum do
   import Analyzer
   alias Pelemay.Db
 
-  def replace_term({atom, _, nil} = arg)
+  def parallelize_term({atom, _, nil} = arg)
       when atom |> is_atom do
     arg
   end
 
-  def replace_term({quoted, :map}) do
+  def parallelize_term({quoted, :map}) do
     # include ast of Enum.map
     {_enum_map, _, anonymous_func} = quoted
 
@@ -16,23 +16,23 @@ defmodule Optimizer.Enum do
     |> call_nif(:map)
   end
 
-  def replace_term({quoted, :chunk_every}) do
+  def parallelize_term({quoted, :chunk_every}) do
     {_enum, _, num} = quoted
 
     call_nif(num, :chunk_every)
   end
 
-  def replace_term({quoted, _func}) do
+  def parallelize_term({quoted, _func}) do
     str = Macro.to_string(quoted)
 
     IO.puts("Sorry, #{str} not supported yet.")
     quoted
   end
 
-  def replace_term(other) do
+  def parallelize_term(other) do
     other
     |> which_enum_func?
-    |> replace_term()
+    |> parallelize_term()
   end
 
   defp which_enum_func?(ast) do
