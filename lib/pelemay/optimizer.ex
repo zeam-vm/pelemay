@@ -92,11 +92,10 @@ defmodule Optimizer do
     # Delete pos
     expr = Enum.map(unpiped_list, fn {x, _} -> x end)
 
-    expr
-    |> Enum.map(&parallelize_term(&1, @term_options))
+    optimized_expr = Enum.map(expr, &parallelize_term(&1, @term_options))
 
     # Add pos
-    Enum.map(expr, fn x -> {x, 0} end)
+    Enum.map(optimized_expr, fn x -> {x, 0} end)
   end
 
   @doc """
