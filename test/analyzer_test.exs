@@ -1,7 +1,7 @@
 defmodule AnalyzerAFuncTest do
   use ExUnit.Case, async: true
 
-  @subject Analyzer.AFunc
+  @subject Analyzer
 
   describe "supported?/1" do
     test "with pipe, anonymous function: fn, one argument" do

@@ -246,39 +246,7 @@ defmodule SumMag do
   def iced_block([func]), do: [do: func]
   def iced_block(funcs), do: [do: {:__block__, [], funcs}]
 
-  # @spec map(ast, element -> any))) :: ast
-  def replace(definitions) do
-    definitions
-    |> melt_block
-    |> Enum.map(&optimize_func(&1))
-    |> iced_block
-  end
-
-  defp optimize_func({def_key, meta, [arg_info, exprs]}) do
-    case def_key do
-      :def -> {:def, meta, [arg_info, optimize_exprs(exprs)]}
-      :defp -> {:defp, meta, [arg_info, optimize_exprs(exprs)]}
-      _ -> raise ArgumentError
-    end
-  end
-
-  defp optimize_exprs(exprs) do
-    exprs
-    |> melt_block
-    |> Enum.map(&optimize_expr(&1))
-    |> iced_block
-  end
-
-  defp optimize_expr(expr) do
-    expr
-    |> Macro.unpipe()
-    |> Enum.map(fn {expr, pos} ->
-      {Optimizer.replace_expr(expr, [:enum]), pos}
-    end)
-    |> pipe
-  end
-
-  defp pipe(unpipe_list) do
+  def pipe(unpipe_list) do
     [{h, _} | t] = unpipe_list
 
     fun = fn {x, pos}, acc ->
@@ -293,12 +261,12 @@ defmodule SumMag do
   end
 
   def quoted_var?({atom, _meta, nil})
-      when atom |> is_atom do
+      when is_atom(atom) do
     true
   end
 
   def quoted_var?({atom, [], _context})
-      when atom |> is_atom do
+      when is_atom(atom) do
     true
   end
 
@@ -306,21 +274,17 @@ defmodule SumMag do
 
   def quoted_var?(_other), do: false
 
-  def quoted_vars?(left, right) do
-    quoted_var?(left) && quoted_var?(right)
-  end
+  def quoted_vars?(left, right), do: quoted_var?(left) && quoted_var?(right)
 
   def divide_meta(ast) do
-    ast
-    |> Macro.prewalk([], fn
+    Macro.prewalk(ast, [], fn
       {atom, meta, tree}, acc -> {{atom, tree}, acc ++ meta}
       other, acc -> {other, acc}
     end)
   end
 
   def delete_meta(ast) do
-    ast
-    |> Macro.prewalk(fn
+    Macro.prewalk(ast, fn
       {atom, _meta, tree} -> {atom, tree}
       other -> other
     end)
