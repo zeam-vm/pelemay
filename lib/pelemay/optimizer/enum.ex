@@ -69,7 +69,7 @@ defmodule Optimizer.Enum do
       args: args
     } = asm
 
-    func_name = generate_function_name(:map, operators)
+    func_name = generate_function_name(:map, asm)
 
     case Db.validate(func_name) do
       nil ->
@@ -111,13 +111,27 @@ defmodule Optimizer.Enum do
     asm
   end
 
-  defp generate_function_name(func, operators) do
-    ret =
-      operators
-      |> Enum.map(&(&1 |> operator_to_string))
-      |> Enum.reduce("", fn x, acc -> acc <> "_#{x}" end)
+  defp generate_function_name(func, %{args: args, operators: operators}) do
+    fun = fn
+      {:&, _meta, [1]} -> "elem"
+      {var, _, nil} -> Atom.to_string(var)
+      other -> "#{other}"
+    end
 
-    Atom.to_string(func) <> ret
+    [h | args] = Enum.map(args, &fun.(&1))
+
+    expr =
+      operators
+      |> Enum.map(&operator_to_string(&1))
+      |> Enum.zip(args)
+
+    ret =
+      expr
+      |> Enum.reduce(h, fn {op, arg}, acc -> acc <> "_#{op}_#{arg}" end)
+
+    func_name = Atom.to_string(func) <> "_"
+
+    (func_name <> ret) |> IO.inspect()
   end
 
   defp operator_to_string(operator)
