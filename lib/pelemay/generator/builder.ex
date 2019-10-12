@@ -3,7 +3,7 @@ defmodule Pelemay.Generator.Builder do
 
   @clang "clang"
   @gcc "gcc"
-  @cflags ["-Ofast", "-g", "-ansi", "-pedantic", "-femit-all-decls"]
+  @cflags ["-Ofast", "-g", "-ansi", "-pedantic"]
   @cflags_includes ["-I/usr/local/include", "-I/usr/include", "-L/usr/local/lib", "-L/usr/lib"]
   @cflags_after ["-std=c11", "-Wno-unused-function"]
   @ldflags []
@@ -43,6 +43,7 @@ defmodule Pelemay.Generator.Builder do
     ldflags =
       case :os.type() do
         {:win32, :nt} -> ldflags_t
+        {:unix, :darwin} -> ldflags_t
         _ -> ldflags_t ++ @ldflags_non_windows
       end
 

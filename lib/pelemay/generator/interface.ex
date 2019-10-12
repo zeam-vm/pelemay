@@ -13,7 +13,7 @@ defmodule Pelemay.Generator.Interface do
       @on_load :load_nifs
 
       def load_nifs do
-        :erlang.load_nif("#{Generator.libnif(module)}", 0)
+        :erlang.load_nif(Generator.libnif("#{module}"), 0)
       end
 
     #{funcs}
