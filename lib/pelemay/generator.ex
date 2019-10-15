@@ -129,7 +129,8 @@ defmodule Pelemay.Generator do
     |> File.mkdir()
 
     case Interface.generate(module) do
-      {:error, message} -> Logger.warn(message)
+      {:error, message} ->
+        Logger.warn(message)
 
       :ok ->
         Native.generate(module)

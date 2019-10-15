@@ -6,12 +6,22 @@ defmodule PelemayTest do
   import Pelemay
   require Pelemay
 
+  defp apply_pelemay(function) do
+    quote do
+      defpelemay do
+        unquote(function)
+      end
+    end
+    |> Macro.expand_once(__ENV__)
+    |> Keyword.get(:do)
+  end
+
   test "Ensure loaded?" do
     assert Code.ensure_loaded?(Pelemay)
   end
 
-  describe "Input function definition with one list" do
-    test "one Enum.map" do
+  describe "Input: one list" do
+    test "One Enum.map" do
       function =
         quote do
           def list_plus1(list) do
@@ -20,15 +30,7 @@ defmodule PelemayTest do
           end
         end
 
-      optimized_func =
-        quote do
-          defpelemay do
-            unquote(function)
-          end
-        end
-        |> Macro.expand_once(__ENV__)
-        |> Keyword.get(:do)
-        |> Macro.to_string()
+      optimized_func = apply_pelemay(function)
 
       expected =
         quote do
@@ -39,7 +41,7 @@ defmodule PelemayTest do
         end
         |> Macro.to_string()
 
-      assert expected == optimized_func
+      assert expected == Macro.to_string(optimized_func)
     end
 
     test "two Enum.map" do
@@ -52,15 +54,7 @@ defmodule PelemayTest do
           end
         end
 
-      optimized_func =
-        quote do
-          defpelemay do
-            unquote(function)
-          end
-        end
-        |> Macro.expand_once(__ENV__)
-        |> Keyword.get(:do)
-        |> Macro.to_string()
+      optimized_func = apply_pelemay(function)
 
       expected =
         quote do
@@ -72,10 +66,10 @@ defmodule PelemayTest do
         end
         |> Macro.to_string()
 
-      assert expected == optimized_func
+      assert expected == Macro.to_string(optimized_func)
     end
 
-    test "Other Enum Funtions" do
+    test "Other Enum Funtion" do
       function =
         quote do
           def chunk_every(list) do
@@ -84,26 +78,54 @@ defmodule PelemayTest do
           end
         end
 
-      no_change =
+      no_change = apply_pelemay(function)
+
+      expected = Macro.to_string(function)
+
+      assert expected == Macro.to_string(no_change)
+    end
+
+    test "Various Enum funcions" do
+      function =
         quote do
-          defpelemay do
-            unquote(function)
+          def mult_sort(list) do
+            list
+            |> Enum.map(&(&1 * 2))
+            |> Enum.sort()
           end
         end
-        |> Macro.expand_once(__ENV__)
-        |> Keyword.get(:do)
-        |> Macro.to_string()
+
+      optimized_func = apply_pelemay(function)
 
       expected =
         quote do
-          def chunk_every(list) do
+          def mult_sort(list) do
             list
-            |> Enum.chunk_every()
+            |> PelemayNifElixirPelemayTest.map_elem_mult_2()
+            |> Enum.sort()
           end
         end
         |> Macro.to_string()
 
-      assert expected == no_change
+      assert expected == Macro.to_string(optimized_func)
+    end
+  end
+
+  describe "Inputs: two list" do
+    test "One Enum.zip" do
+      function =
+        quote do
+          def mult_sort(a, b) do
+            list
+            |> Enum.zip(a, b)
+          end
+        end
+
+      no_change = apply_pelemay(function)
+
+      expected = Macro.to_string(function)
+
+      assert expected == Macro.to_string(no_change)
     end
   end
 end
