@@ -250,7 +250,7 @@ defmodule SumMag do
     [{h, _} | t] = unpipe_list
 
     fun = fn {x, pos}, acc ->
-      Macro.pipe(acc, x, pos)
+     {:|>, [], [acc, x]}
     end
 
     Enum.reduce(t, h, fun)
