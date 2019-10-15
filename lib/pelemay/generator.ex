@@ -3,6 +3,8 @@ defmodule Pelemay.Generator do
   alias Pelemay.Generator.Native
   alias Pelemay.Generator.Builder
 
+  require Logger
+
   @doc """
 
   ## Examples
@@ -126,8 +128,12 @@ defmodule Pelemay.Generator do
     Application.app_dir(:pelemay, "priv")
     |> File.mkdir()
 
-    Interface.generate(module)
-    Native.generate(module)
-    Builder.generate(module)
+    case Interface.generate(module) do
+      {:error, message} -> Logger.warn(message)
+
+      :ok ->
+        Native.generate(module)
+        Builder.generate(module)
+    end
   end
 end

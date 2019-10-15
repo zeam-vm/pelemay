@@ -10,8 +10,8 @@ defmodule PelemayTest do
     assert Code.ensure_loaded?(Pelemay)
   end
 
-  describe "defpelemay/1 macro" do
-    test "one list and one Enum.map" do
+  describe "Input function definition with one list" do
+    test "one Enum.map" do
       function =
         quote do
           def list_plus1(list) do
@@ -42,7 +42,7 @@ defmodule PelemayTest do
       assert expected == optimized_func
     end
 
-    test "one list and two Enum.map" do
+    test "two Enum.map" do
       function =
         quote do
           def list_plus1_twice(list) do
@@ -73,6 +73,37 @@ defmodule PelemayTest do
         |> Macro.to_string()
 
       assert expected == optimized_func
+    end
+
+    test "Other Enum Funtions" do
+      function =
+        quote do
+          def chunk_every(list) do
+            list
+            |> Enum.chunk_every()
+          end
+        end
+
+      no_change =
+        quote do
+          defpelemay do
+            unquote(function)
+          end
+        end
+        |> Macro.expand_once(__ENV__)
+        |> Keyword.get(:do)
+        |> Macro.to_string()
+
+      expected =
+        quote do
+          def chunk_every(list) do
+            list
+            |> Enum.chunk_every()
+          end
+        end
+        |> Macro.to_string()
+
+      assert expected == no_change
     end
   end
 end
