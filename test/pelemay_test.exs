@@ -21,7 +21,7 @@ defmodule PelemayTest do
   end
 
   describe "Input: one list" do
-    test "One Enum.map" do
+    test "One Enum.map/2" do
       original =
         quote do
           def list_plus1(list) do
@@ -44,7 +44,7 @@ defmodule PelemayTest do
       assert expected == Macro.to_string(optimized_func)
     end
 
-    test "two Enum.map" do
+    test "two Enum.map/2" do
       original =
         quote do
           def list_plus1_twice(list) do
@@ -69,12 +69,28 @@ defmodule PelemayTest do
       assert expected == Macro.to_string(optimized_func)
     end
 
-    test "Other Enum Funtion" do
+    test "Other Enum-Funtion/2" do
       original =
         quote do
           def chunk_every(list) do
             list
             |> Enum.chunk_every()
+          end
+        end
+
+      no_change = apply_pelemay(original)
+
+      expected = Macro.to_string(original)
+
+      assert expected == Macro.to_string(no_change)
+    end
+
+    test "One Enum.reduce/3" do
+      original =
+        quote do
+          def sum(list) do
+            list
+            |> Enum.reduce(0, &(&1 + 1))
           end
         end
 
