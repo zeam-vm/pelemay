@@ -5,7 +5,7 @@ defmodule Pelemay.Generator.Interface do
 
   require Logger
 
-  def generate(module) do
+  def generate(module) when is_atom(module) do
     case generate_functions() do
       "" ->
         {:error, "Don't need defpelemay"}
@@ -17,8 +17,14 @@ defmodule Pelemay.Generator.Interface do
           @compile {:autoload, false}
           @on_load :load_nifs
 
+          require Logger
+
           def load_nifs do
-            :erlang.load_nif("#{Generator.libnif(module)}", 0)
+            nif_file = "#{Generator.libnif(module)}"
+            case :erlang.load_nif(nif_file, 0) do
+              :ok -> :ok
+              other -> Logger.debug(#{~S/"Failed to load NIF:#{other}"/})
+            end
           end
 
         #{funcs}
