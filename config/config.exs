@@ -32,6 +32,6 @@ case Mix.env() do
   env when env in [:test, :dev] ->
     config :logger, level: :info
 
-  :prod -> 
+  :prod ->
     config :logger, level: :warn
 end
