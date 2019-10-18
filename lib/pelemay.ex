@@ -37,7 +37,10 @@ defmodule Pelemay do
   defmacro defpelemay(functions) do
     Db.init()
 
-    caller_name = __CALLER__.module |> Generator.elixir_nif_module() |> String.to_atom()
+    caller_name =
+      __CALLER__.module
+      |> Generator.elixir_nif_module()
+      |> String.to_atom()
 
     functions
     |> Optimizer.replace(caller_name)
