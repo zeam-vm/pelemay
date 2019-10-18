@@ -26,7 +26,7 @@ defmodule Optimizer.Enum do
   def parallelize_term({quoted, _}) do
     str = Macro.to_string(quoted)
 
-    Logger.warn("Sorry, #{str} not supported yet.")
+    Logger.warn("Sorry, #{str} cannot accelerated yet.")
     quoted
   end
 
