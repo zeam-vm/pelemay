@@ -27,6 +27,7 @@ defmodule Pelemay.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:nimble_parsec, "~> 0.5"},
       # Docs dependencies
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
