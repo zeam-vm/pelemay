@@ -2,6 +2,153 @@ defmodule Pelemay.Zeam do
   import NimbleParsec
 
   defcombinatorp(
+    :integer,
+    integer(min: 1)
+    |> post_traverse(:match_and_emit_integer)
+  )
+
+  defp match_and_emit_integer(_rest, [value], context, _line, _offset) do
+    {[value], context}
+  end
+
+  defcombinatorp(
+    :factor,
+    choice([
+      ignore(ascii_char([?(]))
+      |> ignore(repeat(ascii_char([?\s])))
+      |> concat(parsec(:expression))
+      |> ignore(repeat(ascii_char([?\s])))
+      |> ignore(ascii_char([?)])),
+      parsec(:integer)
+    ])
+  )
+
+  defcombinatorp(
+    :term,
+    choice([
+      parsec(:factor)
+      |> ignore(repeat(ascii_char([?\s])))
+      |> ignore(ascii_char([?*]))
+      |> ignore(repeat(ascii_char([?\s])))
+      |> concat(parsec(:term))
+      |> tag(:*)
+      |> post_traverse(:match_and_emit_mul),
+      parsec(:factor)
+    ])
+  )
+
+  defp match_and_emit_mul(_rest, [*: children], context, _line, _offset) do
+    {[
+       {:*, [], children}
+     ], context}
+  end
+
+  defcombinatorp(
+    :enif_make_badarg,
+    string("enif_make_badarg")
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string("("))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> concat(ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?.], min: 1))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string(")"))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> post_traverse(:match_and_emit_enif_make_badarg)
+  )
+
+  defp match_and_emit_enif_make_badarg(_rest, [val, "enif_make_badarg"], context, _line, _offset) do
+    {[
+       {:enif_make_badarg, [], [{String.to_atom(val), [], :c_val}]}
+     ], context}
+  end
+
+  defcombinatorp(
+    :expression,
+    choice([
+      parsec(:term)
+      |> ignore(repeat(ascii_char([?\s])))
+      |> ignore(ascii_char([?+]))
+      |> ignore(repeat(ascii_char([?\s])))
+      |> concat(parsec(:expression))
+      |> tag(:+)
+      |> post_traverse(:match_and_emit_plus),
+      parsec(:term)
+      |> ignore(repeat(ascii_char([?\s])))
+      |> ignore(ascii_char([?-]))
+      |> ignore(repeat(ascii_char([?\s])))
+      |> concat(parsec(:expression))
+      |> tag(:-)
+      |> post_traverse(:match_and_emit_minus),
+      parsec(:term),
+      parsec(:enif_make_badarg)
+    ])
+  )
+
+  defp match_and_emit_plus(_rest, [+: children], context, _line, _offset) do
+    {[
+       {:+, [], children}
+     ], context}
+  end
+
+  defp match_and_emit_minus(_rest, [-: children], context, _line, _offset) do
+    {[
+       {:-, [], children}
+     ], context}
+  end
+
+  defcombinatorp(
+    :return,
+    choice([
+      string("return")
+      |> ignore(repeat(ascii_char([?\s, ?\r])))
+      |> parsec(:expression)
+      |> ignore(repeat(ascii_char([?\s, ?\r])))
+      |> ignore(ascii_char([?;]))
+      |> ignore(repeat(ascii_char([?\s, ?\r]))),
+      string("return")
+      |> ignore(repeat(ascii_char([?\s, ?\r])))
+    ])
+    |> post_traverse(:match_and_emit_return)
+  )
+
+  defp match_and_emit_return(_rest, ["return"], context, _line, _offset) do
+    {[
+       {:return, [], []}
+     ], context}
+  end
+
+  defp match_and_emit_return(_rest, [expression, "return"], context, _line, _offset) do
+    {[
+       {:return_with_value, [], [expression]}
+     ], context}
+  end
+
+  defcombinatorp(
+    :statement,
+    choice([
+      parsec(:expression)
+      |> ignore(repeat(ascii_char([?\s, ?\r])))
+      |> ignore(ascii_char([?;]))
+      |> ignore(repeat(ascii_char([?\s, ?\r]))),
+      parsec(:return)
+    ])
+  )
+
+  defcombinatorp(
+    :block,
+    ignore(ascii_char([?{]))
+    |> ignore(repeat(ascii_char([?\s, ?\r])))
+    |> repeat(parsec(:statement))
+    |> ignore(repeat(ascii_char([?\s, ?\r])))
+    |> ignore(ascii_char([?}]))
+    |> post_traverse(:match_and_emit_block)
+  )
+
+  defp match_and_emit_block(_rest, statements, context, _line, _offset) do
+    {[statements], context}
+  end
+
+  defcombinatorp(
     :include,
     ignore(string("#"))
     |> concat(string("include"))
@@ -28,20 +175,81 @@ defmodule Pelemay.Zeam do
   end
 
   defcombinatorp(
-    :define_const_int,
+    :define,
     ignore(string("#"))
     |> concat(string("define"))
     |> ignore(repeat(ascii_char([?\s])))
     |> concat(ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?.], min: 1))
     |> ignore(repeat(ascii_char([?\s])))
-    |> concat(ascii_string([?0..?9, ?_, ?.], min: 1))
-    |> post_traverse(:match_and_emit_define_const_int)
+    |> parsec(:expression)
+    |> post_traverse(:match_and_emit_define)
   )
 
-  defp match_and_emit_define_const_int(_rest, [rval, lval, "define"], context, _line, _offset) do
+  defp match_and_emit_define(_rest, [rval, lval, "define"], context, _line, _offset) do
     {[
-       {:define_const_int, [],
-        [{:=, [], [{String.to_atom(lval), [], :macro}, String.to_integer(rval)]}]}
+       {:define, [], [{:=, [], [{String.to_atom(lval), [], :macro}, rval]}]}
+     ], context}
+  end
+
+  defcombinatorp(
+    :defunc,
+    ignore(string("static"))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> concat(string("ERL_NIF_TERM"))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> concat(ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?.], min: 1))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string("("))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string("ErlNifEnv"))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string("*"))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> concat(ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?.], min: 1))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string(","))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string("int"))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> concat(ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?.], min: 1))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string(","))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string("const"))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string("ERL_NIF_TERM"))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> choice([
+      ignore(string("*"))
+      |> concat(ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?.], min: 1)),
+      ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?.], min: 1)
+      |> ignore(string("[]"))
+    ])
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> ignore(string(")"))
+    |> ignore(repeat(ascii_char([?\s, ?\n])))
+    |> concat(parsec(:block))
+    |> post_traverse(:match_and_emit_defunc)
+  )
+
+  defp match_and_emit_defunc(
+         _rest,
+         [block, argv, argc, env, function, "ERL_NIF_TERM"],
+         context,
+         _line,
+         _offset
+       ) do
+    {[
+       {:defunc, [],
+        [
+          {String.to_atom(function), [context: Nif],
+           [
+             {String.to_atom(env), [], :c_var},
+             {String.to_atom(argc), [], :c_var},
+             {String.to_atom(argv), [], :c_var}
+           ]},
+          [do: block]
+        ]}
      ], context}
   end
 
@@ -49,7 +257,8 @@ defmodule Pelemay.Zeam do
     :clang,
     choice([
       parsec(:include),
-      parsec(:define_const_int)
+      parsec(:define),
+      parsec(:defunc)
     ])
   )
 
@@ -102,8 +311,7 @@ defmodule Pelemay.Zeam do
     "#include \"#{header}\""
   end
 
-  defp to_clang({:define_const_int, _env, [{:=, _, [{lval, [], :macro}, rval]}]})
-       when is_integer(rval) do
+  defp to_clang({:define, _env, [{:=, _, [{lval, [], :macro}, rval]}]}) do
     "#define #{Atom.to_string(lval)} #{rval}"
   end
 end
