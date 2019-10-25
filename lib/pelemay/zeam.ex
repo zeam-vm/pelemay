@@ -101,4 +101,8 @@ defmodule Pelemay.Zeam do
   defp to_clang({:include_cd, _env, header}) do
     "#include \"#{header}\""
   end
+
+  defp to_clang({:define_const_int, _env, [{:=, _, [{lval, [], :macro}, rval]}]}) when is_integer(rval) do
+  	"#define #{Atom.to_string(lval)} #{rval}"
+  end
 end
