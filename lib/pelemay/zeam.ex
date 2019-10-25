@@ -28,26 +28,29 @@ defmodule Pelemay.Zeam do
   end
 
   defcombinatorp(
-  	:define_const_int,
-  	ignore(string("#"))
-  	|> concat(string("define"))
-  	|> ignore(repeat(ascii_char([?\s])))
-  	|> concat(ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?.], min: 1))
-  	|> ignore(repeat(ascii_char([?\s])))
-  	|> concat(ascii_string([?0..?9, ?_, ?.], min: 1))
+    :define_const_int,
+    ignore(string("#"))
+    |> concat(string("define"))
+    |> ignore(repeat(ascii_char([?\s])))
+    |> concat(ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?.], min: 1))
+    |> ignore(repeat(ascii_char([?\s])))
+    |> concat(ascii_string([?0..?9, ?_, ?.], min: 1))
     |> post_traverse(:match_and_emit_define_const_int)
   )
 
   defp match_and_emit_define_const_int(_rest, [rval, lval, "define"], context, _line, _offset) do
-  	{[{:define_const_int, [], [{:=, [], [{String.to_atom(lval), [], :macro}, String.to_integer(rval)]}]}], context}
+    {[
+       {:define_const_int, [],
+        [{:=, [], [{String.to_atom(lval), [], :macro}, String.to_integer(rval)]}]}
+     ], context}
   end
 
   defparsec(
-  	:clang, 
-  	choice([
-  		parsec(:include),
-  		parsec(:define_const_int)
-  	])
+    :clang,
+    choice([
+      parsec(:include),
+      parsec(:define_const_int)
+    ])
   )
 
   @doc """
