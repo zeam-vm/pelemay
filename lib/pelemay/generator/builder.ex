@@ -43,8 +43,8 @@ defmodule Pelemay.Generator.Builder do
     ldflags =
       case :os.type() do
         {:win32, :nt} -> ldflags_t
-        {:unix, :darwin} -> ldflags_t
-        _ -> ldflags_t ++ @ldflags_non_windows
+        {:unix, :darwin} -> ldflags_t ++ @ldflags_non_windows
+        _ -> ldflags_t
       end
 
     options =
