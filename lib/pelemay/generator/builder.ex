@@ -14,7 +14,7 @@ defmodule Pelemay.Generator.Builder do
     cc = System.get_env("CC")
 
     cc =
-      if is_nil(System.find_executable(cc)) do
+      if is_nil(cc) or is_nil(System.find_executable(cc)) do
         @clang
       else
         cc
