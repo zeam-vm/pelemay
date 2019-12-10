@@ -31,8 +31,9 @@ defmodule GeneratedCodeTest do
     end
 
     test "RAISE: Various Type List" do
-      assert_raise ArgumentError,fn -> 
+      assert_raise ArgumentError, fn ->
         Sample.list_square([1.0, 2, 3])
+      end
     end
   end
 

@@ -38,7 +38,7 @@ defmodule Sample do
       list
       |> Enum.map(&(&1 * 2))
       |> Enum.sort()
-    end 
+    end
 
     def list_zip(a, b) do
       Enum.zip(a, b)
