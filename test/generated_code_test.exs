@@ -6,7 +6,7 @@ defmodule GeneratedCodeTest do
     assert Code.ensure_loaded?(Sample)
   end
 
-  describe "Input: one list" do
+  describe "Input one list" do
     test "One Enum.map/2: list_square" do
       assert [1, 4, 9] == Sample.list_square([1, 2, 3])
     end
@@ -29,9 +29,14 @@ defmodule GeneratedCodeTest do
     test "Various Enum funcions" do
       assert [2, 4, 6] == Sample.list_mult_sort([3, 1, 2])
     end
+
+    test "RAISE: Various Type List" do
+      assert_raise ArgumentError,fn -> 
+        Sample.list_square([1.0, 2, 3])
+    end
   end
 
-    describe "Inputs: two list" do
+  describe "Input lists" do
     test "One Enum.zip" do
       assert [{1, 3}, {2, 4}] == Sample.list_zip([1, 2], [3, 4])
     end
