@@ -3,9 +3,9 @@ const int success = 1;
 const int empty = 0;
 const size_t cache_line_size = 64;
 const size_t size_t_max = -1;
-const size_t init_size_long = cache_line_size / sizeof(long);
-const size_t init_size_double = cache_line_size / sizeof(double);
-const size_t size_t_highest_bit = ~(size_t_max >> 1);
+#define INIT_SIZE_LONG (cache_line_size / sizeof(long))
+#define INIT_SIZE_DOUBLE (cache_line_size / sizeof(double))
+#define SIZE_T_HIGHEST_BIT (~(size_t_max >> 1))
 
 #define loop_vectorize_width 4
 
@@ -79,7 +79,7 @@ enif_get_long_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, long **vec, size_
     }
     return success;
   }
-  size_t n = init_size_long;
+  size_t n = INIT_SIZE_LONG;
   size_t nn = cache_line_size;
   long *t = (long *)enif_alloc(nn);
   if (__builtin_expect((t == NULL), false)) {
@@ -119,7 +119,7 @@ enif_get_long_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, long **vec, size_
     }
     if (__builtin_expect((i + loop_vectorize_width > n), false)) {
       size_t old_nn = nn;
-      if (__builtin_expect(((nn & size_t_highest_bit) == 0), true)) {
+      if (__builtin_expect(((nn & SIZE_T_HIGHEST_BIT) == 0), true)) {
         nn <<= 1;
         n <<= 1;
       } else {
@@ -166,7 +166,7 @@ enif_get_double_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, s
     }
     return fail;
   }
-  size_t n = init_size_long;
+  size_t n = INIT_SIZE_LONG;
   size_t nn = cache_line_size;
   double *t = (double *)enif_alloc(nn);
   if (__builtin_expect((t == NULL), false)) {
@@ -206,7 +206,7 @@ enif_get_double_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, s
     }
     if (__builtin_expect((i + loop_vectorize_width > n), false)) {
       size_t old_nn = nn;
-      if (__builtin_expect(((nn & size_t_highest_bit) == 0), true)) {
+      if (__builtin_expect(((nn & SIZE_T_HIGHEST_BIT) == 0), true)) {
         nn <<= 1;
         n <<= 1;
       } else {
@@ -253,7 +253,7 @@ enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double *
     }
     return fail;
   }
-  size_t n = init_size_long;
+  size_t n = INIT_SIZE_LONG;
   size_t nn = cache_line_size;
   double *t = (double *)enif_alloc(nn);
   if (__builtin_expect((t == NULL), false)) {
@@ -279,7 +279,7 @@ enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double *
     }
     if (__builtin_expect((i >= n), false)) {
       size_t old_nn = nn;
-      if (__builtin_expect(((nn & size_t_highest_bit) == 0), true)) {
+      if (__builtin_expect(((nn & SIZE_T_HIGHEST_BIT) == 0), true)) {
         nn <<= 1;
         n <<= 1;
       } else {

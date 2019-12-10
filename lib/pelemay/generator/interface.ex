@@ -20,7 +20,7 @@ defmodule Pelemay.Generator.Interface do
           require Logger
 
           def load_nifs do
-            nif_file = "#{Generator.libnif(module)}"
+            nif_file = "#{Pelemay.Generator.libnif(module)}"
             case :erlang.load_nif(nif_file, 0) do
               :ok -> :ok
               other -> Logger.debug(#{~S/"Failed to load NIF:#{other}"/})
