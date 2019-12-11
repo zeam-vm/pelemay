@@ -3,6 +3,8 @@ defmodule SumMag do
   SumMag: a meta-programming library for Pelemay and Cockatorice.
   """
 
+  @type t :: Macro.t()
+
   @doc """
       ## Examples
       iex> quote do end |> SumMag.parse(%{target: :pelemay})
@@ -256,25 +258,73 @@ defmodule SumMag do
     Enum.reduce(t, h, fun)
   end
 
-  def quoted_var?({:&, _, [1]}) do
-    true
-  end
-
-  def quoted_var?({atom, _meta, nil})
-      when is_atom(atom) do
-    true
-  end
-
-  def quoted_var?({atom, [], _context})
-      when is_atom(atom) do
-    true
-  end
-
+  def quoted_var?({:&, _, [1]}), do: true
+  def quoted_var?({atom, _meta, nil}) when is_atom(atom), do: true
+  def quoted_var?({atom, [], _context}) when is_atom(atom), do: true
   def quoted_var?(other) when other |> is_number, do: true
-
   def quoted_var?(_other), do: false
 
   def quoted_vars?(left, right), do: quoted_var?(left) && quoted_var?(right)
+
+  def include_module?(ast, module_name) when is_atom(module_name) do
+    Macro.prewalk(ast, false, fn
+      {:__aliases__, _, [module_name]} = ast, _ -> {ast, true}
+      other, acc -> {other, acc}
+    end)
+  end
+
+  # def include_func?(ast, module_name, func_list) 
+  #   when is_atom(module_name) and is_list(func_name) do
+
+  # end
+
+  @doc """
+  Find a specified fucntion from ast
+  """
+  @spec include_specified_func?(Macro.input(), atom, atom) :: boolean()
+  def include_specified_func?(ast_term, module, func) do
+    verify = fn
+      {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, args} = ast, acc ->
+        if code_module == module && code_func == func do
+          {ast, true}
+        else
+          {ast, acc}
+        end
+
+      ast, acc ->
+        {ast, acc}
+    end
+
+    {_, exist} = Macro.prewalk(ast_term, nil, verify)
+
+    exist
+  end
+
+  @doc """
+
+  Find specified fucntions from ast
+  """
+  @spec include_specified_functions?(Macro.input(), atom, [atom, ...]) :: [...]
+  def include_specified_functions?(ast_term, module, func) do
+    verify = fn
+      {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, args} = ast, acc ->
+        if code_module != module do
+          {ast, acc}
+        else
+          case Enum.find_value(func, &(&1 == code_func)) do
+            true -> {ast, Map.update(acc, code_func, 1, &(&1 + 1))}
+            other -> {ast, acc}
+          end
+        end
+
+      ast, acc ->
+        {ast, acc}
+    end
+
+    {_, match} = Macro.prewalk(ast_term, %{}, verify)
+
+    match
+  end
 
   def divide_meta(ast) do
     Macro.prewalk(ast, [], fn
