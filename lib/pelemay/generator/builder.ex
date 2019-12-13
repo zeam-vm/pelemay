@@ -42,9 +42,18 @@ defmodule Pelemay.Generator.Builder do
 
     ldflags =
       case :os.type() do
-        {:win32, :nt} -> ldflags_t
-        {:unix, :darwin} -> ldflags_t ++ @ldflags_non_windows
-        _ -> ldflags_t
+        {:win32, :nt} ->
+          ldflags_t
+
+        {:unix, :darwin} ->
+          if is_nil(System.get_env("CROSSCOMPILE")) do
+            ldflags_t ++ @ldflags_non_windows
+          else
+            ldflags_t
+          end
+
+        _ ->
+          ldflags_t
       end
 
     options =
