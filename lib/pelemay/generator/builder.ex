@@ -31,8 +31,18 @@ defmodule Pelemay.Generator.Builder do
       raise CompileError, message: "#{cc} is not installed."
     end
 
-    cflags_t = @cflags ++ ["-I#{erlang_include_path()}"] ++ @cflags_includes ++ @cflags_after
-    ldflags_t = @ldflags
+    {cflags_t, ldflags_t} =
+      if is_nil(System.get_env("CROSSCOMPILE")) do
+        {
+          @cflags ++ ["-I#{erlang_include_path()}"] ++ @cflags_includes ++ @cflags_after,
+          @ldflags
+        }
+      else
+        {
+          String.split(System.get_env("CFLAGS")) ++ String.split(System.get_env("ERL_CFLAGS")),
+          @ldflags ++ String.split(System.get_env("ERL_LDFLAGS"))
+        }
+      end
 
     cflags =
       case :os.type() do
@@ -42,9 +52,18 @@ defmodule Pelemay.Generator.Builder do
 
     ldflags =
       case :os.type() do
-        {:win32, :nt} -> ldflags_t
-        {:unix, :darwin} -> ldflags_t ++ @ldflags_non_windows
-        _ -> ldflags_t
+        {:win32, :nt} ->
+          ldflags_t
+
+        {:unix, :darwin} ->
+          if is_nil(System.get_env("CROSSCOMPILE")) do
+            ldflags_t ++ @ldflags_non_windows
+          else
+            ldflags_t
+          end
+
+        _ ->
+          ldflags_t
       end
 
     options =
