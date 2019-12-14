@@ -37,10 +37,10 @@ defmodule Pelemay.Generator.Builder do
           @cflags ++ ["-I#{erlang_include_path()}"] ++ @cflags_includes ++ @cflags_after,
           @ldflags
         }
-      else 
+      else
         {
           String.split(System.get_env("CFLAGS")) ++ String.split(System.get_env("ERL_CFLAGS")),
-          @ldflags ++ String.split(System.get_env("ERL_LDFLAGS")) 
+          @ldflags ++ String.split(System.get_env("ERL_LDFLAGS"))
         }
       end
 
