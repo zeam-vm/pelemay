@@ -1,5 +1,10 @@
 # Changelog for Pelemay
 
+## v0.0.5
+
+* Support Nerves
+* Add some doctests
+
 ## v0.0.4
 
 * Support to convert Range into List
