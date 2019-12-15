@@ -24,6 +24,7 @@ Potentially, Pelemay may support any architectures that both Erlang and Clang ar
 We've tested it well on the following processor architectures:
 
 * x86_64
+* ARM
 
 We've tested it well on the following OS:
 
@@ -41,16 +42,16 @@ We've tested it on the following OTP versions:
 * 21
 * 20
 
-We've tested it on Clang 6 or later.
-Potentially, Clang that supports auto-vectorization may support Pelemay.
+We've tested it on Clang 6 or later and GCC 7 or later.
+Potentially, Clang and GCC that supports auto-vectorization can generate native code with SIMD instructions by Pelemay.
 
-We heard the reports that it works on the following systems:
-
-* RasPi 4, 32bit Raspbian, Elixir 1.7.4 (with warning)
+Pelemay also supports Nerves.
 
 ## Pre-installation
 
-Pelemay requires Clang that supports auto-vectorization.
+Pelemay requires Clang or GCC.
+
+Environment Variable `CC` is recommended being set the path of the C compiler you want to use.
 
 ## Installation
 
@@ -59,7 +60,7 @@ Add `pelemay` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pelemay, "~> 0.0"},
+    {:pelemay, "~> 0.0.5"},
   ]
 end
 ```
