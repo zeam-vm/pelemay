@@ -249,8 +249,8 @@ defmodule SumMag do
   def pipe(unpipe_list) do
     [{h, _} | t] = unpipe_list
 
-    fun = fn {x, pos}, acc ->
-      Macro.pipe(acc, x, pos)
+    fun = fn {x, _}, acc ->
+      {:|>, [], [acc, x]}
     end
 
     Enum.reduce(t, h, fun)

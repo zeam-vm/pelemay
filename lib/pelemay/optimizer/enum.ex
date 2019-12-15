@@ -2,8 +2,15 @@ defmodule Optimizer.Enum do
   import Analyzer
   alias Pelemay.Db
 
+  require Logger
+
   def parallelize_term({atom, _, nil} = arg)
-      when atom |> is_atom do
+      when is_atom(atom) do
+    arg
+  end
+
+  def parallelize_term({atom, [], _} = arg)
+      when is_atom(atom) do
     arg
   end
 
@@ -16,16 +23,10 @@ defmodule Optimizer.Enum do
     |> call_nif(:map)
   end
 
-  def parallelize_term({quoted, :chunk_every}) do
-    {_enum, _, num} = quoted
-
-    call_nif(num, :chunk_every)
-  end
-
-  def parallelize_term({quoted, _func}) do
+  def parallelize_term({quoted, _}) do
     str = Macro.to_string(quoted)
 
-    IO.puts("Sorry, #{str} not supported yet.")
+    Logger.warn("Sorry, #{str} cannot accelerated yet.")
     quoted
   end
 
@@ -57,10 +58,6 @@ defmodule Optimizer.Enum do
       end)
 
     func
-  end
-
-  def call_nif(num, :chunk_every) do
-    quote do: ReplaceModule.chunk_every(unquote(num))
   end
 
   def call_nif({:ok, asm}, :map) do
@@ -131,7 +128,7 @@ defmodule Optimizer.Enum do
 
     func_name = Atom.to_string(func) <> "_"
 
-    (func_name <> ret) |> IO.inspect()
+    func_name <> ret
   end
 
   defp operator_to_string(operator)

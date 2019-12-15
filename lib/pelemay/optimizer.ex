@@ -49,11 +49,11 @@ defmodule Optimizer do
   end
   ```
   """
-  def optimize_func({def_key, meta, [arg_info, exprs]}) do
+  def optimize_func({def_key, meta, [arg_info, exprs]} = ast) do
     case def_key do
       :def -> {:def, meta, [arg_info, optimize_exprs(exprs)]}
       :defp -> {:defp, meta, [arg_info, optimize_exprs(exprs)]}
-      _ -> raise ArgumentError
+      _ -> raise ArgumentError, message: Macro.to_string(ast)
     end
   end
 
