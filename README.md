@@ -19,7 +19,7 @@ end
 
 ## Supported Platforms
 
-Potentially, Pelemay may support any architectures that both Erlang and Clang are supported.
+Potentially, Pelemay may support any architectures that both Erlang and Clang or GCC are supported.
 
 We've tested it well on the following processor architectures:
 
