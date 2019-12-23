@@ -248,6 +248,9 @@ defmodule SumMag do
   def iced_block([func]), do: [do: func]
   def iced_block(funcs), do: [do: {:__block__, [], funcs}]
 
+  @doc """
+  Same behaviour to "|>"
+  """
   def pipe(unpipe_list) do
     [{h, _} | t] = unpipe_list
 
@@ -258,10 +261,14 @@ defmodule SumMag do
     Enum.reduce(t, h, fun)
   end
 
+  @doc """
+
+  Find captured variable in the anonymous function.
+
+  """
   def quoted_var?({:&, _, [1]}), do: true
   def quoted_var?({atom, _meta, nil}) when is_atom(atom), do: true
   def quoted_var?({atom, [], _context}) when is_atom(atom), do: true
-  def quoted_var?(other) when other |> is_number, do: true
   def quoted_var?(_other), do: false
 
   def quoted_vars?(left, right), do: quoted_var?(left) && quoted_var?(right)
@@ -280,6 +287,16 @@ defmodule SumMag do
 
   @doc """
   Find a specified fucntion from ast
+
+  ```
+  iex> quote do
+  ...> [1, 2]
+  ...> |> Enum.map(&(&1 + 1))
+  ...> |> Enum.map(&(&1 + 2))
+  ...> end |>
+  ...> SumMag.include_specified_func?(:Enum, :map)
+  true
+  ```
   """
   @spec include_specified_func?(Macro.input(), atom, atom) :: boolean()
   def include_specified_func?(ast_term, module, func) do
@@ -301,8 +318,17 @@ defmodule SumMag do
   end
 
   @doc """
-
   Find specified fucntions from ast
+
+  ```
+  iex> quote do
+  ...> [1, 2]
+  ...> |> Enum.map(&(&1 + 1))
+  ...> |> Enum.map(&(&1 + 2))
+  ...> end |>
+  ...> SumMag.include_specified_functions?(:Enum, [:map, :zip])
+  %{map: 2}
+  ```
   """
   @spec include_specified_functions?(Macro.input(), atom, [atom, ...]) :: [...]
   def include_specified_functions?(ast_term, module, func) do
@@ -326,6 +352,7 @@ defmodule SumMag do
     match
   end
 
+  @doc false
   def divide_meta(ast) do
     Macro.prewalk(ast, [], fn
       {atom, meta, tree}, acc -> {{atom, tree}, acc ++ meta}
@@ -333,6 +360,7 @@ defmodule SumMag do
     end)
   end
 
+  @doc false
   def delete_meta(ast) do
     Macro.prewalk(ast, fn
       {atom, _meta, tree} -> {atom, tree}

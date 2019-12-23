@@ -36,9 +36,9 @@ defmodule SumMagTest do
     ast =
       quote do
         Enum.zip([1, 2], [3, 4])
-        |> Enum.map(&(&1))
+        |> Enum.map(& &1)
       end
-    
+
     assert %{map: 1, zip: 1} == SumMag.include_specified_functions?(ast, :Enum, [:map, :zip])
   end
 end

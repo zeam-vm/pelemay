@@ -7,7 +7,7 @@ defmodule Optimizer do
   @term_options [enum: true]
 
   @doc """
-  Optimize funcions which be enclosed `defptermay`, using `optimize_***` function.
+  Optimize funcions which be enclosed `defpelemay`, using `optimize_***` function.
   Input is funcion definitions.
   ```
   quote do
@@ -102,7 +102,6 @@ defmodule Optimizer do
   Input is a term:
   ```
   quote do: list
-  quote do: list
   quote do: Enum.map(&(&1*2))
   ```
   """
@@ -113,6 +112,16 @@ defmodule Optimizer do
       term,
       fn opt, acc -> parallelize_term(acc, opt) end
     )
+  end
+
+  def parallelize_term({atom, _, nil} = arg, _)
+      when is_atom(atom) do
+    arg
+  end
+
+  def parallelize_term({atom, [], _} = arg, _)
+      when is_atom(atom) do
+    arg
   end
 
   def parallelize_term(term, {:enum, true}), do: Optimizer.Enum.parallelize_term(term)
