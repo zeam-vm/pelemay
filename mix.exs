@@ -29,7 +29,8 @@ defmodule Pelemay.MixProject do
   defp deps do
     [
       # Docs dependencies
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
   end
 

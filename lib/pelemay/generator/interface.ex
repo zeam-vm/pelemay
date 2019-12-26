@@ -32,7 +32,6 @@ defmodule Pelemay.Generator.Interface do
         """
 
         Generator.stub(module) |> File.write(str)
-
         Generator.stub(module) |> Code.compile_file(Generator.ebin())
 
         Code.append_path(Generator.ebin())
