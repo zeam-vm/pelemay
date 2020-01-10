@@ -116,6 +116,12 @@ defmodule Pelemay.Generator do
     end
   end
 
+  #make kernel code file for OpenCL
+  def libcl_func(func_name) do
+    Application.app_dir(:pelemay, "priv/#{(func_name)}.cl")
+  end
+
+
   def stub(module) do
     Application.app_dir(:pelemay, "priv/pelemay_nif_#{module_downcase_underscore(module)}.ex")
   end
