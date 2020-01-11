@@ -3,6 +3,7 @@ defmodule Optimizer do
     Provides a optimizer for [AST](https://elixirschool.com/en/lessons/advanced/metaprogramming/)
   """
   import SumMag
+  alias Pelemay.Db
 
   @term_options [enum: true]
 
@@ -51,10 +52,15 @@ defmodule Optimizer do
   """
   def optimize_func({def_key, meta, [arg_info, exprs]} = ast) do
     case def_key do
-      :def -> {:def, meta, [arg_info, optimize_exprs(exprs)]}
+      :def -> {:def, meta, [regist_arg_info(arg_info), optimize_exprs(exprs)]}
       :defp -> {:defp, meta, [arg_info, optimize_exprs(exprs)]}
       _ -> raise ArgumentError, message: Macro.to_string(ast)
     end
+  end
+
+  def regist_arg_info({def_name, _, _} = arg_info) do
+    Db.regist_arg_info(def_name)
+    arg_info
   end
 
   @doc """

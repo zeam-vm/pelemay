@@ -95,8 +95,8 @@ defmodule Optimizer.Enum do
 
         Db.register(info)
 
-      false ->
-        nil
+      other ->
+        Db.regist_func_num(other)
     end
 
     func_name = func_name |> String.to_atom()
