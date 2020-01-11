@@ -8,7 +8,7 @@ defmodule Pelemay.Generator.Native_CL do
     |> Enum.map(&(&1 |> generate_cl_code))
   end
 
-  defp generate_cl_code([name, func_num_list] = info) do
+  defp generate_cl_code([name, func_num_list]) do
     Generator.libcl_func(name)
     |> write(name, func_num_list)
   end
@@ -54,7 +54,7 @@ defmodule Pelemay.Generator.Native_CL do
 
   defp make_expr(operators, args, type)
        when is_list(operators) and is_list(args) do
-    args = args |> to_string(:args, type)
+    args = args |> to_string(:args)
 
     operators = operators |> to_string(:op)
 
@@ -75,14 +75,14 @@ defmodule Pelemay.Generator.Native_CL do
     enclosure(acc <> arg) <> operator
   end
 
-  defp to_string(args, :args, "double") do
-    args
-    |> Enum.map(&(&1 |> arg_to_string("double")))
-  end
+  #defp to_string(args, :args, "double") do
+   # args
+    #|> Enum.map(&(&1 |> arg_to_string))
+  #end
 
-  defp to_string(args, :args, type) do
+  defp to_string(args, :args) do
     args
-    |> Enum.map(&(&1 |> arg_to_string(type)))
+    |> Enum.map(&(&1 |> arg_to_string))
   end
 
   defp to_string(operators, :op) do
@@ -90,7 +90,7 @@ defmodule Pelemay.Generator.Native_CL do
     |> Enum.map(&(&1 |> operator_to_string))
   end
 
-  defp arg_to_string(arg, type) do
+  defp arg_to_string(arg) do
     case arg do
       {:&, _meta, [1]} -> "value"
       {_, _, nil} -> "value"
