@@ -38,15 +38,17 @@ enif_get_long_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, long *vec, unsign
 {
   ERL_NIF_TERM head, tail;
 
-  int tmp_r = 1;
+  int acc = true;
+  int tmp_r;
   for(int i=0; i<vec_l; i++){
       enif_get_list_cell(env, list, &head, &tail);
       tmp_r = enif_get_long(env, head, &vec[i]);
       list = tail;
-      if (__builtin_expect((tmp_r == false), false)) {
+      acc &= tmp_r;
+  }
+  if (__builtin_expect((tmp_r == false), false)) {
         return fail;
       }
-  }
   return success;
 }
 

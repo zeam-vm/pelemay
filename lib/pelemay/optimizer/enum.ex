@@ -99,7 +99,7 @@ defmodule Optimizer.Enum do
         Db.regist_func_num(other)
     end
 
-    func_name = func_name |> String.to_atom()
+    func_name = Db.get_arg_info()
 
     quote do: ReplaceModule.unquote(func_name)
   end
