@@ -30,7 +30,7 @@ use Mix.Config
 #     import_config "#{Mix.env}.exs"
 case Mix.env() do
   env when env in [:test, :dev] ->
-    config :logger, level: :info
+    config :logger, level: :info, backends: [Pelemay.Logger]
 
   :prod ->
     config :logger, level: :warn
