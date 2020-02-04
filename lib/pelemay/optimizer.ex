@@ -124,6 +124,6 @@ defmodule Optimizer do
     arg
   end
 
-  def parallelize_term(term, {:enum, true}), do: Optimizer.Enum.parallelize_term(term)
+  def parallelize_term(term, {:enum, true}), do: Optimizer.Enum.init(term)
   def parallelize_term(term, _), do: term
 end

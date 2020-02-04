@@ -327,7 +327,7 @@ defmodule SumMag do
   ...> |> Enum.map(&(&1 + 2))
   ...> end |>
   ...> SumMag.include_specified_functions?(:Enum, [:map, :zip])
-  %{map: 2}
+  [map: 2]
   ```
   """
   @spec include_specified_functions?(Macro.input(), atom, [atom, ...]) :: [...]
@@ -338,7 +338,7 @@ defmodule SumMag do
           {ast, acc}
         else
           case Enum.find_value(func, &(&1 == code_func)) do
-            true -> {ast, Map.update(acc, code_func, 1, &(&1 + 1))}
+            true -> {ast, Keyword.update(acc, code_func, 1, &(&1 + 1))}
             other -> {ast, acc}
           end
         end
@@ -347,7 +347,7 @@ defmodule SumMag do
         {ast, acc}
     end
 
-    {_, match} = Macro.prewalk(ast_term, %{}, verify)
+    {_, match} = Macro.prewalk(ast_term, [], verify)
 
     match
   end
