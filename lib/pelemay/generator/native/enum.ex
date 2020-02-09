@@ -1,9 +1,13 @@
 defmodule Pelemay.Generator.Native.Enum do
   alias Pelemay.Generator.Native.Util, as: Util
+  alias Pelemay.Db
 
-  def map(%{nif_name: nif_name, args: args, operators: operators}) do
+  def map(%{nif_name: nif_name, args: args, operators: operators} = info) do
     expr_d = Util.make_expr(operators, args, "double")
     expr_l = Util.make_expr(operators, args, "long")
+
+    Map.update(info, :impl, nil, fn _ -> true end)
+    |> Db.register()
 
     """
     static ERL_NIF_TERM
@@ -34,10 +38,38 @@ defmodule Pelemay.Generator.Native.Enum do
     """
   end
 
-  # # Add here
-  def sort(%{nif_name: nif_name, args: args, operators: operators}) do
+  def chunk_every(info) do
+     IO.inspect("I AM CHUNK_EVERY")
+     %{
+      nif_name:  nif_name,
+      module: _,
+      function: _,
+      arg_num: _,
+      args: _,
+      operators: _
+    } = info
+
+    {:ok, ret} = File.read(__DIR__ <> "/enum.c")
+
+    Map.update(info, :impl, nil, fn _ -> true end)
+    |> Map.update(:arg_num, nil, fn _ -> 2 end)
+    |> Db.register()
+
+    String.replace(ret, "chunk_every", "#{nif_name}")
   end
 
-  def filter(%{nif_name: nif_name, args: args, operators: operators}) do
+  # Add here
+  def sort(info) do
+    Map.update(info, :impl, nil, fn _ -> false end)
+    |> Db.register()
+
+    nil
+  end
+
+  def filter(info) do
+    Map.update(info, :impl, nil, fn _ -> false end)
+    |> Db.register()
+
+    nil
   end
 end

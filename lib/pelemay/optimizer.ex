@@ -47,7 +47,7 @@ defmodule Optimizer do
       fn
         {
           ast,
-          {{:., _, [_, func_name]}, [], []} = replacer
+          {{:., _, [_, func_name]}, [], _arg} = replacer
         } ->
           case Db.impl_validate(func_name) do
             true -> replacer
@@ -150,16 +150,13 @@ defmodule Optimizer do
     info = SumMag.include_specified_functions?(term, :Enum, Enum.__info__(:functions))
     Optimizer.init(term, info)
   end
-
   def parallelize_term(term, {:String, true}) do
     info = SumMag.include_specified_functions?(term, :String, String.__info__(:functions))
     Optimizer.init(term, info)
   end
-
   def parallelize_term(term, _), do: term
 
   def init(ast, []), do: ast
-
   def init(ast, info) do
     {_func, _meta, arg_func} = ast
     optimized_ast = parallelize(info, arg_func)
@@ -170,17 +167,13 @@ defmodule Optimizer do
     end
   end
 
-  defp parallelize([{key, 1}], func) do
-    res = Analyzer.supported?(func)
-
-    call_nif(res, key)
-  end
-
   defp parallelize([{key, arity}], func) do
-    parallelize([{key, arity - 1}], func)
+   res = Analyzer.supported?(func)
+
+    call_nif(res, key, arity)
   end
 
-  defp call_nif({:ok, asm}, key) do
+  defp call_nif({:ok, asm}, key, arity) do
     %{
       operators: operators,
       args: args
@@ -197,7 +190,7 @@ defmodule Optimizer do
           module: :Enum,
           function: key,
           nif_name: func_name,
-          arg_num: 1,
+          arg_num: arity,
           args: args,
           operators: operators,
           impl: nil
@@ -208,15 +201,19 @@ defmodule Optimizer do
 
     func_name = func_name |> String.to_atom()
 
-    {:ok,
-     quote do
-       # try do
-       ReplaceModule.unquote(func_name)
-       # rescue
-       #   e in RuntimeError -> ast
-       # end
-     end}
+    ast = case operators do
+      [] -> 
+        quote do
+          ReplaceModule.unquote(func_name)(unquote(hd(args)))
+        end
+      other ->
+        quote do
+          ReplaceModule.unquote(func_name)
+        end
+    end
+
+    {:ok, ast}
   end
 
-  defp call_nif({:error, _}, _), do: {:error, "Not Supported"}
+  defp call_nif({:error, asm}, key, _), do: {:error, "Not Supported"}
 end

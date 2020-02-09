@@ -18,26 +18,37 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp generate_functions(str) do
-    code_info = Db.get_functions()
+    code_info = Db.get_functions() 
 
     Db.clear()
 
     definition_func =
       code_info
-      |> Enum.map(&(&1 |> generate_function))
-
-    Enum.zip(definition_func, code_info)
-    |> Enum.map(fn
-      {nil, [info]} ->
-        Map.update(info, :impl, nil, fn _ -> false end)
-        |> Db.register()
-
-      {_, [info]} ->
-        Map.update(info, :impl, nil, fn _ -> true end)
-        |> Db.register()
-    end)
+      |> Enum.map(&(generate_function(&1)))
 
     str <> Util.to_str_code(definition_func) <> func_list(definition_func)
+  end
+
+  defp generate_function([func_info]) do
+    generate_function(func_info)
+  end
+
+  defp generate_function(%{module: module, function: func} = info) do
+    module = Atom.to_string(module)
+    func = Atom.to_string(func)
+
+    prefix = "Pelemay.Generator.Native.#{module}.#{func}"
+
+    {res, _} = 
+      try do
+        Code.eval_string("#{prefix}(info)", info: info)
+      rescue
+        e in UndefinedFunctionError -> 
+          Map.update(info, :impl, nil, fn _ -> false end)
+          |> Db.register()
+          error(e)
+      end
+    res
   end
 
   defp func_list(list) do
@@ -131,18 +142,9 @@ defmodule Pelemay.Generator.Native do
     str <> ret
   end
 
-  defp generate_function([func_info]) do
-    generate_function(func_info)
-  end
-
-  defp generate_function(%{module: module, function: func} = info) do
-    module = Atom.to_string(module)
-    func = Atom.to_string(func)
-
-    prefix = "Pelemay.Generator.Native.#{module}.#{func}"
-
-    {res, _} = Code.eval_string("#{prefix}(info)", info: info)
-    res
+  defp error(e) do
+    IO.puts("Please write a native code of the following code: #{e.module}.#{e.function}/#{e.arity}")
+    {nil, []}
   end
 
   # defp arithmetic(str) do

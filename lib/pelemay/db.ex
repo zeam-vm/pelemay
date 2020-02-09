@@ -49,10 +49,9 @@ defmodule Pelemay.Db do
 
       other ->
         other
-        # |> IO.inspect(label: "#{func_name}")
+        |> IO.inspect(label: "#{func_name}")
         |> Enum.filter(&(Map.get(&1, :nif_name) == "#{func_name}"))
         |> hd
-        # |> IO.inspect(label: "filtered")
         |> Map.get(:impl)
     end
   end
@@ -69,6 +68,20 @@ defmodule Pelemay.Db do
   end
 
   def get_function([]), do: ""
+
+  def get_function(func_name) when is_bitstring(func_name) do
+    get_functions()
+    |> List.flatten()
+    |> case do
+      [] ->
+        {:error, "DB is empty"}
+
+      other ->
+        other
+        |> Enum.filter(&(Map.get(&1, :nif_name) == "#{func_name}"))
+        |> hd
+    end
+  end
 
   def get_function(id) do
     ret =
