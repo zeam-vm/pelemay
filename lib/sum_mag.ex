@@ -266,7 +266,7 @@ defmodule SumMag do
   Find captured variable in the anonymous function.
 
   """
-  def quoted_var?({:&, _, [1]}), do: true
+  def quoted_var?({:&, _, [num]}) when is_number(num), do: true
   def quoted_var?({atom, _meta, nil}) when is_atom(atom), do: true
   def quoted_var?({atom, [], _context}) when is_atom(atom), do: true
   def quoted_var?(_other), do: false
