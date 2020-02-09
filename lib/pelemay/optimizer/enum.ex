@@ -3,28 +3,31 @@ defmodule Optimizer.Enum do
 
   require Logger
 
+  # Add supported code
   def env do
-    [:map, :chunk_every]
+    [:map, :sort]
   end
 
   def init(ast) do
     high_order_func = which_enum_func?(ast)
 
-    support_hof = env()
-    |> Enum.map(& Keyword.take(high_order_func, [&1]))
-    |> List.flatten()
+    {_enum_func, _meta, arg_func} = ast
+    optimized_ast = parallelize_term(high_order_func, arg_func, ast)
 
-    case support_hof do
-      [{:map, x}] -> # 別関数があってもここには引っかからない
-        {_enum_map, _meta, arg_func} = ast
-        parallelize_term(support_hof, arg_func)
+    # optimized_ast = case high_order_func do
+    #   [] ->
+    #     str = Macro.to_string(ast)
+    #     Logger.warn("Sorry, #{str} cannot accelerated yet.")
+    #     ast
 
-      # Add HERE
+    #   _ ->
+    #     {_enum_func, _meta, arg_func} = ast
+    #     parallelize_term(support_hof, arg_func, ast)
+    # end
 
-      _ -> 
-        str = Macro.to_string(ast)
-        Logger.warn("Sorry, #{str} cannot accelerated yet.")
-        ast
+    case optimized_ast do
+      {:ok, opt_ast} -> {ast, opt_ast}
+      {:error, ast} -> ast
     end
   end
 
@@ -32,14 +35,16 @@ defmodule Optimizer.Enum do
     SumMag.include_specified_functions?(ast, :Enum, env())
   end
 
-  defp parallelize_term([{key, 1}], func) do
-    res = Analyzer.supported?(func)
+  defp parallelize_term([], _, ast), do: {:error, ast}
+  defp parallelize_term([{key, 1}], func, ast) do
+    res =
+      Analyzer.supported?(func)
 
     call_nif(res, key)
   end
 
-  defp parallelize_term([{key, x}], func) do
-    parallelize_term([{key, x-1}], func)
+  defp parallelize_term([{key, arity}], func, ast) do
+    parallelize_term([{key, arity - 1}], func, ast)
   end
 
   defp call_nif({:ok, asm}, key) do
@@ -48,21 +53,21 @@ defmodule Optimizer.Enum do
       args: args
     } = asm
 
-    func_name = Optimizer.AFunction.generate_function_name(:map, asm)
+    func_name = Optimizer.AFunction.generate_function_name(key, asm)
 
     case Db.validate(func_name) do
       false ->
         nil
 
       other ->
-        # plan to fix this data
         info = %{
-          module: :enum,
+          module: :Enum,
           function: key,
           nif_name: func_name,
           arg_num: 1,
           args: args,
-          operators: operators
+          operators: operators,
+          impl: nil
         }
 
         Db.register(info)
@@ -70,10 +75,14 @@ defmodule Optimizer.Enum do
 
     func_name = func_name |> String.to_atom()
 
-    quote do: ReplaceModule.unquote(func_name)
+    {:ok, quote do
+      # try do
+      ReplaceModule.unquote(func_name)
+      # rescue
+      #   e in RuntimeError -> ast
+      # end
+    end}
   end
 
-  defp call_nif({:error, asm}, _atom) do
-    asm
-  end
+  defp call_nif({:error, _}), do: :error
 end

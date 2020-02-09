@@ -46,6 +46,10 @@ defmodule Pelemay.Generator.Interface do
   end
 
   defp generate_function([func_info]) do
+    generate_function(func_info)
+  end
+
+  defp generate_function(%{impl: true} = func_info) do
     %{
       nif_name: nif_name,
       module: _,
@@ -60,6 +64,10 @@ defmodule Pelemay.Generator.Interface do
     """
       def #{nif_name}(#{args}), do: raise "NIF #{nif_name}/#{num} not implemented"
     """
+  end
+
+  defp generate_function(%{impl: false}) do
+    ""
   end
 
   defp generate_function([]), do: []

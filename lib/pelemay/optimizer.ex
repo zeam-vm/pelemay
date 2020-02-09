@@ -3,6 +3,7 @@ defmodule Optimizer do
     Provides a optimizer for [AST](https://elixirschool.com/en/lessons/advanced/metaprogramming/)
   """
   import SumMag
+  alias Pelemay.Db
 
   @term_options [enum: true]
 
@@ -21,18 +22,36 @@ defmodule Optimizer do
   ```
   """
   def replace(definitions, caller) do
-    definitions
+    res = definitions
     |> melt_block
     |> Enum.map(&optimize_func(&1))
     |> iced_block
-    |> consist_context(caller)
+    |> consist_alias(caller)
   end
 
-  defp consist_context(funcs, module) do
+  def consist_alias(definitions, module) do
     Macro.prewalk(
-      funcs,
+      definitions,
       fn
         {:__aliases__, [alias: false], [:ReplaceModule]} -> module
+        other -> other
+      end
+    )
+  end
+
+  def consist_context(definitions, module) do
+    Macro.prewalk(
+      definitions,
+      fn
+        { 
+          ast, {{:., _,
+            [module, func_name]}, [], 
+            []} = replacer
+        } ->
+          case Db.impl_validate(func_name) do
+            true -> replacer
+            other -> ast 
+          end
         other -> other
       end
     )
@@ -124,6 +143,8 @@ defmodule Optimizer do
     arg
   end
 
-  def parallelize_term(term, {:enum, true}), do: Optimizer.Enum.init(term)
+  def parallelize_term(term, {:enum, true}) do
+    Optimizer.Enum.init(term)
+  end
   def parallelize_term(term, _), do: term
 end

@@ -53,12 +53,53 @@ defmodule Analyzer do
     Macro.prewalk(ast, acc, &numerical?/2) |> elem(1)
   end
 
+  # !/1   !=/2
+  # !==/2 %/2
+  # %{}/1 &&/2
+  # &/1   */2
+  # ++/2  +/1
+  # +/2   --/2
+  # -/1   -/2
+  # ../2  ./2
+  # //2   ::/2
+  # </2   <<>>/1
+  # <=/2  <>/2
+  # =/2   ==/2
+  # ===/2 =~/2
+  # >/2   >=/2
+  # @/1   ^/1
+
   defp operator(:+), do: :+
   defp operator(:-), do: :-
   defp operator(:/), do: :/
   defp operator(:*), do: :*
   defp operator(:rem), do: :rem
+
+  # Logical Operator
+  defp operator(:>=), do: :>=
+  defp operator(:<=), do: :<=
+  defp operator(:!=), do: :!=
+  defp operator(:<), do: :<
+  defp operator(:>), do: :>
+  defp operator(:==), do: :==
+  defp operator(:!), do: :!
+  defp operator(:!=), do: :!=
+  defp operator(:!==), do: :!==
+  defp operator(:<>), do: :<>
+
   defp operator(_), do: false
+
+  def operator_to_string(operator)
+      when operator |> is_atom do
+    case operator do
+      :* -> "mult"
+      :+ -> "plus"
+      :- -> "minus"
+      :/ -> "div"
+      :rem -> "mod"
+      other -> "logic"
+    end
+  end
 
   defp numerical?({atom, _, [left, right]} = ast, acc) do
     %{

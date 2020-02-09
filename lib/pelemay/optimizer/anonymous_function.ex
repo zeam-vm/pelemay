@@ -2,7 +2,7 @@ defmodule Optimizer.AFunction do
   def generate_function_name(func, %{args: args, operators: operators})
       when is_atom(func) do
     fun = fn
-      {:&, _meta, [1]} -> "elem"
+      {:&, _meta, [num]} -> "elem#{num}"
       {var, _, nil} -> Atom.to_string(var)
       other -> "#{other}"
     end
@@ -11,7 +11,7 @@ defmodule Optimizer.AFunction do
 
     expr =
       operators
-      |> Enum.map(&operator_to_string(&1))
+      |> Enum.map(&Analyzer.operator_to_string(&1))
       |> Enum.zip(args)
 
     ret =
@@ -21,16 +21,5 @@ defmodule Optimizer.AFunction do
     func_name = Atom.to_string(func) <> "_"
 
     func_name <> ret
-  end
-
-  def operator_to_string(operator)
-      when operator |> is_atom do
-    case operator do
-      :* -> "mult"
-      :+ -> "plus"
-      :- -> "minus"
-      :/ -> "div"
-      :rem -> "mod"
-    end
   end
 end
