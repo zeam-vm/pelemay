@@ -27,7 +27,7 @@ defmodule GeneratedCodeTest do
     end
 
     test "Various Enum funcions" do
-      assert [2, 4, 6] == Sample.list_mult_sort([3, 1, 2])
+      assert [6, 4, 2] == Sample.list_mult_sort([3, 1, 2])
     end
 
     test "RAISE: Various Type List" do

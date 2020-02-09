@@ -37,7 +37,7 @@ defmodule Sample do
     def list_mult_sort(list) do
       list
       |> Enum.map(&(&1 * 2))
-      |> Enum.sort()
+      |> Enum.sort(&(&1 >= &2))
     end
 
     def list_zip(a, b) do
