@@ -49,7 +49,6 @@ defmodule Pelemay.Db do
 
       other ->
         other
-        |> IO.inspect(label: "#{func_name}")
         |> Enum.filter(&(Map.get(&1, :nif_name) == "#{func_name}"))
         |> hd
         |> Map.get(:impl)
@@ -110,7 +109,6 @@ defmodule Pelemay.Db do
   end
 
   def clear do
-    id = get_func_num()
     :ets.delete_all_objects(@table_name)
 
     @table_name

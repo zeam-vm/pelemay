@@ -26,7 +26,7 @@ defmodule Pelemay.Generator.Native do
       code_info
       |> Enum.map(&generate_function(&1))
 
-    str <> Util.to_str_code(definition_func) <> func_list(definition_func)
+    str <> Util.to_str_code(definition_func) <> func_list()
   end
 
   defp generate_function([func_info]) do
@@ -44,27 +44,25 @@ defmodule Pelemay.Generator.Native do
         Code.eval_string("#{prefix}(info)", info: info)
       rescue
         e in UndefinedFunctionError ->
-          Map.update(info, :impl, nil, fn _ -> false end)
-          |> Db.register()
-
+          Util.push_info(info, :impl, false)
           error(e)
       end
 
     res
   end
 
-  defp func_list(list) do
+  defp func_list do
     fl =
-      Enum.zip(list, Db.get_functions())
+      Db.get_functions()
       |> Enum.reduce(
         "",
         fn
-          {nil, _}, acc ->
-            acc
-
-          {_, info}, acc ->
+          [%{impl: true}] = info, acc ->
             str = erl_nif_func(info)
             acc <> "#{str},\n  "
+
+          [%{impl: false}], acc ->
+            acc
         end
       )
 
@@ -151,8 +149,4 @@ defmodule Pelemay.Generator.Native do
 
     {nil, []}
   end
-
-  # defp arithmetic(str) do
-  #   str <> File.read(@dir <> "arithmetic.c")
-  # end
 end

@@ -6,8 +6,7 @@ defmodule Pelemay.Generator.Native.Enum do
     expr_d = Util.make_expr(operators, args, "double")
     expr_l = Util.make_expr(operators, args, "long")
 
-    Map.update(info, :impl, nil, fn _ -> true end)
-    |> Db.register()
+    Util.push_impl_info(info, true)
 
     """
     static ERL_NIF_TERM
@@ -39,8 +38,6 @@ defmodule Pelemay.Generator.Native.Enum do
   end
 
   def chunk_every(info) do
-    IO.inspect("I AM CHUNK_EVERY")
-
     %{
       nif_name: nif_name,
       module: _,
@@ -61,15 +58,13 @@ defmodule Pelemay.Generator.Native.Enum do
 
   # Add here
   def sort(info) do
-    Map.update(info, :impl, nil, fn _ -> false end)
-    |> Db.register()
+    Util.push_impl_info(info, false)
 
     nil
   end
 
   def filter(info) do
-    Map.update(info, :impl, nil, fn _ -> false end)
-    |> Db.register()
+    Util.push_impl_info(info, false)
 
     nil
   end

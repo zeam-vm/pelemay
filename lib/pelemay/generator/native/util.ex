@@ -1,4 +1,16 @@
 defmodule Pelemay.Generator.Native.Util do
+  alias Pelemay.Db
+
+  def push_info(info, key, val) do
+    Map.update(info, key, nil, fn _ -> val end)
+    |> Db.register()
+  end
+
+  def push_impl_info(info, val) do
+    Map.update(info, :impl, nil, fn _ -> val end)
+    |> Db.register()
+  end
+
   def to_str_code(list) when list |> is_list do
     list
     |> Enum.reduce(
