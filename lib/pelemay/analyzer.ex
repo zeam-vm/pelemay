@@ -13,8 +13,29 @@ defmodule Analyzer do
   When the expression is enable to optimize, {:ok, map} is returned.
   The map is shape following: %{args: _, operators: _}.
 
+  iex> var = quote do x end
+  ...> Analyzer.supported?(var)
+  {:error, {:x, [], AnalyzerTest}}
+  
+  iex> var = quote do [x] end 
+  iex> Analyzer.supported?(var)
+  {:ok, %{args: [{:x, [], AnalyzerTest}], operators: []}}
+
+  iex> quote do
+  ...>   fn x -> x + 1 end
+  ...> end |> Analyzer.supported?
+  {:ok, %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}}
   """
   @spec supported?(Macro.t()) :: asm
+  def supported?([{val, line, atom}]) when is_atom(atom) do
+    asm = %{
+        operators: [],
+        args: [{val, line, atom}]
+      }
+
+    {:ok, asm}
+  end
+
   def supported?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
     supported_expr?(expr)
   end
@@ -52,22 +73,6 @@ defmodule Analyzer do
 
     Macro.prewalk(ast, acc, &numerical?/2) |> elem(1)
   end
-
-  # !/1   !=/2
-  # !==/2 %/2
-  # %{}/1 &&/2
-  # &/1   */2
-  # ++/2  +/1
-  # +/2   --/2
-  # -/1   -/2
-  # ../2  ./2
-  # //2   ::/2
-  # </2   <<>>/1
-  # <=/2  <>/2
-  # =/2   ==/2
-  # ===/2 =~/2
-  # >/2   >=/2
-  # @/1   ^/1
 
   defp operator(:+), do: :+
   defp operator(:-), do: :-
