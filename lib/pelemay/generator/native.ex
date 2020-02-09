@@ -18,13 +18,13 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp generate_functions(str) do
-    code_info = Db.get_functions() 
+    code_info = Db.get_functions()
 
     Db.clear()
 
     definition_func =
       code_info
-      |> Enum.map(&(generate_function(&1)))
+      |> Enum.map(&generate_function(&1))
 
     str <> Util.to_str_code(definition_func) <> func_list(definition_func)
   end
@@ -39,15 +39,17 @@ defmodule Pelemay.Generator.Native do
 
     prefix = "Pelemay.Generator.Native.#{module}.#{func}"
 
-    {res, _} = 
+    {res, _} =
       try do
         Code.eval_string("#{prefix}(info)", info: info)
       rescue
-        e in UndefinedFunctionError -> 
+        e in UndefinedFunctionError ->
           Map.update(info, :impl, nil, fn _ -> false end)
           |> Db.register()
+
           error(e)
       end
+
     res
   end
 
@@ -143,7 +145,10 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp error(e) do
-    IO.puts("Please write a native code of the following code: #{e.module}.#{e.function}/#{e.arity}")
+    IO.puts(
+      "Please write a native code of the following code: #{e.module}.#{e.function}/#{e.arity}"
+    )
+
     {nil, []}
   end
 

@@ -39,9 +39,10 @@ defmodule Pelemay.Generator.Native.Enum do
   end
 
   def chunk_every(info) do
-     IO.inspect("I AM CHUNK_EVERY")
-     %{
-      nif_name:  nif_name,
+    IO.inspect("I AM CHUNK_EVERY")
+
+    %{
+      nif_name: nif_name,
       module: _,
       function: _,
       arg_num: _,

@@ -150,13 +150,16 @@ defmodule Optimizer do
     info = SumMag.include_specified_functions?(term, :Enum, Enum.__info__(:functions))
     Optimizer.init(term, info)
   end
+
   def parallelize_term(term, {:String, true}) do
     info = SumMag.include_specified_functions?(term, :String, String.__info__(:functions))
     Optimizer.init(term, info)
   end
+
   def parallelize_term(term, _), do: term
 
   def init(ast, []), do: ast
+
   def init(ast, info) do
     {_func, _meta, arg_func} = ast
     optimized_ast = parallelize(info, arg_func)
@@ -168,7 +171,7 @@ defmodule Optimizer do
   end
 
   defp parallelize([{key, arity}], func) do
-   res = Analyzer.supported?(func)
+    res = Analyzer.supported?(func)
 
     call_nif(res, key, arity)
   end
@@ -201,16 +204,18 @@ defmodule Optimizer do
 
     func_name = func_name |> String.to_atom()
 
-    ast = case operators do
-      [] -> 
-        quote do
-          ReplaceModule.unquote(func_name)(unquote(hd(args)))
-        end
-      other ->
-        quote do
-          ReplaceModule.unquote(func_name)
-        end
-    end
+    ast =
+      case operators do
+        [] ->
+          quote do
+            ReplaceModule.unquote(func_name)(unquote(hd(args)))
+          end
+
+        other ->
+          quote do
+            ReplaceModule.unquote(func_name)
+          end
+      end
 
     {:ok, ast}
   end

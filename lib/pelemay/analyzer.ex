@@ -16,7 +16,7 @@ defmodule Analyzer do
   iex> var = quote do x end
   ...> Analyzer.supported?(var)
   {:error, {:x, [], AnalyzerTest}}
-  
+
   iex> var = quote do [x] end 
   iex> Analyzer.supported?(var)
   {:ok, %{args: [{:x, [], AnalyzerTest}], operators: []}}
@@ -29,9 +29,9 @@ defmodule Analyzer do
   @spec supported?(Macro.t()) :: asm
   def supported?([{val, line, atom}]) when is_atom(atom) do
     asm = %{
-        operators: [],
-        args: [{val, line, atom}]
-      }
+      operators: [],
+      args: [{val, line, atom}]
+    }
 
     {:ok, asm}
   end
