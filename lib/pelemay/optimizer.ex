@@ -150,11 +150,13 @@ defmodule Optimizer do
     Optimizer.init(term, info)
   end
 
-  # def parallelize_term(term, {:String, true}) do
-  #   info = SumMag.include_specified_functions?(term, :String, String.__info__(:functions))
-  #   Optimizer.init(term, info)
-  # end
+  def parallelize_term(term, {:String, true}) do
+    info = SumMag.include_specified_functions?(term, :String, String.__info__(:functions))
+    Optimizer.init(term, info)
+  end
   def parallelize_term(term, _), do: term
+
+  def init(ast, []), do: ast
 
   def init(ast, info) do
     {_func, _meta, arg_func} = ast
