@@ -34,7 +34,7 @@ defmodule Pelemay.Generator.Native.Enum do
     """
   end
 
-  # Add here
+  # # Add here
   def sort(%{nif_name: nif_name, args: args, operators: operators}) do
   end
 

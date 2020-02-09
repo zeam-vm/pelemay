@@ -27,16 +27,15 @@ defmodule Pelemay.Generator.Native do
       |> Enum.map(&(&1 |> generate_function))
 
     Enum.zip(definition_func, code_info)
-      |> Enum.map(
-        fn 
-          {nil, [info]} -> 
-            Map.update(info, :impl, nil, fn _ -> false end)
-            |> Db.register()
-          
-          {_, [info]} -> 
-            Map.update(info, :impl, nil, fn _ -> true end)
-            |> Db.register()
-        end)
+    |> Enum.map(fn
+      {nil, [info]} ->
+        Map.update(info, :impl, nil, fn _ -> false end)
+        |> Db.register()
+
+      {_, [info]} ->
+        Map.update(info, :impl, nil, fn _ -> true end)
+        |> Db.register()
+    end)
 
     str <> Util.to_str_code(definition_func) <> func_list(definition_func)
   end
@@ -46,14 +45,15 @@ defmodule Pelemay.Generator.Native do
       Enum.zip(list, Db.get_functions())
       |> Enum.reduce(
         "",
-        fn 
-          {nil, _}, acc -> 
+        fn
+          {nil, _}, acc ->
             acc
-          
-          {_, info}, acc -> 
+
+          {_, info}, acc ->
             str = erl_nif_func(info)
             acc <> "#{str},\n  "
-        end)
+        end
+      )
 
     """
     static
@@ -141,7 +141,7 @@ defmodule Pelemay.Generator.Native do
 
     prefix = "Pelemay.Generator.Native.#{module}.#{func}"
 
-    {res,_} = Code.eval_string("#{prefix}(info)", [info: info])
+    {res, _} = Code.eval_string("#{prefix}(info)", info: info)
     res
   end
 

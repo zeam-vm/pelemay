@@ -45,16 +45,17 @@ defmodule Optimizer do
     Macro.prewalk(
       definitions,
       fn
-        { 
-          ast, {{:., _,
-            [_, func_name]}, [], 
-            []} = replacer
+        {
+          ast,
+          {{:., _, [_, func_name]}, [], []} = replacer
         } ->
           case Db.impl_validate(func_name) do
             true -> replacer
-            _ -> ast 
+            _ -> ast
           end
-        other -> other
+
+        other ->
+          other
       end
     )
   end
@@ -154,6 +155,7 @@ defmodule Optimizer do
     info = SumMag.include_specified_functions?(term, :String, String.__info__(:functions))
     Optimizer.init(term, info)
   end
+
   def parallelize_term(term, _), do: term
 
   def init(ast, []), do: ast
@@ -169,8 +171,7 @@ defmodule Optimizer do
   end
 
   defp parallelize([{key, 1}], func) do
-    res =
-      Analyzer.supported?(func)
+    res = Analyzer.supported?(func)
 
     call_nif(res, key)
   end
@@ -207,13 +208,15 @@ defmodule Optimizer do
 
     func_name = func_name |> String.to_atom()
 
-    {:ok, quote do
-      # try do
-      ReplaceModule.unquote(func_name)
-      # rescue
-      #   e in RuntimeError -> ast
-      # end
-    end}
+    {:ok,
+     quote do
+       # try do
+       ReplaceModule.unquote(func_name)
+       # rescue
+       #   e in RuntimeError -> ast
+       # end
+     end}
   end
+
   defp call_nif({:error, _}, _), do: {:error, "Not Supported"}
 end

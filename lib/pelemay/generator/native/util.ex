@@ -12,7 +12,7 @@ defmodule Pelemay.Generator.Native.Util do
   end
 
   def make_expr(operators, args, type)
-       when is_list(operators) and is_list(args) do
+      when is_list(operators) and is_list(args) do
     args = args |> to_string(:args, type)
 
     operators = operators |> to_string(:op)
