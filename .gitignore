@@ -1,3 +1,4 @@
+.tool-versions
 *.beam
 /config/*.secret.exs
 
