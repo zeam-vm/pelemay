@@ -1,5 +1,6 @@
-defmodule AnalyzerAFuncTest do
+defmodule AnalyzerTest do
   use ExUnit.Case, async: true
+  doctest Analyzer
 
   @subject Analyzer
 
@@ -10,7 +11,7 @@ defmodule AnalyzerAFuncTest do
       assert {:|>, [context: _, import: Kernel], [[1, 2, 3], right]} = quoted
       assert {_enum_map, [], anonymous_function} = right
       assert {:ok, info} = @subject.supported?(anonymous_function)
-      assert %{args: [{:x, [], AnalyzerAFuncTest}, 1], operators: [:+]} == info
+      assert %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]} == info
     end
 
     test "with pipe, anonymous function: fn, two arguments" do
@@ -21,7 +22,7 @@ defmodule AnalyzerAFuncTest do
       assert {:ok, info} = @subject.supported?(anonymous_function)
 
       assert %{
-               args: [{:x, [], AnalyzerAFuncTest}, {:y, [], AnalyzerAFuncTest}, 1],
+               args: [{:x, [], AnalyzerTest}, {:y, [], AnalyzerTest}, 1],
                operators: [:+, :+]
              } == info
     end
@@ -31,7 +32,7 @@ defmodule AnalyzerAFuncTest do
 
       assert {_enum_map, [], [[1, 2, 3], anonymous_function]} = quoted
       assert {:ok, info} = @subject.supported?(anonymous_function)
-      assert %{args: [{:x, [], AnalyzerAFuncTest}, 1], operators: [:+]} == info
+      assert %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]} == info
     end
 
     test "with anonymous function: fn, two arguments" do
@@ -41,7 +42,7 @@ defmodule AnalyzerAFuncTest do
       assert {:ok, info} = @subject.supported?(anonymous_function)
 
       assert %{
-               args: [{:x, [], AnalyzerAFuncTest}, {:y, [], AnalyzerAFuncTest}, 1],
+               args: [{:x, [], AnalyzerTest}, {:y, [], AnalyzerTest}, 1],
                operators: [:+, :+]
              } == info
     end
@@ -98,7 +99,7 @@ defmodule AnalyzerAFuncTest do
 
       assert @subject.polynomial_map(expr) == %{
                operators: [:+],
-               args: [{:x, [], AnalyzerAFuncTest}, 2]
+               args: [{:x, [], AnalyzerTest}, 2]
              }
     end
   end
