@@ -46,6 +46,6 @@ defmodule Pelemay do
     |> Optimizer.replace(caller_name)
 
     Generator.generate(__CALLER__.module)
-    Optimizer.consist_context(ret, caller_name)
+    Optimizer.consist_context(ret)
   end
 end

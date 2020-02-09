@@ -5,7 +5,9 @@ defmodule Optimizer do
   import SumMag
   alias Pelemay.Db
 
-  @term_options [enum: true]
+  require Logger
+
+  @term_options [Enum: true, String: true]
 
   @doc """
   Optimize funcions which be enclosed `defpelemay`, using `optimize_***` function.
@@ -22,7 +24,7 @@ defmodule Optimizer do
   ```
   """
   def replace(definitions, caller) do
-    res = definitions
+    definitions
     |> melt_block
     |> Enum.map(&optimize_func(&1))
     |> iced_block
@@ -39,18 +41,18 @@ defmodule Optimizer do
     )
   end
 
-  def consist_context(definitions, module) do
+  def consist_context(definitions) do
     Macro.prewalk(
       definitions,
       fn
         { 
           ast, {{:., _,
-            [module, func_name]}, [], 
+            [_, func_name]}, [], 
             []} = replacer
         } ->
           case Db.impl_validate(func_name) do
             true -> replacer
-            other -> ast 
+            _ -> ast 
           end
         other -> other
       end
@@ -143,8 +145,73 @@ defmodule Optimizer do
     arg
   end
 
-  def parallelize_term(term, {:enum, true}) do
-    Optimizer.Enum.init(term)
+  def parallelize_term(term, {:Enum, true}) do
+    info = SumMag.include_specified_functions?(term, :Enum, Enum.__info__(:functions))
+    Optimizer.init(term, info)
   end
+
+  # def parallelize_term(term, {:String, true}) do
+  #   info = SumMag.include_specified_functions?(term, :String, String.__info__(:functions))
+  #   Optimizer.init(term, info)
+  # end
   def parallelize_term(term, _), do: term
+
+  def init(ast, info) do
+    {_func, _meta, arg_func} = ast
+    optimized_ast = parallelize(info, arg_func)
+
+    case optimized_ast do
+      {:ok, opt_ast} -> {ast, opt_ast}
+      {:error, _} -> ast
+    end
+  end
+
+  defp parallelize([{key, 1}], func) do
+    res =
+      Analyzer.supported?(func)
+
+    call_nif(res, key)
+  end
+
+  defp parallelize([{key, arity}], func) do
+    parallelize([{key, arity - 1}], func)
+  end
+
+  defp call_nif({:ok, asm}, key) do
+    %{
+      operators: operators,
+      args: args
+    } = asm
+
+    func_name = Optimizer.AFunction.generate_function_name(key, asm)
+
+    case Db.validate(func_name) do
+      false ->
+        nil
+
+      _ ->
+        info = %{
+          module: :Enum,
+          function: key,
+          nif_name: func_name,
+          arg_num: 1,
+          args: args,
+          operators: operators,
+          impl: nil
+        }
+
+        Db.register(info)
+    end
+
+    func_name = func_name |> String.to_atom()
+
+    {:ok, quote do
+      # try do
+      ReplaceModule.unquote(func_name)
+      # rescue
+      #   e in RuntimeError -> ast
+      # end
+    end}
+  end
+  defp call_nif({:error, _}, _), do: {:error, "Not Supported"}
 end
