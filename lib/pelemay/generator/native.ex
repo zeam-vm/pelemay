@@ -26,7 +26,7 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp generate_function([func_info]) do
-    enum_map(func_info)
+    enum_map_SIMD(func_info)
   end
 
   defp to_str_code(list) when list |> is_list do
@@ -182,8 +182,8 @@ defmodule Pelemay.Generator.Native do
     end
   end
 
-  # defp enum_map_(str, operator, num)
-  defp enum_map(%{nif_name: nif_name, args: args, operators: operators}) do
+  # defp enum_map_SIMD_(str, operator, num)
+  defp enum_map_SIMD(%{nif_name: nif_name, args: args, operators: operators}) do
     expr_d = make_expr(operators, args, "double")
     expr_l = make_expr(operators, args, "long")
 
@@ -218,6 +218,105 @@ defmodule Pelemay.Generator.Native do
       for(size_t i = 0; i < vec_l; i++) {
         vec_long[i] = #{expr_l};
       }
+      return enif_make_list_from_int64_vec(env, vec_long, vec_l);
+    }
+    """
+  end
+
+  # defp enum_map_CUDA_(str, operator, num)
+  defp enum_map_CUDA(%{nif_name: nif_name, args: args, operators: operators}) do
+    expr_d = make_expr(operators, args, "double")
+    expr_l = make_expr(operators, args, "long")
+
+    # expr_d = case operators do
+    #   :% -> ""
+    #   _ -> "#{str_operator}  #{args}"
+    # end
+
+    # expr_l = "#{str_operator} (long)#{args}"
+
+    """
+    __global__ void enum_map_double_kernel(const size_t vec_l, double* vec_double)
+    {
+      int i = blockIdx.x * blockDim.x + threadIdx.x;
+      if(i < vec_l){
+        vec_double[i] = #{expr_d};
+      }
+    }
+
+    __global__ void enum_map_long_kernel(const size_t vec_l, long* vec_long)
+    {
+      int i = blockIdx.x * blockDim.x + threadIdx.x;
+      if(i < vec_l){
+        vec_long[i] = #{expr_l};
+      }
+    }
+
+    void enum_map_double_host(const size_t vec_l, double* vec_double)
+    {
+      double* dev_vec_double;
+      if (__builtin_expect((cudaMalloc(&dev_vec_double, vec_l * sizeof(vec_double[0])) != cudaSuccess), false)) {
+        // the occured error may be cudaErrorInvalidValue or cudaErrorMemoryAllocation.
+        return enif_make_badarg(env);
+      }
+      if (__builtin_expect(cudaMemcpy(dev_vec_double, vec_double, vec_l * sizeof(vec_double[0]), cudaMemcpyHostToDevice) != cudaSuccess), false)) {
+        // the occured error may be cudaErrorInvalidValue or cudaErrorInvalidMemcpyDirection.
+        return enif_make_badarg(env);
+      }
+  
+      enum_map_double_kernel <<< (vec_l + 255)/256, 256 >>> (vec_l, vec_double);
+  
+      if (__builtin_expect(cudaMemcpy(vec_double, dev_vec_double, vec_l * sizeof(vec_double[0]), cudaMemcpyDeviceToHost) != cudaSuccess), false)) {
+        // the occured error may be cudaErrorInvalidValue or cudaErrorInvalidMemcpyDirection.
+        return enif_make_badarg(env);
+      }
+      if (__builtin_expect(cudaFree(dev_vec_double) != cudaSuccess), false)) {
+        // the occured error may be cudaErrorInvalidValue.
+        return enif_make_badarg(env);
+      }
+    }
+
+    void enum_map_long_host(const size_t vec_l, long* vec_long)
+    {
+      long* dev_vec_long;
+      if (__builtin_expect((cudaMalloc(&dev_vec_long, vec_l * sizeof(vec_long[0])) != cudaSuccess), false)) {
+        // the occured error may be cudaErrorInvalidValue or cudaErrorMemoryAllocation.
+        return enif_make_badarg(env);
+      }      
+      if (__builtin_expect(cudaMemcpy(dev_vec_long, vec_long, vec_l * sizeof(vec_long[0]), cudaMemcpyHostToDevice) != cudaSuccess), false)) {
+        // the occured error may be  cudaErrorInvalidValue or cudaErrorInvalidMemcpyDirection.
+        return enif_make_badarg(env);
+      }
+  
+      enum_map_long_kernel <<< (vec_l + 255)/256, 256 >>> (vec_l, vec_long);
+  
+      if (__builtin_expect(cudaMemcpy(vec_long, dev_vec_long, vec_l * sizeof(vec_long[0]), cudaMemcpyDeviceToHost) != cudaSuccess), false)) {
+        // the occured error may be  cudaErrorInvalidValue or cudaErrorInvalidMemcpyDirection.
+        return enif_make_badarg(env);
+      }
+      if (__builtin_expect(cudaFree(dev_vec_long) != cudaSuccess), false)) {
+        // the occured error may be cudaErrorInvalidValue.
+        return enif_make_badarg(env);
+      }
+    }
+
+    static ERL_NIF_TERM
+    #{nif_name}(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+    {
+      if (__builtin_expect((argc != 1), false)) {
+        return enif_make_badarg(env);
+      }
+      ErlNifSInt64 *vec_long;
+      size_t vec_l;
+      double *vec_double;
+      if (__builtin_expect((enif_get_int64_vec_from_list(env, argv[0], &vec_long, &vec_l) == fail), false)) {
+        if (__builtin_expect((enif_get_double_vec_from_list(env, argv[0], &vec_double, &vec_l) == fail), false)) {
+          return enif_make_badarg(env);
+        }
+        enum_map_double_host(vec_l, vec_double);
+        return enif_make_list_from_double_vec(env, vec_double, vec_l);
+      }
+      enum_map_long_host(vec_l, vec_long);
       return enif_make_list_from_int64_vec(env, vec_long, vec_l);
     }
     """
