@@ -259,18 +259,18 @@ defmodule Pelemay.Generator.Native do
         // the occured error may be cudaErrorInvalidValue or cudaErrorMemoryAllocation.
         return enif_make_badarg(env);
       }
-      if (__builtin_expect(cudaMemcpy(dev_vec_double, vec_double, vec_l * sizeof(vec_double[0]), cudaMemcpyHostToDevice) != cudaSuccess), false)) {
+      if (__builtin_expect((cudaMemcpy(dev_vec_double, vec_double, vec_l * sizeof(vec_double[0]), cudaMemcpyHostToDevice) != cudaSuccess), false)) {
         // the occured error may be cudaErrorInvalidValue or cudaErrorInvalidMemcpyDirection.
         return enif_make_badarg(env);
       }
   
       enum_map_double_kernel <<< (vec_l + 255)/256, 256 >>> (vec_l, vec_double);
   
-      if (__builtin_expect(cudaMemcpy(vec_double, dev_vec_double, vec_l * sizeof(vec_double[0]), cudaMemcpyDeviceToHost) != cudaSuccess), false)) {
+      if (__builtin_expect((cudaMemcpy(vec_double, dev_vec_double, vec_l * sizeof(vec_double[0]), cudaMemcpyDeviceToHost) != cudaSuccess), false)) {
         // the occured error may be cudaErrorInvalidValue or cudaErrorInvalidMemcpyDirection.
         return enif_make_badarg(env);
       }
-      if (__builtin_expect(cudaFree(dev_vec_double) != cudaSuccess), false)) {
+      if (__builtin_expect((cudaFree(dev_vec_double) != cudaSuccess), false)) {
         // the occured error may be cudaErrorInvalidValue.
         return enif_make_badarg(env);
       }
@@ -283,18 +283,18 @@ defmodule Pelemay.Generator.Native do
         // the occured error may be cudaErrorInvalidValue or cudaErrorMemoryAllocation.
         return enif_make_badarg(env);
       }      
-      if (__builtin_expect(cudaMemcpy(dev_vec_long, vec_long, vec_l * sizeof(vec_long[0]), cudaMemcpyHostToDevice) != cudaSuccess), false)) {
+      if (__builtin_expect((cudaMemcpy(dev_vec_long, vec_long, vec_l * sizeof(vec_long[0]), cudaMemcpyHostToDevice) != cudaSuccess), false)) {
         // the occured error may be  cudaErrorInvalidValue or cudaErrorInvalidMemcpyDirection.
         return enif_make_badarg(env);
       }
   
       enum_map_long_kernel <<< (vec_l + 255)/256, 256 >>> (vec_l, vec_long);
   
-      if (__builtin_expect(cudaMemcpy(vec_long, dev_vec_long, vec_l * sizeof(vec_long[0]), cudaMemcpyDeviceToHost) != cudaSuccess), false)) {
+      if (__builtin_expect((cudaMemcpy(vec_long, dev_vec_long, vec_l * sizeof(vec_long[0]), cudaMemcpyDeviceToHost) != cudaSuccess), false)) {
         // the occured error may be  cudaErrorInvalidValue or cudaErrorInvalidMemcpyDirection.
         return enif_make_badarg(env);
       }
-      if (__builtin_expect(cudaFree(dev_vec_long) != cudaSuccess), false)) {
+      if (__builtin_expect((cudaFree(dev_vec_long) != cudaSuccess), false)) {
         // the occured error may be cudaErrorInvalidValue.
         return enif_make_badarg(env);
       }
