@@ -42,4 +42,12 @@ defmodule GeneratedCodeTest do
       assert [{1, 3}, {2, 4}] == Sample.list_zip([1, 2], [3, 4])
     end
   end
+
+  describe "String module" do
+    test "replace/3" do
+      assert "AAAA" == Sample.replace_sample_c1("aaaa")
+      assert "AAAA" == Sample.replace_sample_c2("aaaa")
+      assert "AAAA" == Sample.replace_sample_c3("aaaa", "a", "A")
+    end
+  end
 end

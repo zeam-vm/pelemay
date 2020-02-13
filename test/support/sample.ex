@@ -2,6 +2,9 @@ defmodule Sample do
   import Pelemay
   require Pelemay
 
+  @pattern "a"
+  @replacement "A"
+
   defpelemay do
     def list_square(list) when is_list(list) do
       list
@@ -42,6 +45,18 @@ defmodule Sample do
 
     def list_zip(a, b) do
       Enum.zip(a, b)
+    end
+
+    def replace_sample_c1(subject) do
+      String.replace(subject, @pattern, @replacement)
+    end
+
+    def replace_sample_c2(subject) do
+      subject |> String.replace(@pattern, @replacement)
+    end
+
+    def replace_sample_c3(subject, pattern, replacement) do
+      String.replace(subject, pattern, replacement)
     end
   end
 end
