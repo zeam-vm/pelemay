@@ -15,54 +15,61 @@ defmodule Analyzer do
 
   iex> var = quote do x end
   ...> Analyzer.supported?(var)
-  {:error, {:x, [], AnalyzerTest}}
+  [var: {:x, [], AnalyzerTest}]
 
   iex> var = quote do [x] end 
   iex> Analyzer.supported?(var)
-  {:ok, %{args: [{:x, [], AnalyzerTest}], operators: []}}
+  [var: {:x, [], AnalyzerTest}]
 
   iex> quote do
   ...>   fn x -> x + 1 end
   ...> end |> Analyzer.supported?
-  {:ok, %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}}
+  [func: %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}]
   """
   @spec supported?(Macro.t()) :: asm
-  def supported?([{val, line, atom}]) when is_atom(atom) do
-    asm = %{
-      operators: [],
-      args: [{val, line, atom}]
-    }
 
-    {:ok, asm}
+  def supported?({_, _, atom} = var) when is_atom(atom) do
+    [var: var]
   end
 
-  def supported?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
-    supported_expr?(expr)
+  def supported?({:@, _, [{_, _, nil}]} = var) do
+    [var: var]
   end
+
+  # def supported?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
+  #   supported_expr?(expr)
+  # end
 
   def supported?({:fn, _, [{:->, _, [_arg, expr]}]}) do
     supported_expr?(expr)
   end
 
   # Anonymous functions by &
-  def supported?([{:&, _, other}]) do
-    other |> hd |> supported_expr?
-  end
+  # def supported?([{:&, _, other}]) do
+  #   other |> hd |> supported_expr?
+  # end
 
   def supported?({:&, _, other}) do
     other |> hd |> supported_expr?
   end
 
+  def supported?([num]) when is_number(num), do: {:error, [num]}
+
+  def supported?(args) when is_list(args) do
+    func = fn node, asm ->
+      [supported?(node) | asm]
+    end
+
+    args
+    |> Enum.reduce([], func)
+    |> List.flatten()
+    |> Enum.reverse()
+  end
+
   def supported?(other), do: {:error, other}
 
   defp supported_expr?({_atom, _, [_left, _right]} = ast) do
-    expr_map = ast |> polynomial_map
-
-    if verify(expr_map) do
-      {:ok, expr_map}
-    else
-      {:error, ast}
-    end
+    ast |> polynomial_map
   end
 
   def polynomial_map(ast) do
@@ -71,7 +78,8 @@ defmodule Analyzer do
       args: []
     }
 
-    Macro.prewalk(ast, acc, &numerical?/2) |> elem(1)
+    polymap = Macro.prewalk(ast, acc, &numerical?/2) |> elem(1)
+    [func: polymap]
   end
 
   defp operator(:+), do: :+
@@ -88,7 +96,6 @@ defmodule Analyzer do
   defp operator(:>), do: :>
   defp operator(:==), do: :==
   defp operator(:!), do: :!
-  defp operator(:!=), do: :!=
   defp operator(:!==), do: :!==
   defp operator(:<>), do: :<>
 
@@ -141,14 +148,6 @@ defmodule Analyzer do
         false -> acc
         _ -> [term | acc]
       end
-    end
-  end
-
-  defp verify(%{operators: operators, args: args}) do
-    if length(operators) != length(args) - 1 do
-      false
-    else
-      true
     end
   end
 end

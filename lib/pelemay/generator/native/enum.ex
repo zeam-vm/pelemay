@@ -2,7 +2,17 @@ defmodule Pelemay.Generator.Native.Enum do
   alias Pelemay.Generator.Native.Util, as: Util
   alias Pelemay.Db
 
-  def map(%{nif_name: nif_name, args: args, operators: operators} = info) do
+  def map(info) do
+    %{
+      nif_name: nif_name,
+      args: [
+        func: %{
+          args: args,
+          operators: operators
+        }
+      ]
+    } = info
+
     expr_d = Util.make_expr(operators, args, "double")
     expr_l = Util.make_expr(operators, args, "long")
 
@@ -43,8 +53,7 @@ defmodule Pelemay.Generator.Native.Enum do
       module: _,
       function: _,
       arg_num: _,
-      args: _,
-      operators: _
+      args: _
     } = info
 
     {:ok, ret} = File.read(__DIR__ <> "/enum.c")

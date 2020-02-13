@@ -54,9 +54,7 @@ defmodule Pelemay.Generator.Interface do
       nif_name: nif_name,
       module: _,
       function: _,
-      arg_num: num,
-      args: _,
-      operators: _
+      arg_num: num
     } = func_info
 
     args = generate_string_arguments(num)
