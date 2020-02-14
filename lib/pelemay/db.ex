@@ -40,6 +40,21 @@ defmodule Pelemay.Db do
     end
   end
 
+  def impl_validate(func_name) do
+    get_functions()
+    |> List.flatten()
+    |> case do
+      [] ->
+        {:error, "DB is empty"}
+
+      other ->
+        other
+        |> Enum.filter(&(Map.get(&1, :nif_name) == "#{func_name}"))
+        |> hd
+        |> Map.get(:impl)
+    end
+  end
+
   defp only_one?(list) do
     !Enum.find_value(list, false, &(&1 == true))
   end
@@ -52,6 +67,20 @@ defmodule Pelemay.Db do
   end
 
   def get_function([]), do: ""
+
+  def get_function(func_name) when is_bitstring(func_name) do
+    get_functions()
+    |> List.flatten()
+    |> case do
+      [] ->
+        {:error, "DB is empty"}
+
+      other ->
+        other
+        |> Enum.filter(&(Map.get(&1, :nif_name) == "#{func_name}"))
+        |> hd
+    end
+  end
 
   def get_function(id) do
     ret =
@@ -79,33 +108,10 @@ defmodule Pelemay.Db do
     @table_name |> :ets.insert({:func_num, id + 1})
   end
 
-  # def on_load do
-  #   case :mnesia.start do
-  #     :ok -> case :mnesia.create_table( :functions, [ attributes: [ :id, :module_name, :function_name, :is_public, :is_nif, :args, :do ] ] ) do
-  #       {:atomic, :ok} -> :ok
-  #       _ -> :err
-  #     end
-  #     _ -> :err
-  #   end
-  # end
+  def clear do
+    :ets.delete_all_objects(@table_name)
 
-  # def write_function({key, value}, module) do
-  #   :mnesia.dirty_write({
-  #     :functions,
-  #     key,
-  #     module,
-  #     value[:function_name],
-  #     value[:is_public],
-  #     value[:is_nif],
-  #     value[:args],
-  #     value[:do]})
-  # end
-
-  # def read_function(id) do
-  #   :mnesia.dirty_read({:functions, id})
-  # end
-
-  # def all_functions() do
-  #   :mnesia.dirty_all_keys(:functions)
-  # end
+    @table_name
+    |> :ets.insert({:func_num, 1})
+  end
 end

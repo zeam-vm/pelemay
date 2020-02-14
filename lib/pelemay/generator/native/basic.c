@@ -323,3 +323,71 @@ enif_get_range(ErlNifEnv *env, ERL_NIF_TERM map, ErlNifSInt64 *from, ErlNifSInt6
   return success;
 }
 
+int string_replace_binary(ErlNifBinary subject, ErlNifBinary pattern, ErlNifBinary replacement, bool global, ErlNifBinary *object)
+{
+  if(__builtin_expect(!enif_alloc_binary(subject.size, object), false)) {
+    return false;
+  }
+  unsigned subject_i = 0, object_i = 0;
+#pragma clang loop vectorize_width(loop_vectorize_width)
+  while(subject_i < subject.size) {
+    while(subject_i < subject.size && subject.data[subject_i] != pattern.data[0]) {
+      object->data[object_i++] = subject.data[subject_i++];
+    }
+    if(__builtin_expect(subject_i >= subject.size, false)) {
+      return true;
+    }
+    unsigned pattern_i = 0;
+    while(subject_i + pattern_i < subject.size
+      && pattern_i < pattern.size 
+      && subject.data[subject_i + pattern_i] == pattern.data[pattern_i]) {
+      pattern_i++;
+    }
+    if(__builtin_expect(pattern_i == pattern.size, true)) {
+      if(__builtin_expect(pattern.size != replacement.size, false)) {
+        if(__builtin_expect(!enif_realloc_binary(object, object->size - pattern.size + replacement.size), false)) {
+          return false;
+        }
+      }
+      subject_i += pattern.size;
+      for(unsigned replacement_i = 0; replacement_i < replacement.size; replacement_i++) {
+        object->data[object_i++] = replacement.data[replacement_i];
+      }
+      if(__builtin_expect(!global, false)) {
+        while(subject_i < subject.size) {
+          object->data[object_i++] = subject.data[subject_i++];
+        }
+        return true;
+      }
+    } else if(__builtin_expect(subject_i < subject.size, true)) {
+      object->data[object_i++] = subject.data[subject_i++];
+    } else {
+      return true;
+    }
+  }
+  return true;
+}
+
+ERL_NIF_TERM string_replace(ErlNifEnv *env, ERL_NIF_TERM subject, ERL_NIF_TERM pattern, ERL_NIF_TERM replacement, bool global)
+{
+  ErlNifBinary subject_binary;
+  if(__builtin_expect(!enif_inspect_binary(env, subject, &subject_binary), false)) {
+    return enif_make_badarg(env);
+  }
+  ErlNifBinary pattern_binary;
+  if(__builtin_expect(!enif_inspect_binary(env, pattern, &pattern_binary), false)) {
+    return enif_make_badarg(env);
+  }
+  ErlNifBinary replacement_binary;
+  if(__builtin_expect(!enif_inspect_binary(env, replacement, &replacement_binary), false)) {
+    return enif_make_badarg(env);
+  }
+  ErlNifBinary object_binary;
+  if(__builtin_expect(!string_replace_binary(subject_binary, pattern_binary, replacement_binary, global, &object_binary), false)) {
+    return enif_make_badarg(env);
+  }
+  return enif_make_binary(env, &object_binary);
+}
+
+
+

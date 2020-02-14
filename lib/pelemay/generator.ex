@@ -128,12 +128,12 @@ defmodule Pelemay.Generator do
     Application.app_dir(:pelemay, "priv")
     |> File.mkdir()
 
-    case Interface.generate(module) do
+    case Native.generate(module) do
       {:error, message} ->
         Logger.warn(message)
 
       :ok ->
-        Native.generate(module)
+        Interface.generate(module)
         Builder.generate(module)
     end
   end

@@ -42,13 +42,11 @@ defmodule Pelemay do
       |> Generator.elixir_nif_module()
       |> String.to_atom()
 
-    functions
-    |> Optimizer.replace(caller_name)
-    |> pelemaystub(__CALLER__.module)
-  end
+    ret =
+      functions
+      |> Optimizer.replace(caller_name)
 
-  defp pelemaystub(ret, module) do
-    Generator.generate(module)
-    ret
+    Generator.generate(__CALLER__.module)
+    Optimizer.consist_context(ret)
   end
 end

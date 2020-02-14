@@ -266,7 +266,7 @@ defmodule SumMag do
   Find captured variable in the anonymous function.
 
   """
-  def quoted_var?({:&, _, [1]}), do: true
+  def quoted_var?({:&, _, [num]}) when is_number(num), do: true
   def quoted_var?({atom, _meta, nil}) when is_atom(atom), do: true
   def quoted_var?({atom, [], _context}) when is_atom(atom), do: true
   def quoted_var?(_other), do: false
@@ -294,12 +294,12 @@ defmodule SumMag do
   ...> |> Enum.map(&(&1 + 1))
   ...> |> Enum.map(&(&1 + 2))
   ...> end |>
-  ...> SumMag.include_specified_func?(:Enum, :map)
+  ...> SumMag.include_specified_func?(:Enum, {:map, 2})
   true
   ```
   """
-  @spec include_specified_func?(Macro.input(), atom, atom) :: boolean()
-  def include_specified_func?(ast_term, module, func) do
+  @spec include_specified_func?(Macro.input(), atom, {atom, number}) :: boolean()
+  def include_specified_func?(ast_term, module, {func, arity}) do
     verify = fn
       {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, args} = ast, acc ->
         if code_module == module && code_func == func do
@@ -326,8 +326,8 @@ defmodule SumMag do
   ...> |> Enum.map(&(&1 + 1))
   ...> |> Enum.map(&(&1 + 2))
   ...> end |>
-  ...> SumMag.include_specified_functions?(:Enum, [:map, :zip])
-  %{map: 2}
+  ...> SumMag.include_specified_functions?(:Enum, [map: 2, zip: 2])
+  [map: 2]
   ```
   """
   @spec include_specified_functions?(Macro.input(), atom, [atom, ...]) :: [...]
@@ -337,8 +337,8 @@ defmodule SumMag do
         if code_module != module do
           {ast, acc}
         else
-          case Enum.find_value(func, &(&1 == code_func)) do
-            true -> {ast, Map.update(acc, code_func, 1, &(&1 + 1))}
+          case Keyword.fetch(func, code_func) do
+            {:ok, _} -> {ast, Keyword.update(acc, code_func, 1, &(&1 + 1))}
             other -> {ast, acc}
           end
         end
@@ -347,7 +347,7 @@ defmodule SumMag do
         {ast, acc}
     end
 
-    {_, match} = Macro.prewalk(ast_term, %{}, verify)
+    {_, match} = Macro.prewalk(ast_term, [], verify)
 
     match
   end

@@ -27,7 +27,7 @@ defmodule GeneratedCodeTest do
     end
 
     test "Various Enum funcions" do
-      assert [2, 4, 6] == Sample.list_mult_sort([3, 1, 2])
+      assert [6, 4, 2] == Sample.list_mult_sort([3, 1, 2])
     end
 
     test "RAISE: Various Type List" do
@@ -40,6 +40,19 @@ defmodule GeneratedCodeTest do
   describe "Input lists" do
     test "One Enum.zip" do
       assert [{1, 3}, {2, 4}] == Sample.list_zip([1, 2], [3, 4])
+    end
+  end
+
+  describe "String module" do
+    test "replace/3" do
+      assert "AAAA" == Sample.replace_sample_c1("aaaa")
+      assert "AAAA" == Sample.replace_sample_c2("aaaa")
+      assert "AAAA" == Sample.replace_sample_c3("aaaa", "a", "A")
+
+      assert """
+             abcdefghi
+             BuzzBuzzBuzzBuzz
+             """ == Sample.string_replace_c4()
     end
   end
 end

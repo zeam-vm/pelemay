@@ -1,36 +1,35 @@
 defmodule Optimizer.AFunction do
-  def generate_function_name(func, %{args: args, operators: operators})
-      when is_atom(func) do
-    fun = fn
-      {:&, _meta, [1]} -> "elem"
-      {var, _, nil} -> Atom.to_string(var)
-      other -> "#{other}"
-    end
-
-    [h | args] = Enum.map(args, &fun.(&1))
-
-    expr =
-      operators
-      |> Enum.map(&operator_to_string(&1))
-      |> Enum.zip(args)
-
+  def generate_function_name(func, polymap)
+      when is_list(polymap) do
     ret =
-      expr
-      |> Enum.reduce(h, fn {op, arg}, acc -> acc <> "_#{op}_#{arg}" end)
+      polymap
+      |> Enum.reduce("", fn {_, x}, acc ->
+        acc <> "_" <> generate_function_name(x)
+      end)
 
-    func_name = Atom.to_string(func) <> "_"
-
-    func_name <> ret
+    Atom.to_string(func) <> ret
   end
 
-  def operator_to_string(operator)
-      when operator |> is_atom do
-    case operator do
-      :* -> "mult"
-      :+ -> "plus"
-      :- -> "minus"
-      :/ -> "div"
-      :rem -> "mod"
-    end
+  def generate_function_name({:&, _meta, [num]}) do
+    "elem#{num}"
   end
+
+  def generate_function_name({var, _, nil}) do
+    Atom.to_string(var)
+  end
+
+  def generate_function_name({:@, _, [{var, _, nil}]}) do
+    Atom.to_string(var) |> String.upcase()
+  end
+
+  def generate_function_name(%{args: args, operators: operators}) do
+    [h | string_args] = Enum.map(args, &generate_function_name(&1))
+
+    operators
+    |> Enum.map(&Analyzer.operator_to_string(&1))
+    |> Enum.zip(string_args)
+    |> Enum.reduce(h, fn {op, arg}, acc -> acc <> "_#{op}_#{arg}" end)
+  end
+
+  def generate_function_name(other), do: "#{other}"
 end
