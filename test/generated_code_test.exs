@@ -48,6 +48,11 @@ defmodule GeneratedCodeTest do
       assert "AAAA" == Sample.replace_sample_c1("aaaa")
       assert "AAAA" == Sample.replace_sample_c2("aaaa")
       assert "AAAA" == Sample.replace_sample_c3("aaaa", "a", "A")
+
+      assert """
+             abcdefghi
+             BuzzBuzzBuzzBuzz
+             """ == Sample.string_replace_c4()
     end
   end
 end

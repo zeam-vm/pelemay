@@ -173,7 +173,7 @@ defmodule Optimizer do
   end
 
   defp parallelize(module_info, args) do
-    Analyzer.supported?(args)
+    Analyzer.to_keyword(args)
     |> verify
     |> case do
       {:ok, polymap} -> {:ok, call_nif(polymap, module_info)}
@@ -182,7 +182,7 @@ defmodule Optimizer do
   end
 
   defp call_nif(polymap, module_info) do
-    [{module, [{key, num}]}] = module_info
+    [{module, [{key, _num}]}] = module_info
 
     func_name = Optimizer.AFunction.generate_function_name(key, polymap)
 
@@ -211,8 +211,8 @@ defmodule Optimizer do
 
     flat_vars =
       polymap
-      |> Keyword.get_values(:var)
       |> List.flatten()
+      |> Keyword.get_values(:var)
 
     {
       {:., [], [{:__aliases__, [alias: false], [:ReplaceModule]}, func_name]},
@@ -224,11 +224,13 @@ defmodule Optimizer do
   defp verify(polymap) when is_list(polymap) do
     var_num =
       polymap
+      |> List.flatten()
       |> Keyword.get_values(:var)
       |> length
 
     func_num =
       polymap
+      |> List.flatten()
       |> Keyword.get_values(:func)
       |> length
 
@@ -236,6 +238,7 @@ defmodule Optimizer do
       {0, 1} -> {:ok, polymap}
       {0, 0} -> {:error, polymap}
       {_, 0} -> {:ok, polymap}
+      _ -> {:error, polymap}
     end
   end
 end

@@ -8,6 +8,24 @@ defmodule Analyzer do
   """
 
   @doc """
+  iex> var = quote do [x] end 
+  iex> Analyzer.to_keyword(var)
+  [var: {:x, [], AnalyzerTest}]
+  """
+  def to_keyword(args) when is_list(args) do
+    func = fn node, asm ->
+      [supported?(node) | asm]
+    end
+
+    args
+    |> Enum.reduce([], func)
+    |> Enum.reverse()
+    |> List.flatten()
+  end
+
+  def to_keyword(other), do: [var: other]
+
+  @doc """
   Check if expressions can be optimzed.
 
   When the expression is enable to optimize, {:ok, map} is returned.
@@ -17,17 +35,12 @@ defmodule Analyzer do
   ...> Analyzer.supported?(var)
   [var: {:x, [], AnalyzerTest}]
 
-  iex> var = quote do [x] end 
-  iex> Analyzer.supported?(var)
-  [var: {:x, [], AnalyzerTest}]
-
   iex> quote do
   ...>   fn x -> x + 1 end
   ...> end |> Analyzer.supported?
   [func: %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}]
   """
   @spec supported?(Macro.t()) :: asm
-
   def supported?({_, _, atom} = var) when is_atom(atom) do
     [var: var]
   end
@@ -36,37 +49,26 @@ defmodule Analyzer do
     [var: var]
   end
 
-  # def supported?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
-  #   supported_expr?(expr)
-  # end
-
   def supported?({:fn, _, [{:->, _, [_arg, expr]}]}) do
     supported_expr?(expr)
   end
-
-  # Anonymous functions by &
-  # def supported?([{:&, _, other}]) do
-  #   other |> hd |> supported_expr?
-  # end
 
   def supported?({:&, _, other}) do
     other |> hd |> supported_expr?
   end
 
-  def supported?([num]) when is_number(num), do: {:error, [num]}
-
-  def supported?(args) when is_list(args) do
-    func = fn node, asm ->
-      [supported?(node) | asm]
-    end
-
-    args
-    |> Enum.reduce([], func)
-    |> List.flatten()
-    |> Enum.reverse()
+  def supported?(num) when is_number(num) do
+    [var: [num]]
   end
 
-  def supported?(other), do: {:error, other}
+  def supported?(other) do
+    other
+    |> Macro.quoted_literal?()
+    |> case do
+      false -> {:error, other}
+      true -> [var: other]
+    end
+  end
 
   defp supported_expr?({_atom, _, [_left, _right]} = ast) do
     ast |> polynomial_map
@@ -109,7 +111,7 @@ defmodule Analyzer do
       :- -> "minus"
       :/ -> "div"
       :rem -> "mod"
-      other -> "logic"
+      _ -> "logic"
     end
   end
 

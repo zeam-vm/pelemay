@@ -3,7 +3,9 @@ defmodule Optimizer.AFunction do
       when is_list(polymap) do
     ret =
       polymap
-      |> Enum.reduce("", fn {_, x}, acc -> acc <> "_" <> generate_function_name(x) end)
+      |> Enum.reduce("", fn {_, x}, acc ->
+        acc <> "_" <> generate_function_name(x)
+      end)
 
     Atom.to_string(func) <> ret
   end

@@ -12,7 +12,7 @@ defmodule AnalyzerTest do
       assert {_enum_map, [], anonymous_function} = right
 
       assert [func: %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}] ==
-               @subject.supported?(anonymous_function)
+               @subject.to_keyword(anonymous_function)
     end
 
     test "with pipe, anonymous function: fn, two arguments" do
@@ -26,7 +26,7 @@ defmodule AnalyzerTest do
                  args: [{:x, [], AnalyzerTest}, {:y, [], AnalyzerTest}, 1],
                  operators: [:+, :+]
                }
-             ] == @subject.supported?(anonymous_function)
+             ] == @subject.to_keyword(anonymous_function)
     end
 
     test "with anonymous function: fn, one argument" do
@@ -56,12 +56,12 @@ defmodule AnalyzerTest do
     end
 
     test "with basic types w/o tuples" do
-      assert {:error, 1} == @subject.supported?(1)
-      assert {:error, [1]} == @subject.supported?([1])
-      assert {:error, true} == @subject.supported?(true)
-      assert {:error, "1"} == @subject.supported?("1")
-      assert {:error, '1'} == @subject.supported?('1')
-      assert {:error, :a} == @subject.supported?(:a)
+      assert [var: 1] == @subject.to_keyword(1)
+      assert [var: [1]] == @subject.to_keyword([1])
+      assert [var: true] == @subject.to_keyword(true)
+      assert [var: "1"] == @subject.to_keyword("1")
+      assert [var: '1'] == @subject.to_keyword('1')
+      assert [var: :a] == @subject.to_keyword(:a)
     end
 
     test "with one-element-tuple" do
@@ -73,7 +73,7 @@ defmodule AnalyzerTest do
     test "with two-elements-tuple" do
       quoted = quote do: {1, 2}
 
-      assert {:error, quoted} == @subject.supported?(quoted)
+      assert [var: {1, 2}] == @subject.supported?(quoted)
     end
 
     test "with three-elements-tuple" do

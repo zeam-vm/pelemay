@@ -2,6 +2,10 @@ defmodule Sample do
   import Pelemay
   require Pelemay
 
+  @string """
+  abcdefghi
+  FizzBuzzFizzBuzz
+  """
   @pattern "a"
   @replacement "A"
 
@@ -57,6 +61,10 @@ defmodule Sample do
 
     def replace_sample_c3(subject, pattern, replacement) do
       String.replace(subject, pattern, replacement)
+    end
+
+    def string_replace_c4 do
+      String.replace(@string, "Fizz", "Buzz")
     end
   end
 end
