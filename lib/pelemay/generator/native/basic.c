@@ -334,8 +334,13 @@ int string_replace_binary(ErlNifBinary subject, ErlNifBinary pattern, ErlNifBina
     while(subject_i < subject.size && subject.data[subject_i] != pattern.data[0]) {
       object->data[object_i++] = subject.data[subject_i++];
     }
+    if(__builtin_expect(subject_i >= subject.size, false)) {
+      return true;
+    }
     unsigned pattern_i = 0;
-    while(pattern_i < pattern.size && subject.data[subject_i + pattern_i] == pattern.data[pattern_i]) {
+    while(subject_i + pattern_i < subject.size
+      && pattern_i < pattern.size 
+      && subject.data[subject_i + pattern_i] == pattern.data[pattern_i]) {
       pattern_i++;
     }
     if(__builtin_expect(pattern_i == pattern.size, true)) {
@@ -354,6 +359,10 @@ int string_replace_binary(ErlNifBinary subject, ErlNifBinary pattern, ErlNifBina
         }
         return true;
       }
+    } else if(__builtin_expect(subject_i < subject.size, true)) {
+      object->data[object_i++] = subject.data[subject_i++];
+    } else {
+      return true;
     }
   }
   return true;
