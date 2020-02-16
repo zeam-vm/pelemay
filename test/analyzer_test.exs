@@ -67,7 +67,7 @@ defmodule AnalyzerTest do
     test "with one-element-tuple" do
       quoted = quote do: {1}
 
-      assert [var: quoted] == @subject.supported?(quoted)
+      assert {:error, quoted} == @subject.supported?(quoted)
     end
 
     test "with two-elements-tuple" do
@@ -79,7 +79,7 @@ defmodule AnalyzerTest do
     test "with three-elements-tuple" do
       quoted = quote do: {1, 2, 3}
 
-      assert [var: quoted] == @subject.supported?(quoted)
+      assert {:error, quoted} == @subject.supported?(quoted)
     end
   end
 
