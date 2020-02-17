@@ -29,7 +29,7 @@ defmodule SumMagTest do
         |> Enum.map(&(&1 + 2))
       end
 
-    assert [map: 2] == SumMag.include_specified_functions?(ast, :Enum, map: 2)
+    assert [map: 2] == SumMag.include_specified_functions?(ast, Enum: [map: 2])
   end
 
   test "check support various funcions" do
@@ -39,6 +39,6 @@ defmodule SumMagTest do
         |> Enum.map(& &1)
       end
 
-    assert [zip: 1, map: 1] == SumMag.include_specified_functions?(ast, :Enum, map: 2, zip: 1)
+    assert [zip: 1, map: 1] == SumMag.include_specified_functions?(ast, Enum: [map: 2, zip: 1])
   end
 end

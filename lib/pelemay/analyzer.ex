@@ -1,7 +1,15 @@
 defmodule Analyzer do
   import SumMag
 
-  @type asm :: %{args: list(any), operators: list(atom)}
+  defmacro debug(val) do
+    {name, _, _} = val
+    name = Atom.to_string(name)
+
+    quote do
+      IO.inspect(unquote(val), label: unquote(name))
+    end
+  end
+
 
   @moduledoc """
   Provides optimizer for anonymous functions.
@@ -40,7 +48,6 @@ defmodule Analyzer do
   ...> end |> Analyzer.supported?
   [func: %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}]
   """
-  @spec supported?(Macro.t()) :: asm
   def supported?({_, _, atom} = var) when is_atom(atom) do
     [var: var]
   end
@@ -50,11 +57,11 @@ defmodule Analyzer do
   end
 
   def supported?({:fn, _, [{:->, _, [_arg, expr]}]}) do
-    supported_expr?(expr)
+    polynomial_map(expr)
   end
 
   def supported?({:&, _, other}) do
-    other |> hd |> supported_expr?
+    other |> hd |> polynomial_map
   end
 
   def supported?(num) when is_number(num) do
@@ -70,11 +77,7 @@ defmodule Analyzer do
     end
   end
 
-  defp supported_expr?({_atom, _, [_left, _right]} = ast) do
-    ast |> polynomial_map
-  end
-
-  def polynomial_map(ast) do
+  def polynomial_map({_atom, _, args} = ast) do
     acc = %{
       operators: [],
       args: []
@@ -82,6 +85,55 @@ defmodule Analyzer do
 
     polymap = Macro.prewalk(ast, acc, &numerical?/2) |> elem(1)
     [func: polymap]
+  end
+
+  defp numerical?({:&, _, _} = cap_val, acc), do: {cap_val, acc}
+
+  defp numerical?({_atom, _, context} = val, acc) when is_atom(context) do
+    {val, acc}
+  end 
+
+  defp numerical?({atom, _, args} = ast, acc) when is_list(args) do
+    %{
+      operators: operators,
+      args: map_args
+    } = acc
+
+    operators =
+      case operator(atom) do
+        false -> operators
+        atom -> [atom | operators]
+      end
+
+    map_args =
+      args
+      |> Enum.reverse()
+      |> Enum.reduce(
+        map_args,
+        fn x, acc ->
+          listing_literal(x, acc)
+        end
+      )
+
+    ret = %{
+      operators: operators,
+      args: map_args
+    }
+
+    {ast, ret}
+  end
+
+  defp numerical?(other, acc), do: {other, acc}
+
+  def listing_literal(term, acc) do
+    if Macro.quoted_literal?(term) do
+      [term | acc]
+    else
+      case quoted_var?(term) do
+        false -> acc
+        _ -> [term | acc]
+      end
+    end
   end
 
   defp operator(:+), do: :+
@@ -112,44 +164,6 @@ defmodule Analyzer do
       :/ -> "div"
       :rem -> "mod"
       _ -> "logic"
-    end
-  end
-
-  defp numerical?({atom, _, [left, right]} = ast, acc) do
-    %{
-      operators: operators,
-      args: args
-    } = acc
-
-    operators =
-      case operator(atom) do
-        false -> operators
-        atom -> [atom | operators]
-      end
-
-    args =
-      args
-      |> listing_literal(right)
-      |> listing_literal(left)
-
-    ret = %{
-      operators: operators,
-      args: args
-    }
-
-    {ast, ret}
-  end
-
-  defp numerical?(other, acc), do: {other, acc}
-
-  defp listing_literal(acc, term) do
-    if Macro.quoted_literal?(term) do
-      [term | acc]
-    else
-      case quoted_var?(term) do
-        false -> acc
-        _ -> [term | acc]
-      end
     end
   end
 end

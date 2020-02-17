@@ -127,15 +127,6 @@ defmodule Optimizer do
   quote do: Enum.map(&(&1*2))
   ```
   """
-  def parallelize_term(term, options)
-      when is_list(options) do
-    Enum.reduce(
-      options,
-      term,
-      fn opt, acc -> parallelize_term(acc, opt) end
-    )
-  end
-
   def parallelize_term({atom, _, nil} = arg, _)
       when is_atom(atom) do
     arg
@@ -146,18 +137,43 @@ defmodule Optimizer do
     arg
   end
 
-  def parallelize_term(term, {:Enum, true}) do
-    info = SumMag.include_specified_functions?(term, :Enum, Enum.__info__(:functions))
-    init(term, Enum: info)
+  def parallelize_term(term, options)
+      when is_list(options) do
+    term
+    |> Macro.quoted_literal?()
+    |> case do
+      true ->
+        term
+
+      false ->
+        info =
+          extract_module_informations(term, options)
+
+        init(term, info)
+    end
   end
 
-  def parallelize_term(term, {:String, true}) do
-    info = SumMag.include_specified_functions?(term, :String, String.__info__(:functions))
-
-    init(term, String: info)
+  def extract_module_informations(term, options) do
+    Enum.reduce(options, [], fn opt, acc ->
+      acc ++ extract_module_information(term, opt)
+    end)
   end
 
-  def parallelize_term(term, _), do: term
+  def extract_module_information(term, {:Enum, true}) do
+    SumMag.include_specified_functions?(term, Enum: Enum.__info__(:functions))
+    |> case do
+      [] -> []
+      other -> [Enum: other]
+    end
+  end
+
+  def extract_module_information(term, {:String, true}) do
+    SumMag.include_specified_functions?(term, String: String.__info__(:functions))
+    |> case do
+      [] -> []
+      other -> [String: other]
+    end
+  end
 
   # @spec init(Macro.t(), list) :: 
   def init(ast, [{_, []}]), do: ast

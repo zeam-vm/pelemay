@@ -326,12 +326,12 @@ defmodule SumMag do
   ...> |> Enum.map(&(&1 + 1))
   ...> |> Enum.map(&(&1 + 2))
   ...> end |>
-  ...> SumMag.include_specified_functions?(:Enum, [map: 2, zip: 2])
+  ...> SumMag.include_specified_functions?([Enum: [map: 2, zip: 2]])
   [map: 2]
   ```
   """
-  @spec include_specified_functions?(Macro.input(), atom, [atom, ...]) :: [...]
-  def include_specified_functions?(ast_term, module, func) do
+  @spec include_specified_functions?(Macro.input(), [{atom, list}]) :: [...]
+  def include_specified_functions?(ast_term, [{module, func}]) do
     verify = fn
       {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, args} = ast, acc ->
         if code_module != module do
@@ -342,6 +342,33 @@ defmodule SumMag do
             other -> {ast, acc}
           end
         end
+
+      ast, acc ->
+        {ast, acc}
+    end
+
+    {_, match} = Macro.prewalk(ast_term, [], verify)
+
+    match
+  end
+
+  def include_specified_functions(ast_term, module_functions) do
+    verify = fn
+      {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, args} = ast, acc ->
+        module_functions
+        |> Enum.map(fn {module, functions} ->
+          if code_module != module do
+            {ast, acc}
+          else
+            functions
+            |> Enum.map(fn {func, _arity} ->
+              case Keyword.fetch(func, code_func) do
+                {:ok, _} -> {ast, Keyword.update(acc, code_func, 1, &(&1 + 1))}
+                other -> {ast, acc}
+              end
+            end)
+          end
+        end)
 
       ast, acc ->
         {ast, acc}
