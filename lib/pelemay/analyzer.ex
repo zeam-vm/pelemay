@@ -1,15 +1,6 @@
 defmodule Analyzer do
   import SumMag
 
-  defmacro debug(val) do
-    {name, _, _} = val
-    name = Atom.to_string(name)
-
-    quote do
-      IO.inspect(unquote(val), label: unquote(name))
-    end
-  end
-
   @moduledoc """
   Provides optimizer for anonymous functions.
   """
