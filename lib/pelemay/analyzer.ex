@@ -10,7 +10,6 @@ defmodule Analyzer do
     end
   end
 
-
   @moduledoc """
   Provides optimizer for anonymous functions.
   """
@@ -91,7 +90,7 @@ defmodule Analyzer do
 
   defp numerical?({_atom, _, context} = val, acc) when is_atom(context) do
     {val, acc}
-  end 
+  end
 
   defp numerical?({atom, _, args} = ast, acc) when is_list(args) do
     %{

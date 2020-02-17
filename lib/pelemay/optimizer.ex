@@ -146,8 +146,7 @@ defmodule Optimizer do
         term
 
       false ->
-        info =
-          extract_module_informations(term, options)
+        info = extract_module_informations(term, options)
 
         init(term, info)
     end
