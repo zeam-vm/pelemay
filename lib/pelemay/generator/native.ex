@@ -26,8 +26,6 @@ defmodule Pelemay.Generator.Native do
       code_info
       |> Enum.map(&generate_function(&1))
 
-    Db.get_functions()
-
     str <> Util.to_str_code(definition_func) <> func_list()
   end
 
