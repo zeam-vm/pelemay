@@ -112,12 +112,18 @@ defmodule Optimizer do
 
   defp accelerate_expr(unpiped_list) do
     # Delete pos
-    expr = Enum.map(unpiped_list, fn {x, _} -> x end)
+    unpiped_list
+    |> delete_pos
+    |> Enum.map(&parallelize_term(&1, @term_options))
+    |> add_pos
+  end
 
-    optimized_expr = Enum.map(expr, &parallelize_term(&1, @term_options))
+  defp delete_pos(unpiped_list) do
+    Enum.map(unpiped_list, fn {x, _} -> x end)
+  end
 
-    # Add pos
-    Enum.map(optimized_expr, fn x -> {x, 0} end)
+  defp add_pos(unpiped_list) do
+    Enum.map(unpiped_list, fn x -> {x, 0} end)
   end
 
   @doc """
@@ -174,12 +180,18 @@ defmodule Optimizer do
     end
   end
 
-  # @spec init(Macro.t(), list) :: 
   def init(ast, [{_, []}]), do: ast
 
   def init(ast, module_info) do
     {_func, _meta, args} = ast
-    optimized_ast = parallelize(module_info, args)
+
+    optimized_ast =
+      Analyzer.parse(args)
+      |> verify
+      |> case do
+        {:ok, polymap} -> {:ok, format(polymap, module_info)}
+        {:error, _} -> {:error, "Not supported"}
+      end
 
     case optimized_ast do
       {:ok, opt_ast} -> {ast, opt_ast}
@@ -187,19 +199,8 @@ defmodule Optimizer do
     end
   end
 
-  defp parallelize(module_info, args) do
-    Analyzer.to_keyword(args)
-    |> verify
-    |> case do
-      {:ok, polymap} -> {:ok, call_nif(polymap, module_info)}
-      {:error, _} -> {:error, "Not supported"}
-    end
-  end
-
-  defp call_nif(polymap, module_info) do
-    [{module, [{key, _num}]}] = module_info
-
-    func_name = Optimizer.AFunction.generate_function_name(key, polymap)
+  defp format(polymap, [{module, [{function, _num}]}]) do
+    func_name = Generator.Name.generate_function_name(function, polymap)
 
     case Db.validate(func_name) do
       false ->
@@ -208,7 +209,7 @@ defmodule Optimizer do
       _ ->
         info = %{
           module: module,
-          function: key,
+          function: function,
           nif_name: func_name,
           arg_num: 1,
           args: polymap,
@@ -218,10 +219,36 @@ defmodule Optimizer do
         Db.register(info)
     end
 
-    replcae_function(func_name, polymap)
+    replace_function(func_name, polymap)
   end
 
-  def replcae_function(func_name, polymap) do
+  defp format(polymap, module_info) do
+    modules = module_info |> Keyword.keys()
+    functions = module_info |> Keyword.values()
+
+    func_name = Generator.Name.generate_function_name(functions, polymap)
+
+    case Db.validate(func_name) do
+      false ->
+        nil
+
+      _ ->
+        info = %{
+          module: modules,
+          function: functions,
+          nif_name: func_name,
+          arg_num: 1,
+          args: polymap,
+          impl: nil
+        }
+
+        Db.register(info)
+    end
+
+    replace_function(func_name, polymap)
+  end
+
+  def replace_function(func_name, polymap) do
     func_name = func_name |> String.to_atom()
 
     flat_vars =
