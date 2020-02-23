@@ -7,10 +7,10 @@ defmodule Analyzer do
 
   @doc """
   iex> var = quote do [x] end 
-  iex> Analyzer.to_keyword(var)
+  iex> Analyzer.parse(var)
   [var: {:x, [], AnalyzerTest}]
   """
-  def to_keyword(args) when is_list(args) do
+  def parse(args) when is_list(args) do
     func = fn node, asm ->
       [supported?(node) | asm]
     end
@@ -21,7 +21,7 @@ defmodule Analyzer do
     |> List.flatten()
   end
 
-  def to_keyword(other), do: [var: other]
+  def parse(other), do: [var: other]
 
   @doc """
   Check if expressions can be optimzed.
@@ -50,8 +50,8 @@ defmodule Analyzer do
     polynomial_map(expr)
   end
 
-  def supported?({:&, _, other}) do
-    other |> hd |> polynomial_map
+  def supported?({:&, _, expr}) do
+    expr |> hd |> polynomial_map
   end
 
   def supported?(num) when is_number(num) do
@@ -67,7 +67,7 @@ defmodule Analyzer do
     end
   end
 
-  def polynomial_map({_atom, _, args} = ast) do
+  def polynomial_map(ast) do
     acc = %{
       operators: [],
       args: []
@@ -143,17 +143,7 @@ defmodule Analyzer do
   defp operator(:!==), do: :!==
   defp operator(:<>), do: :<>
 
-  defp operator(_), do: false
-
-  def operator_to_string(operator)
-      when operator |> is_atom do
-    case operator do
-      :* -> "mult"
-      :+ -> "plus"
-      :- -> "minus"
-      :/ -> "div"
-      :rem -> "mod"
-      _ -> "logic"
-    end
   end
+
+  defp operator(_), do: false
 end
