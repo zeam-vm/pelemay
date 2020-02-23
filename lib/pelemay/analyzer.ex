@@ -77,6 +77,9 @@ defmodule Analyzer do
     [func: polymap]
   end
 
+  defp numerical?({:., _, _} = aliases, acc), do: {aliases, acc}
+  defp numerical?({:__aliases__, _, _} = aliases, acc), do: {aliases, acc}
+
   defp numerical?({:&, _, _} = cap_val, acc), do: {cap_val, acc}
 
   defp numerical?({_atom, _, context} = val, acc) when is_atom(context) do
@@ -143,6 +146,8 @@ defmodule Analyzer do
   defp operator(:!==), do: :!==
   defp operator(:<>), do: :<>
 
+  defp operator({:., _, [{:__aliases__, _, [module]}, func]}) do
+    Atom.to_string(module) <> "." <> Atom.to_string(func)
   end
 
   defp operator(_), do: false
