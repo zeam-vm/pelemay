@@ -54,5 +54,9 @@ defmodule GeneratedCodeTest do
              BuzzBuzzBuzzBuzz
              """ == Sample.string_replace_c4()
     end
+
+    test "enum_replace" do
+      assert ["A"] == Sample.list_replace(["a"], "a", "A")
+    end
   end
 end

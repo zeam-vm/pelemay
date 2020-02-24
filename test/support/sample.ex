@@ -66,5 +66,15 @@ defmodule Sample do
     def string_replace_c4 do
       String.replace(@string, "Fizz", "Buzz")
     end
+
+    def list_replace(subject, pattern, replacement) do
+      subject
+      |> Enum.map(&String.replace(&1, pattern, replacement))
+    end
+
+    def list_spilt do
+        ["a, b"]
+        |> Enum.map(&String.split(&1, ","))
+    end
   end
 end
