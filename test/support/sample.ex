@@ -73,8 +73,8 @@ defmodule Sample do
     end
 
     def list_spilt do
-        ["a, b"]
-        |> Enum.map(&String.split(&1, ","))
+      ["a, b"]
+      |> Enum.map(&String.split(&1, ","))
     end
   end
 end

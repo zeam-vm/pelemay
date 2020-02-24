@@ -189,10 +189,12 @@ defmodule Optimizer do
       Analyzer.parse(args)
       |> verify
       |> case do
-        {:ok, polymap} -> 
+        {:ok, polymap} ->
           # polymap |> IO.inspect(label: "polymap")
           {:ok, format(polymap, module_info)}
-        {:error, _} -> {:error, "Not supported"}
+
+        {:error, _} ->
+          {:error, "Not supported"}
       end
 
     case optimized_ast do
@@ -267,7 +269,7 @@ defmodule Optimizer do
     }
   end
 
-  def generate_arguments([func: %{operators: operators} = polymap]) do
+  def generate_arguments(func: %{operators: operators} = polymap) do
     operators
     |> Enum.filter(&(is_bitstring(&1) == true))
     |> case do

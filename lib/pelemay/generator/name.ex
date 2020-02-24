@@ -12,7 +12,7 @@ defmodule Generator.Name do
 
   def generate_function_name(functions, polymap)
       when is_list(functions) do
-    [[{func, _}]| tl] = functions
+    [[{func, _}] | tl] = functions
     acc = Atom.to_string(func)
 
     prefix =
@@ -56,6 +56,7 @@ defmodule Generator.Name do
   def generate_function_name(other), do: "#{other}"
 
   def operator_to_string(func) when is_bitstring(func), do: ""
+
   def operator_to_string(operator)
       when operator |> is_atom do
     case operator do
