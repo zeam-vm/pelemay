@@ -189,7 +189,9 @@ defmodule Optimizer do
       Analyzer.parse(args)
       |> verify
       |> case do
-        {:ok, polymap} -> {:ok, format(polymap, module_info)}
+        {:ok, polymap} -> 
+          # polymap |> IO.inspect(label: "polymap")
+          {:ok, format(polymap, module_info)}
         {:error, _} -> {:error, "Not supported"}
       end
 
@@ -256,12 +258,33 @@ defmodule Optimizer do
       |> List.flatten()
       |> Keyword.get_values(:var)
 
+    first_func_vars = generate_arguments(polymap)
+
     {
       {:., [], [{:__aliases__, [alias: false], [:ReplaceModule]}, func_name]},
       [],
-      flat_vars
+      flat_vars ++ first_func_vars
     }
   end
+
+  def generate_arguments([func: %{operators: operators} = polymap]) do
+    operators
+    |> Enum.filter(&(is_bitstring(&1) == true))
+    |> case do
+      [] -> []
+      _ -> generate_arguments(polymap)
+    end
+  end
+
+  def generate_arguments(%{args: args}) do
+    Enum.map(args, &generate_argument(&1))
+    |> List.flatten()
+  end
+
+  def generate_arguments(_), do: []
+
+  def generate_argument({:&, _, [num]}) when is_number(num), do: []
+  def generate_argument(other), do: other
 
   defp verify(polymap) when is_list(polymap) do
     var_num =
