@@ -1,7 +1,4 @@
 defmodule Generator.Name do
-  import Util
-  require Util
-
   def generate_function_name(func, polymap)
       when is_atom(func) and is_list(polymap) do
     ret =
@@ -15,21 +12,18 @@ defmodule Generator.Name do
 
   def generate_function_name(functions, polymap)
       when is_list(functions) do
-    debug(functions)
-    debug(polymap)
+    [[{func, _}]| tl] = functions
+    acc = Atom.to_string(func)
 
     prefix =
-      functions
-      |> Enum.reduce("", fn [{func, _}], acc -> acc <> Atom.to_string(func) <> "_" end)
+      tl
+      |> Enum.reduce(acc, fn [{func, _}], acc -> acc <> "_" <> Atom.to_string(func) end)
 
     postfix =
       polymap
       |> Enum.reduce("", fn x, acc ->
         acc <> "_" <> generate_function_name(x)
       end)
-
-    debug(prefix)
-    debug(postfix)
 
     prefix <> postfix
   end
@@ -61,8 +55,7 @@ defmodule Generator.Name do
 
   def generate_function_name(other), do: "#{other}"
 
-  def operator_to_string(func) when is_bitstring(func), do: func
-
+  def operator_to_string(func) when is_bitstring(func), do: ""
   def operator_to_string(operator)
       when operator |> is_atom do
     case operator do
