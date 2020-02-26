@@ -4,7 +4,14 @@ defmodule Pelemay.Generator.CudaBuilder do
   @clang "clang"
   @gcc "gcc"
   @cflags ["-Ofast", "-g", "-ansi", "-pedantic"]
-  @cflags_includes ["-I/usr/local/include", "-I/usr/include", "-I/usr/local/cuda/include", "-L/usr/local/lib", "-L/usr/lib", "-L/usr/local/cuda/lib64"]
+  @cflags_includes [
+    "-I/usr/local/include",
+    "-I/usr/include",
+    "-I/usr/local/cuda/include",
+    "-L/usr/local/lib",
+    "-L/usr/lib",
+    "-L/usr/local/cuda/lib64"
+  ]
   @cflags_after ["-std=c++11", "-Wno-unused-function", "--cuda-gpu-arch=sm_30"]
   @ldflags ["-stdlib=libc++", "-lcudart_static", "-ldl", "-lrt", "-pthread"]
   @cflags_non_windows ["-fPIC"]

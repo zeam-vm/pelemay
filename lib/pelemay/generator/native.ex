@@ -42,7 +42,7 @@ defmodule Pelemay.Generator.Native do
 
     module_cuda = "#{module}Cuda"
 
-    #prefix = "Pelemay.Generator.Native.#{module}.#{func}"
+    # prefix = "Pelemay.Generator.Native.#{module}.#{func}"
     prefix =
       case module do
         "Enum" -> "Pelemay.Generator.Native.#{module_cuda}.#{func}"
