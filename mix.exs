@@ -45,6 +45,7 @@ defmodule Pelemay.MixProject do
         "Masakazu Mori",
         "Yoshihiro Ueno",
         "Hideki Takase",
+        "Tatsuya Abe",
         "Yuki Hisae"
       ],
       licenses: ["Apache 2.0"],
