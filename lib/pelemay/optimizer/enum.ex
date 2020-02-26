@@ -22,16 +22,7 @@ defmodule Optimizer.Enum do
     |> supported?()
     |> call_nif(:map)
   end
-
-  def parallelize_term({quoted, :filter}) do
-    # include ast of Enum.filter
-    {_enum_filter, _, anonymous_func} = quoted
-
-    anonymous_func
-    |> supported_isboolean?()
-  end
-    
-
+  
   def parallelize_term({quoted, _}) do
     str = Macro.to_string(quoted)
 
@@ -63,7 +54,6 @@ defmodule Optimizer.Enum do
       Macro.prewalk(ast, false, fn
         :map = ast, _acc -> {ast, :map}
         :chunk_every = ast, _acc -> {ast, :chunk_every}
-        :filter = ast, _acc -> {ast, :filter}
         other, acc -> {other, acc}
       end)
 

@@ -33,35 +33,6 @@ defmodule Analyzer do
   end
 
   def supported?(other), do: {:error, other}
-  """
-  def supported_isboolean?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
-    isboolean_expr?(expr)
-  end
-
-  def supported_isboolean?({:fn, _, [{:->, _, [_arg, expr]}]}) do
-  end
-
-  def supported_isboolean?([{:&, _, other}]) do
-  end
-
-  def supported_isboolean?({:&, _, other}) do
-  end
-
-  defp operator(:==), do: {:==, :comp}
-  defp operator(:>=), do: {:>=, :comp}
-  defp operator(:<=), do: {:<=, :comp}
-  defp operator(:>), do: {:>, :comp}
-  defp operator(:<), do: {:<, :comp}
-
-  #抽象構文木の初期頂点のオペランドからその式がbooleanを返すかを判定する。
-  defp isboolean_expr?({atom, _, [left, right]} = ast) do
-    cmp = 
-    case operator(atom) do
-      false -> {:error, ast}
-      {atom, :comp} -> atom
-    end
-  end
-  """
 
   defp supported_expr?({_atom, _, [_left, _right]} = ast) do
     expr_map = ast |> polynomial_map
