@@ -40,5 +40,6 @@ pelemay-*.tar
 interact_nif.ex
 /native/
 
-# Ignore macos file
+# Ignore local file
 .DS_Store
+.vscode
