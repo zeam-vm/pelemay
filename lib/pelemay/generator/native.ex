@@ -96,7 +96,14 @@ defmodule Pelemay.Generator.Native do
     #pragma clang diagnostic ignored "-Wnullability-completeness"
     #pragma clang diagnostic ignored "-Wnullability-extension"
 
+    #include<iostream>
+    #include<string>
+    #ifdef __cplusplus
+    extern "C" {
+    #endif
     #include<stdbool.h>
+    #include<stdio.h>
+    #include<stdlib.h>
     #include<erl_nif.h>
     #include<string.h>
 
@@ -143,6 +150,9 @@ defmodule Pelemay.Generator.Native do
     str <>
       """
       ERL_NIF_INIT(Elixir.#{Generator.nif_module(module)}, nif_funcs, &load, &reload, &upgrade, &unload)
+      #ifdef __cplusplus
+      }
+      #endif
       """
   end
 
