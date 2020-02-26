@@ -1,4 +1,4 @@
-defmodule Pelemay_CL do
+defmodule Pelemay do
   alias Pelemay.Generator
   alias Pelemay.Db
 
@@ -34,7 +34,7 @@ defmodule Pelemay_CL do
   8. Generate Elixir's functions
   9. Compile NIF as Custom Mix Task, using Clang
   """
-  defmacro defpelemaycl(functions) do
+  defmacro defpelemay(functions) do
     Db.init()
 
     caller_name =
