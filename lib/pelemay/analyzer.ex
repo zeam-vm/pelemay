@@ -33,7 +33,7 @@ defmodule Analyzer do
   end
 
   def supported?(other), do: {:error, other}
-
+  """
   def supported_isboolean?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
     isboolean_expr?(expr)
   end
@@ -61,7 +61,7 @@ defmodule Analyzer do
       {atom, :comp} -> atom
     end
   end
-
+  """
 
   defp supported_expr?({_atom, _, [_left, _right]} = ast) do
     expr_map = ast |> polynomial_map

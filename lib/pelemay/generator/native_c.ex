@@ -158,7 +158,11 @@ defmodule Pelemay.Generator.Native_C do
     #define CL_SILENCE_DEPRECATION
     #include <stdio.h>
     #include <stdlib.h>
+    #ifdef __APPLE__
     #include <OpenCL/opencl.h>
+    #else
+    #include <CL/cl.h>
+    #endif 
     #include <erl_nif.h>
     #include <string.h>
     #include <stdbool.h>
