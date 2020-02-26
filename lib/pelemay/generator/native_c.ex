@@ -41,11 +41,11 @@ defmodule Pelemay.Generator.Native_C do
     cl_platform_id platform_id = NULL;
     cl_uint ret_num_devices, ret_num_platforms;
     cl_int ret;
-    
+
     //get size of input array
     unsigned int size;
     enif_get_list_length(env, argv[0], &size);
-    
+
     //vector for C
     long *vec;
     vec = (long *)malloc( size* sizeof(long));
@@ -57,7 +57,7 @@ defmodule Pelemay.Generator.Native_C do
     char fileName[] = "#{Generator.libcl_func(name)}";
     char *source_str;
     size_t source_size;
-    
+
     fp = fopen(fileName, "r");
     if(!fp) {
         exit(1);
@@ -65,38 +65,38 @@ defmodule Pelemay.Generator.Native_C do
     source_str = (char*)malloc(MAX_SOURCE_SIZE);
     source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
     fclose(fp);
-    
+
     ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
     ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &ret_num_devices);
-    
+
     context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
-    
+
     command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
-    
+
     memobj = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(long)*size, NULL, &ret);
     memosize = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int), NULL, &ret);
-    
+
     ret = clEnqueueWriteBuffer(command_queue, memobj, CL_TRUE, 0, sizeof(long)*size, vec, 0, NULL, NULL);
     ret = clEnqueueWriteBuffer(command_queue, memosize, CL_TRUE, 0, sizeof(int), &size, 0, NULL, NULL);
-    
+
     program = clCreateProgramWithSource(context, 1, (const char **)&source_str, (const size_t *)&source_size, &ret);
-    
+
     ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
-    
+
     kernel = clCreateKernel(program, "#{name}", &ret);
-    
+
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&memobj);
     ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&memosize);
-    
+
     size_t local_item_size = LOCAL_SIZE;
     size_t global_item_size = ITEM_SIZE;
-    
+
     //ret = clEnqueueTask(command_queue, kernel, 0, NULL, NULL);
-    
+
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
-    
+
     ret = clEnqueueReadBuffer(command_queue, memobj, CL_TRUE, 0, sizeof(long)*size, vec, 0, NULL, NULL);
-    
+
     ret = clFlush(command_queue);
     ret = clFinish(command_queue);
     ret = clReleaseKernel(kernel);
@@ -105,33 +105,33 @@ defmodule Pelemay.Generator.Native_C do
     ret = clReleaseCommandQueue(command_queue);
     ret = clReleaseContext(context);
     ERL_NIF_TERM list = enif_make_list_from_long_vec(env, vec, size);
-  
+
     free(source_str);
     free(vec);
-    
+
     return list;
-    
+
     }
     """
   end
 
   defp to_str_code(list) when list |> is_list do
     list
-    |> Enum.reduce(fn x, acc ->  x<>acc end) 
+    |> Enum.reduce(fn x, acc -> x <> acc end)
   end
 
   defp func_list do
     fl =
       Db.get_arguments()
-      |> Enum.map(&(&1 |> hd ))
+      |> Enum.map(&(&1 |> hd))
       |> Enum.reduce(
-          "",
-          fn x, acc ->
-            str = x |> erl_nif_func
-            acc <> "#{str},"
-          end
+        "",
+        fn x, acc ->
+          str = x |> erl_nif_func
+          acc <> "#{str},"
+        end
       )
-    
+
     """
     static
     ErlNifFunc nif_funcs[] =
@@ -217,6 +217,4 @@ defmodule Pelemay.Generator.Native_C do
 
     str <> ret
   end
-
-
 end

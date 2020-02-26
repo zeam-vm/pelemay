@@ -37,9 +37,10 @@ defmodule Pelemay.Db do
 
   # get arg_name from ETS now registered
   def get_arg_info do
-    registered = @table_name
-    |> :ets.match({:arg_name, :"$1"})
-    |> List.flatten()
+    registered =
+      @table_name
+      |> :ets.match({:arg_name, :"$1"})
+      |> List.flatten()
 
     case registered do
       [] -> []
@@ -57,14 +58,15 @@ defmodule Pelemay.Db do
 
     updated_list = number_list ++ [get_func_num()]
 
-    @table_name 
-    |> :ets.update_element(arg_name, {2,updated_list}) 
+    @table_name
+    |> :ets.update_element(arg_name, {2, updated_list})
   end
 
-  #regist_func_num for same functions
+  # regist_func_num for same functions
   def regist_func_num(num)
       when num |> is_number do
     arg_name = get_arg_info()
+
     number_list =
       @table_name
       |> :ets.match({arg_name, :"$1", :args})
@@ -72,8 +74,8 @@ defmodule Pelemay.Db do
 
     updated_list = number_list ++ [num]
 
-    @table_name 
-    |> :ets.update_element(arg_name, {2,updated_list}) 
+    @table_name
+    |> :ets.update_element(arg_name, {2, updated_list})
   end
 
   def validate(func_name) do
@@ -97,6 +99,7 @@ defmodule Pelemay.Db do
     case Enum.find_index(list, &(&1 == true)) do
       nil ->
         true
+
       other ->
         other + 1
     end

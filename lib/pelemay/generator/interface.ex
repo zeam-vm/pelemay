@@ -46,22 +46,22 @@ defmodule Pelemay.Generator.Interface do
     |> List.to_string()
   end
 
-  defp generate_function(name) do   
+  defp generate_function(name) do
     """
       def #{name}(_arg1), do: raise "NIF #{name}/1 not implemented"
     """
   end
 
-  #defp generate_function([]), do: []
-  
-  #defp generate_string_arguments(num) do
-   # 1..num
-    #|> Enum.reduce(
-    #  "",
-    #  fn
-    #    x, "" -> "_arg#{x}"
-    #    x, acc -> acc <> ", _arg#{x}"
-    #  end
-    #)
-  #end
+  # defp generate_function([]), do: []
+
+  # defp generate_string_arguments(num) do
+  # 1..num
+  # |> Enum.reduce(
+  #  "",
+  #  fn
+  #    x, "" -> "_arg#{x}"
+  #    x, acc -> acc <> ", _arg#{x}"
+  #  end
+  # )
+  # end
 end

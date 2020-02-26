@@ -22,7 +22,7 @@ defmodule Optimizer.Enum do
     |> supported?()
     |> call_nif(:map)
   end
-  
+
   def parallelize_term({quoted, _}) do
     str = Macro.to_string(quoted)
 
