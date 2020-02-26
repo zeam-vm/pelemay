@@ -4,7 +4,8 @@ defmodule Pelemay.Generator.Native do
   alias Pelemay.Generator.Native.Util, as: Util
 
   def generate(module) do
-    Pelemay.Generator.libc(module) |> write(module)
+    # Pelemay.Generator.libc(module) |> write(module)
+    Pelemay.Generator.libcu(module) |> write(module)
   end
 
   defp write(file, module) do
@@ -39,7 +40,14 @@ defmodule Pelemay.Generator.Native do
     module = Atom.to_string(module)
     func = Atom.to_string(func)
 
-    prefix = "Pelemay.Generator.Native.#{module}.#{func}"
+    module_cuda = "#{module}Cuda"
+
+    #prefix = "Pelemay.Generator.Native.#{module}.#{func}"
+    prefix =
+      case module do
+        "Enum" -> "Pelemay.Generator.Native.#{module_cuda}.#{func}"
+        _ -> "Pelemay.Generator.Native.#{module}.#{func}"
+      end
 
     {res, _} =
       try do

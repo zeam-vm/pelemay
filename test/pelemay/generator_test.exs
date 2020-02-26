@@ -4,4 +4,5 @@ defmodule Pelemay.GeneratorTest do
   doctest Pelemay.Generator.Interface
   doctest Pelemay.Generator.Native
   doctest Pelemay.Generator.Builder
+  doctest Pelemay.Generator.CudaBuilder
 end

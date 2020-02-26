@@ -2,6 +2,7 @@ defmodule Pelemay.Generator do
   alias Pelemay.Generator.Interface
   alias Pelemay.Generator.Native
   alias Pelemay.Generator.Builder
+  alias Pelemay.Generator.CudaBuilder
 
   require Logger
 
@@ -109,6 +110,10 @@ defmodule Pelemay.Generator do
     Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.c")
   end
 
+  def libcu(module) do
+    Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.cu")
+  end
+
   def libso(module) do
     case :os.type() do
       {:win32, :nt} -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.dll")
@@ -134,7 +139,8 @@ defmodule Pelemay.Generator do
 
       :ok ->
         Interface.generate(module)
-        Builder.generate(module)
+        # Builder.generate(module)
+        CudaBuilder.generate(module)
     end
   end
 end
