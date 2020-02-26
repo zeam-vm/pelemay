@@ -34,6 +34,35 @@ defmodule Analyzer do
 
   def supported?(other), do: {:error, other}
 
+  def supported_isboolean?([{:fn, _, [{:->, _, [_arg, expr]}]}]) do
+    isboolean_expr?(expr)
+  end
+
+  def supported_isboolean?({:fn, _, [{:->, _, [_arg, expr]}]}) do
+  end
+
+  def supported_isboolean?([{:&, _, other}]) do
+  end
+
+  def supported_isboolean?({:&, _, other}) do
+  end
+
+  defp operator(:==), do: {:==, :comp}
+  defp operator(:>=), do: {:>=, :comp}
+  defp operator(:<=), do: {:<=, :comp}
+  defp operator(:>), do: {:>, :comp}
+  defp operator(:<), do: {:<, :comp}
+
+  #抽象構文木の初期頂点のオペランドからその式がbooleanを返すかを判定する。
+  defp isboolean_expr?({atom, _, [left, right]} = ast) do
+    cmp = 
+    case operator(atom) do
+      false -> {:error, ast}
+      {atom, :comp} -> atom
+    end
+  end
+
+
   defp supported_expr?({_atom, _, [_left, _right]} = ast) do
     expr_map = ast |> polynomial_map
 
@@ -53,11 +82,11 @@ defmodule Analyzer do
     Macro.prewalk(ast, acc, &numerical?/2) |> elem(1)
   end
 
-  defp operator(:+), do: :+
-  defp operator(:-), do: :-
-  defp operator(:/), do: :/
-  defp operator(:*), do: :*
-  defp operator(:rem), do: :rem
+  defp operator(:+), do: {:+, :arith}
+  defp operator(:-), do: {:-, :arith}
+  defp operator(:/), do: {:/, :arith}
+  defp operator(:*), do: {:*, :arith}
+  defp operator(:rem), do: {:rem, :arith}
   defp operator(_), do: false
 
   defp numerical?({atom, _, [left, right]} = ast, acc) do
@@ -69,7 +98,7 @@ defmodule Analyzer do
     operators =
       case operator(atom) do
         false -> operators
-        atom -> [atom | operators]
+        {atom, :arith} -> [atom | operators]
       end
 
     args =

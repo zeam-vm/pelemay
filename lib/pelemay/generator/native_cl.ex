@@ -40,7 +40,7 @@ defmodule Pelemay.Generator.Native_CL do
   defp generate_function(list) do
     list
     |> Enum.map(&(&1 |> generate_expr))
-    |> Enum.reduce(fn x, acc -> x<>acc end)
+    |> Enum.reduce(fn x, acc -> acc<>x end)
   end 
 
   defp generate_expr(func_num) do
