@@ -76,7 +76,7 @@ defmodule Pelemay.Generator.CudaBuilder do
     options =
       cflags ++ ["-o", Generator.libso(module), Generator.libcu(module)] ++ ["-shared"] ++ ldflags
 
-    {_result, 0} = System.cmd(cc, options) |> IO.inspect(:stderr)
+    {_result, 0} = System.cmd(cc, options)
   end
 
   def erlang_include_path() do
