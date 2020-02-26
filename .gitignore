@@ -39,3 +39,6 @@ pelemay-*.tar
 # Ignore NIF Code
 interact_nif.ex
 /native/
+
+# Ignore macos file
+.DS_Store
