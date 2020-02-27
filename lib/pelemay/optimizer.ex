@@ -84,13 +84,23 @@ defmodule Optimizer do
     map_fold(func, value, arg_info)
   end
 
+  def regist_arg_info({:when, _, arg_info}) do
+    def_name = arg_info |> hd
+    regist_arg_info(def_name)
+  end
+
   def regist_arg_info({def_name, _, _} = arg_info) do
     Db.regist_arg_info(def_name)
     arg_info
   end
 
+  def get_value({:when, _, arg_info}) do
+    def_info = arg_info |> hd
+    get_value(def_info)
+  end
+
   def get_value({_, _, value_info}) do
-    [value] = value_info
+    value = value_info |> hd
     value
   end
 
