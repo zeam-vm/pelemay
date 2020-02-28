@@ -23,7 +23,6 @@ defmodule Optimizer do
   end
   ```
   """
-  def replace(definitions, caller) do
   def replace(definitions, module) do
     nif_module =
       module
@@ -34,7 +33,6 @@ defmodule Optimizer do
     |> melt_block
     |> Enum.map(&optimize_func(&1))
     |> iced_block
-    |> consist_alias(caller)
     |> consist_alias(nif_module)
   end
 
@@ -171,19 +169,14 @@ defmodule Optimizer do
     end)
   end
 
-  def extract_module_information(term, {:Enum, true}) do
-    SumMag.include_specified_functions?(term, Enum: Enum.__info__(:functions))
-    |> case do
-      [] -> []
-      other -> [Enum: other]
-    end
-  end
+  def extract_module_information(term, {module, true}) do
+    str = Atom.to_string(module) <> ".__info__(:functions)"
+    {module_functions, _} = Code.eval_string(str)
 
-  def extract_module_information(term, {:String, true}) do
-    SumMag.include_specified_functions?(term, String: String.__info__(:functions))
+    SumMag.include_specified_functions?(term, [{module, module_functions}])
     |> case do
       [] -> []
-      other -> [String: other]
+      other -> [{module, other}]
     end
   end
 
@@ -210,32 +203,12 @@ defmodule Optimizer do
     end
   end
 
-  defp format(polymap, [{module, [{function, _num}]}]) do
-    func_name = Generator.Name.generate_function_name(function, polymap)
-
-    case Db.validate(func_name) do
-      false ->
-        nil
-
-      _ ->
-        info = %{
-          module: module,
-          function: function,
-          nif_name: func_name,
-          arg_num: 1,
-          args: polymap,
-          impl: nil
-        }
-
-        Db.register(info)
-    end
-
-    replace_function(func_name, polymap)
-  end
-
   defp format(polymap, module_info) do
     modules = module_info |> Keyword.keys()
     functions = module_info |> Keyword.values()
+
+    
+    
 
     func_name = Generator.Name.generate_function_name(functions, polymap)
 

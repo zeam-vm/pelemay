@@ -1,47 +1,42 @@
 defmodule Generator.Name do
-  def generate_function_name(func, polymap)
-      when is_atom(func) and is_list(polymap) do
-    ret =
-      polymap
-      |> Enum.reduce("", fn {_, x}, acc ->
-        acc <> "_" <> generate_function_name(x)
-      end)
-
-    Atom.to_string(func) <> ret
-  end
-
+  @doc """
+  iex> func_label = [[map: 1]]
+  iex> polymap = [func: %{args: [{:&, [], [1]}, {:&, [], [1]}], operators: [:*]}]
+  iex> Generator.Name.generate_function_name(func_label, polymap)
+  "map_elem1_mult_elem1"
+  """
   def generate_function_name(functions, polymap)
       when is_list(functions) do
-    [[{func, _}] | tl] = functions
-    acc = Atom.to_string(func)
-
-    prefix =
-      tl
-      |> Enum.reduce(acc, fn [{func, _}], acc -> acc <> "_" <> Atom.to_string(func) end)
+    {_, prefix} =
+      functions
+      |> Enum.reduce("", fn [{func, _}], acc -> acc <> "_" <> Atom.to_string(func) end)
+      |> String.split_at(1)
 
     postfix =
       polymap
+      # |> IO.inspect(label: "polymap")
       |> Enum.reduce("", fn x, acc ->
-        acc <> "_" <> generate_function_name(x)
+        acc <> "_" <> arg_to_string(x)
       end)
 
     prefix <> postfix
   end
 
-  def generate_function_name({:&, _meta, [num]}) do
+  def arg_to_string({:&, _meta, [num]}) do
     "elem#{num}"
   end
 
-  def generate_function_name({var, _, nil}) do
+  def arg_to_string({var, _, context})
+      when is_atom(context) and is_atom(context) do
     Atom.to_string(var)
   end
 
-  def generate_function_name({:@, _, [{var, _, nil}]}) do
+  def arg_to_string({:@, _, [{var, _, nil}]}) do
     Atom.to_string(var) |> String.upcase()
   end
 
-  def generate_function_name(%{args: args, operators: operators}) do
-    [h | string_args] = Enum.map(args, &generate_function_name(&1))
+  def arg_to_string(%{args: args, operators: operators}) do
+    [h | string_args] = Enum.map(args, &arg_to_string(&1))
 
     operators
     |> Enum.map(&operator_to_string(&1))
@@ -49,11 +44,15 @@ defmodule Generator.Name do
     |> Enum.reduce(h, fn {op, arg}, acc -> acc <> "_#{op}_#{arg}" end)
   end
 
-  def generate_function_name({:func, polymap}) do
-    generate_function_name(polymap)
+  def arg_to_string({:func, polymap}) do
+    arg_to_string(polymap)
   end
 
-  def generate_function_name(other), do: "#{other}"
+  def arg_to_string({:var, polymap}) do
+    arg_to_string(polymap)
+  end
+
+  def arg_to_string(other), do: "#{other}"
 
   def operator_to_string(func) when is_bitstring(func), do: ""
 
