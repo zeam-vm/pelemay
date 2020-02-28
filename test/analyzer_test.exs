@@ -12,7 +12,7 @@ defmodule AnalyzerTest do
       assert {_enum_map, [], anonymous_function} = right
 
       assert [func: %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}] ==
-               @subject.to_keyword(anonymous_function)
+               @subject.parse(anonymous_function)
     end
 
     test "with pipe, anonymous function: fn, two arguments" do
@@ -26,7 +26,7 @@ defmodule AnalyzerTest do
                  args: [{:x, [], AnalyzerTest}, {:y, [], AnalyzerTest}, 1],
                  operators: [:+, :+]
                }
-             ] == @subject.to_keyword(anonymous_function)
+             ] == @subject.parse(anonymous_function)
     end
 
     test "with anonymous function: fn, one argument" do
@@ -56,30 +56,30 @@ defmodule AnalyzerTest do
     end
 
     test "with basic types w/o tuples" do
-      assert [var: 1] == @subject.to_keyword(1)
-      assert [var: [1]] == @subject.to_keyword([1])
-      assert [var: true] == @subject.to_keyword(true)
-      assert [var: "1"] == @subject.to_keyword("1")
-      assert [var: '1'] == @subject.to_keyword('1')
-      assert [var: :a] == @subject.to_keyword(:a)
+      assert [var: 1] == @subject.parse(1)
+      assert [var: [1]] == @subject.parse([1])
+      assert [var: true] == @subject.parse(true)
+      assert [var: "1"] == @subject.parse("1")
+      assert [var: '1'] == @subject.parse('1')
+      assert [var: :a] == @subject.parse(:a)
     end
 
     test "with one-element-tuple" do
       quoted = quote do: {1}
 
-      assert {:error, quoted} == @subject.supported?(quoted)
+      assert [var: quoted] == @subject.supported?(quoted)
     end
 
     test "with two-elements-tuple" do
       quoted = quote do: {1, 2}
 
-      assert [var: {1, 2}] == @subject.supported?(quoted)
+      assert [var: quoted] == @subject.supported?(quoted)
     end
 
     test "with three-elements-tuple" do
       quoted = quote do: {1, 2, 3}
 
-      assert {:error, quoted} == @subject.supported?(quoted)
+      assert [var: quoted] == @subject.supported?(quoted)
     end
   end
 

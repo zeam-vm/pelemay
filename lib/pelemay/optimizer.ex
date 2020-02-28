@@ -23,12 +23,17 @@ defmodule Optimizer do
   end
   ```
   """
-  def replace(definitions, caller) do
+  def replace(definitions, module) do
+    nif_module =
+      module
+      |> Pelemay.Generator.elixir_nif_module()
+      |> String.to_atom()
+
     definitions
     |> melt_block
     |> Enum.map(&optimize_func(&1))
     |> iced_block
-    |> consist_alias(caller)
+    |> consist_alias(nif_module)
   end
 
   def consist_alias(definitions, module) do
@@ -112,12 +117,18 @@ defmodule Optimizer do
 
   defp accelerate_expr(unpiped_list) do
     # Delete pos
-    expr = Enum.map(unpiped_list, fn {x, _} -> x end)
+    unpiped_list
+    |> delete_pos
+    |> Enum.map(&parallelize_term(&1, @term_options))
+    |> add_pos
+  end
 
-    optimized_expr = Enum.map(expr, &parallelize_term(&1, @term_options))
+  defp delete_pos(unpiped_list) do
+    Enum.map(unpiped_list, fn {x, _} -> x end)
+  end
 
-    # Add pos
-    Enum.map(optimized_expr, fn x -> {x, 0} end)
+  defp add_pos(unpiped_list) do
+    Enum.map(unpiped_list, fn x -> {x, 0} end)
   end
 
   @doc """
@@ -127,15 +138,6 @@ defmodule Optimizer do
   quote do: Enum.map(&(&1*2))
   ```
   """
-  def parallelize_term(term, options)
-      when is_list(options) do
-    Enum.reduce(
-      options,
-      term,
-      fn opt, acc -> parallelize_term(acc, opt) end
-    )
-  end
-
   def parallelize_term({atom, _, nil} = arg, _)
       when is_atom(atom) do
     arg
@@ -146,25 +148,54 @@ defmodule Optimizer do
     arg
   end
 
-  def parallelize_term(term, {:Enum, true}) do
-    info = SumMag.include_specified_functions?(term, :Enum, Enum.__info__(:functions))
-    init(term, Enum: info)
+  def parallelize_term(term, options)
+      when is_list(options) do
+    term
+    |> Macro.quoted_literal?()
+    |> case do
+      true ->
+        term
+
+      false ->
+        info = extract_module_informations(term, options)
+
+        init(term, info)
+    end
   end
 
-  def parallelize_term(term, {:String, true}) do
-    info = SumMag.include_specified_functions?(term, :String, String.__info__(:functions))
-
-    init(term, String: info)
+  def extract_module_informations(term, options) do
+    Enum.reduce(options, [], fn opt, acc ->
+      acc ++ extract_module_information(term, opt)
+    end)
   end
 
-  def parallelize_term(term, _), do: term
+  def extract_module_information(term, {module, true}) do
+    str = Atom.to_string(module) <> ".__info__(:functions)"
+    {module_functions, _} = Code.eval_string(str)
 
-  # @spec init(Macro.t(), list) :: 
+    SumMag.include_specified_functions?(term, [{module, module_functions}])
+    |> case do
+      [] -> []
+      other -> [{module, other}]
+    end
+  end
+
   def init(ast, [{_, []}]), do: ast
 
   def init(ast, module_info) do
     {_func, _meta, args} = ast
-    optimized_ast = parallelize(module_info, args)
+
+    optimized_ast =
+      Analyzer.parse(args)
+      |> verify
+      |> case do
+        {:ok, polymap} ->
+          # polymap |> IO.inspect(label: "polymap")
+          {:ok, format(polymap, module_info)}
+
+        {:error, _} ->
+          {:error, "Not supported"}
+      end
 
     case optimized_ast do
       {:ok, opt_ast} -> {ast, opt_ast}
@@ -172,19 +203,11 @@ defmodule Optimizer do
     end
   end
 
-  defp parallelize(module_info, args) do
-    Analyzer.to_keyword(args)
-    |> verify
-    |> case do
-      {:ok, polymap} -> {:ok, call_nif(polymap, module_info)}
-      {:error, _} -> {:error, "Not supported"}
-    end
-  end
+  defp format(polymap, module_info) do
+    modules = module_info |> Keyword.keys()
+    functions = module_info |> Keyword.values()
 
-  defp call_nif(polymap, module_info) do
-    [{module, [{key, _num}]}] = module_info
-
-    func_name = Optimizer.AFunction.generate_function_name(key, polymap)
+    func_name = Generator.Name.generate_function_name(functions, polymap)
 
     case Db.validate(func_name) do
       false ->
@@ -192,8 +215,8 @@ defmodule Optimizer do
 
       _ ->
         info = %{
-          module: module,
-          function: key,
+          module: modules,
+          function: functions,
           nif_name: func_name,
           arg_num: 1,
           args: polymap,
@@ -203,10 +226,10 @@ defmodule Optimizer do
         Db.register(info)
     end
 
-    replcae_function(func_name, polymap)
+    replace_function(func_name, polymap)
   end
 
-  def replcae_function(func_name, polymap) do
+  def replace_function(func_name, polymap) do
     func_name = func_name |> String.to_atom()
 
     flat_vars =
@@ -214,12 +237,33 @@ defmodule Optimizer do
       |> List.flatten()
       |> Keyword.get_values(:var)
 
+    first_func_vars = generate_arguments(polymap)
+
     {
       {:., [], [{:__aliases__, [alias: false], [:ReplaceModule]}, func_name]},
       [],
-      flat_vars
+      flat_vars ++ first_func_vars
     }
   end
+
+  def generate_arguments(func: %{operators: operators} = polymap) do
+    operators
+    |> Enum.filter(&(is_bitstring(&1) == true))
+    |> case do
+      [] -> []
+      _ -> generate_arguments(polymap)
+    end
+  end
+
+  def generate_arguments(%{args: args}) do
+    Enum.map(args, &generate_argument(&1))
+    |> List.flatten()
+  end
+
+  def generate_arguments(_), do: []
+
+  def generate_argument({:&, _, [num]}) when is_number(num), do: []
+  def generate_argument(other), do: other
 
   defp verify(polymap) when is_list(polymap) do
     var_num =

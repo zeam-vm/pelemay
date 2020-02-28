@@ -13,9 +13,16 @@ int enif_get_int64_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ErlNifSInt64
 int enif_get_double_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, size_t *vec_l);
 int enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, size_t *vec_l);
 int enif_get_range(ErlNifEnv *env, ERL_NIF_TERM list, ErlNifSInt64 *from, ErlNifSInt64 *to);
+int enif_get_term_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ERL_NIF_TERM **vec, unsigned *vec_l);
+int get_replace_option(ErlNifEnv *env, ERL_NIF_TERM options, int *global);
+int string_replace_binary(ErlNifBinary subject, ErlNifBinary pattern, ErlNifBinary replacement, bool global, ErlNifBinary *object);
+int get_replace_option(ErlNifEnv *env, ERL_NIF_TERM options, int *global);
 
 ERL_NIF_TERM enif_make_list_from_int64_vec(ErlNifEnv *env, const ErlNifSInt64 *vec, const size_t vec_l);
 ERL_NIF_TERM enif_make_list_from_double_vec(ErlNifEnv *env, const double *vec, const size_t vec_l);
+ERL_NIF_TERM enif_make_list_from_term_vec(ErlNifEnv *env, ERL_NIF_TERM *vec, const unsigned vec_l);
+ERL_NIF_TERM string_replace(ErlNifEnv *env, ERL_NIF_TERM subject, ERL_NIF_TERM pattern, ERL_NIF_TERM replacement, bool global);
+ERL_NIF_TERM enum_string_replace(ErlNifEnv *env, ERL_NIF_TERM subject, ERL_NIF_TERM pattern, ERL_NIF_TERM replacement, bool global);
 
 ERL_NIF_TERM
 enif_make_list_from_int64_vec(ErlNifEnv *env, const ErlNifSInt64 *vec, const size_t vec_l)
@@ -37,6 +44,16 @@ enif_make_list_from_double_vec(ErlNifEnv *env, const double *vec, const size_t v
     ERL_NIF_TERM tail = list;
     ERL_NIF_TERM head = enif_make_double(env, vec[i - 1]);
     list = enif_make_list_cell(env, head, tail);
+  }
+  return list;
+}
+
+ERL_NIF_TERM
+enif_make_list_from_term_vec(ErlNifEnv *env, ERL_NIF_TERM *vec, const unsigned vec_l)
+{
+  ERL_NIF_TERM list = enif_make_list(env, 0);
+  for(size_t i = vec_l; i > 0; i--) {
+    list = enif_make_list_cell(env, vec[i - 1], list);
   }
   return list;
 }
@@ -240,6 +257,33 @@ enif_get_double_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, s
 }
 
 int
+enif_get_term_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ERL_NIF_TERM **vec, unsigned *vec_l)
+{
+  if (__builtin_expect(enif_is_empty_list(env, list), false)) {
+    *vec_l = empty;
+    *vec = NULL;
+    return true;
+  }
+  if (__builtin_expect(!enif_get_list_length(env, list, vec_l), false)) {
+    return false;
+  }
+  *vec = enif_alloc(sizeof(ERL_NIF_TERM) * (*vec_l));
+  if (__builtin_expect(*vec == NULL, false)) {
+    return false;
+  }
+  ERL_NIF_TERM *head = *vec;
+  ERL_NIF_TERM tail = list;
+#pragma clang loop vectorize_width(loop_vectorize_width)
+  for(size_t i = 0; i < *vec_l; i++) {
+    if (__builtin_expect(!enif_get_list_cell(env, tail, head, &tail), false)) {
+      return false;
+    }
+    head++;
+  }
+  return true;
+}
+
+int
 enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, size_t *vec_l)
 {
   ERL_NIF_TERM head, tail;
@@ -389,5 +433,74 @@ ERL_NIF_TERM string_replace(ErlNifEnv *env, ERL_NIF_TERM subject, ERL_NIF_TERM p
   return enif_make_binary(env, &object_binary);
 }
 
+ERL_NIF_TERM enum_string_replace(ErlNifEnv *env, ERL_NIF_TERM subject, ERL_NIF_TERM pattern, ERL_NIF_TERM replacement, bool global)
+{
+  ERL_NIF_TERM *subject_vec;
+  unsigned vec_l;
+  if(__builtin_expect(!enif_get_term_vec_from_list(env, subject, &subject_vec, &vec_l), false)) {
+    return enif_make_badarg(env);
+  }
+  ERL_NIF_TERM *object_vec;
+  object_vec = enif_alloc(sizeof(ERL_NIF_TERM) * vec_l);
+  if(__builtin_expect(object_vec == NULL, false)) {
+    enif_free(subject_vec);
+    return enif_make_badarg(env);
+  }
+#pragma clang loop vectorize_width(loop_vectorize_width)
+  for(unsigned i = 0; i < vec_l; i++) {
+    object_vec[i] = string_replace(env, subject_vec[i], pattern, replacement, global);
+  } 
+  ERL_NIF_TERM result = enif_make_list_from_term_vec(env, object_vec, vec_l);
+  enif_free(subject_vec);
+  enif_free(object_vec);
+  return result;
+}
+
+int get_replace_option(ErlNifEnv *env, ERL_NIF_TERM options, int *global)
+{
+  *global = true;
+  if(__builtin_expect(!enif_is_empty_list(env, options), false)) {
+    ERL_NIF_TERM tail = options;
+    unsigned vec_len;
+    if(__builtin_expect(!enif_get_list_length(env, tail, &vec_len), false)) {
+      return false;
+    }
+    ERL_NIF_TERM vec[vec_len];
+    unsigned i = vec_len;
+    while(enif_get_list_cell(env, tail, &vec[--i], &tail));
+    for(int i = 0; i < vec_len; i++) {
+      int arity;
+      const ERL_NIF_TERM *array;
+      if(__builtin_expect(!enif_get_tuple(env, vec[i], &arity, &array), false)) {
+        return false;
+      }
+      if(__builtin_expect(arity != 2, false)) {
+        return false;
+      }
+      unsigned key_len, value_len;
+      if(__builtin_expect(!enif_get_atom_length(env, array[0], &key_len, ERL_NIF_LATIN1), false)) {
+        return false;
+      }
+      if(__builtin_expect(!enif_get_atom_length(env, array[1], &value_len, ERL_NIF_LATIN1), false)) {
+        return false;
+      }
+      char key_buf[key_len + 1], value_buf[value_len + 1];
+      if(__builtin_expect(!enif_get_atom(env, array[0], key_buf, key_len + 1, ERL_NIF_LATIN1), false)) {
+        return false;
+      }
+      if(__builtin_expect(!enif_get_atom(env, array[1], value_buf, value_len + 1, ERL_NIF_LATIN1), false)) {
+        return false;
+      }
+      if(__builtin_expect(strcmp("global", key_buf) == 0, true)) {
+        if(__builtin_expect(strcmp("false", value_buf) == 0, true)) {
+          *global = false;
+        } else if(__builtin_expect(strcmp("true", value_buf) == 0, true)) {
+          *global = true;
+        }
+      }
+    }
+  }
+  return true;
+}
 
 

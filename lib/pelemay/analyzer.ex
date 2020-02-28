@@ -1,18 +1,16 @@
 defmodule Analyzer do
   import SumMag
 
-  @type asm :: %{args: list(any), operators: list(atom)}
-
   @moduledoc """
   Provides optimizer for anonymous functions.
   """
 
   @doc """
   iex> var = quote do [x] end 
-  iex> Analyzer.to_keyword(var)
+  iex> Analyzer.parse(var)
   [var: {:x, [], AnalyzerTest}]
   """
-  def to_keyword(args) when is_list(args) do
+  def parse(args) when is_list(args) do
     func = fn node, asm ->
       [supported?(node) | asm]
     end
@@ -23,7 +21,7 @@ defmodule Analyzer do
     |> List.flatten()
   end
 
-  def to_keyword(other), do: [var: other]
+  def parse(other), do: [var: other]
 
   @doc """
   Check if expressions can be optimzed.
@@ -40,7 +38,6 @@ defmodule Analyzer do
   ...> end |> Analyzer.supported?
   [func: %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}]
   """
-  @spec supported?(Macro.t()) :: asm
   def supported?({_, _, atom} = var) when is_atom(atom) do
     [var: var]
   end
@@ -50,11 +47,15 @@ defmodule Analyzer do
   end
 
   def supported?({:fn, _, [{:->, _, [_arg, expr]}]}) do
-    supported_expr?(expr)
+    polynomial_map(expr)
   end
 
-  def supported?({:&, _, other}) do
-    other |> hd |> supported_expr?
+  def supported?({:&, _, expr}) do
+    expr |> hd |> polynomial_map
+  end
+
+  def supported?({:{}, [], list} = tuple) do
+    [var: tuple]
   end
 
   def supported?(num) when is_number(num) do
@@ -70,10 +71,6 @@ defmodule Analyzer do
     end
   end
 
-  defp supported_expr?({_atom, _, [_left, _right]} = ast) do
-    ast |> polynomial_map
-  end
-
   def polynomial_map(ast) do
     acc = %{
       operators: [],
@@ -82,6 +79,58 @@ defmodule Analyzer do
 
     polymap = Macro.prewalk(ast, acc, &numerical?/2) |> elem(1)
     [func: polymap]
+  end
+
+  defp numerical?({:., _, _} = aliases, acc), do: {aliases, acc}
+  defp numerical?({:__aliases__, _, _} = aliases, acc), do: {aliases, acc}
+
+  defp numerical?({:&, _, _} = cap_val, acc), do: {cap_val, acc}
+
+  defp numerical?({_atom, _, context} = val, acc) when is_atom(context) do
+    {val, acc}
+  end
+
+  defp numerical?({atom, _, args} = ast, acc) when is_list(args) do
+    %{
+      operators: operators,
+      args: map_args
+    } = acc
+
+    operators =
+      case operator(atom) do
+        false -> operators
+        atom -> [atom | operators]
+      end
+
+    map_args =
+      args
+      |> Enum.reverse()
+      |> Enum.reduce(
+        map_args,
+        fn x, acc ->
+          listing_literal(x, acc)
+        end
+      )
+
+    ret = %{
+      operators: operators,
+      args: map_args
+    }
+
+    {ast, ret}
+  end
+
+  defp numerical?(other, acc), do: {other, acc}
+
+  def listing_literal(term, acc) do
+    if Macro.quoted_literal?(term) do
+      [term | acc]
+    else
+      case quoted_var?(term) do
+        false -> acc
+        _ -> [term | acc]
+      end
+    end
   end
 
   defp operator(:+), do: :+
@@ -101,55 +150,9 @@ defmodule Analyzer do
   defp operator(:!==), do: :!==
   defp operator(:<>), do: :<>
 
+  defp operator({:., _, [{:__aliases__, _, [module]}, func]}) do
+    Atom.to_string(module) <> "." <> Atom.to_string(func)
+  end
+
   defp operator(_), do: false
-
-  def operator_to_string(operator)
-      when operator |> is_atom do
-    case operator do
-      :* -> "mult"
-      :+ -> "plus"
-      :- -> "minus"
-      :/ -> "div"
-      :rem -> "mod"
-      _ -> "logic"
-    end
-  end
-
-  defp numerical?({atom, _, [left, right]} = ast, acc) do
-    %{
-      operators: operators,
-      args: args
-    } = acc
-
-    operators =
-      case operator(atom) do
-        false -> operators
-        atom -> [atom | operators]
-      end
-
-    args =
-      args
-      |> listing_literal(right)
-      |> listing_literal(left)
-
-    ret = %{
-      operators: operators,
-      args: args
-    }
-
-    {ast, ret}
-  end
-
-  defp numerical?(other, acc), do: {other, acc}
-
-  defp listing_literal(acc, term) do
-    if Macro.quoted_literal?(term) do
-      [term | acc]
-    else
-      case quoted_var?(term) do
-        false -> acc
-        _ -> [term | acc]
-      end
-    end
-  end
 end

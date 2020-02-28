@@ -15,6 +15,11 @@ defmodule Sample do
       |> Enum.map(&(&1 * &1))
     end
 
+    def list_square_fn(list) when is_list(list) do
+      list
+      |> Enum.map(fn x -> x * x end)
+    end
+
     def list_plus1(list) do
       list
       |> Enum.map(&(&1 + 1))
@@ -65,6 +70,16 @@ defmodule Sample do
 
     def string_replace_c4 do
       String.replace(@string, "Fizz", "Buzz")
+    end
+
+    def list_replace(subject, pattern, replacement) do
+      subject
+      |> Enum.map(&String.replace(&1, pattern, replacement))
+    end
+
+    def list_spilt do
+      ["a, b"]
+      |> Enum.map(&String.split(&1, ","))
     end
   end
 end

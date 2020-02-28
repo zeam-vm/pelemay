@@ -26,8 +26,6 @@ defmodule Pelemay.Generator.Native do
       code_info
       |> Enum.map(&generate_function(&1))
 
-    Db.get_functions()
-
     str <> Util.to_str_code(definition_func) <> func_list()
   end
 
@@ -35,11 +33,21 @@ defmodule Pelemay.Generator.Native do
     generate_function(func_info)
   end
 
-  defp generate_function(%{module: module, function: func} = info) do
-    module = Atom.to_string(module)
-    func = Atom.to_string(func)
+  defp generate_function(%{module: modules, function: funcs} = info) do
+    object_module = Enum.reduce(modules, "", fn module, acc -> acc <> Atom.to_string(module) end)
 
-    prefix = "Pelemay.Generator.Native.#{module}.#{func}"
+    [hd | tl] = funcs
+
+    acc =
+      hd
+      |> Keyword.keys()
+      |> Enum.map(&Atom.to_string(&1))
+      |> List.to_string()
+
+    object_func =
+      Enum.reduce(tl, acc, fn [{func, _}], acc -> acc <> "_" <> Atom.to_string(func) end)
+
+    prefix = "Pelemay.Generator.Native.#{object_module}.#{object_func}"
 
     {res, _} =
       try do
