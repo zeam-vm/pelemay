@@ -24,11 +24,18 @@ defmodule Optimizer do
   ```
   """
   def replace(definitions, caller) do
+  def replace(definitions, module) do
+    nif_module =
+      module
+      |> Pelemay.Generator.elixir_nif_module()
+      |> String.to_atom()
+
     definitions
     |> melt_block
     |> Enum.map(&optimize_func(&1))
     |> iced_block
     |> consist_alias(caller)
+    |> consist_alias(nif_module)
   end
 
   def consist_alias(definitions, module) do
