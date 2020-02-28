@@ -13,6 +13,11 @@ defmodule M do
       list
       |> Enum.map(& &1 * &1)
     end
+
+    def string_replace(list) do
+      list
+      |> Enum.map(& String.replace(&1, "Fizz", "Buzz"))
+    end
   end
 end
 ```
@@ -35,6 +40,7 @@ We've tested it well on the following OS:
 We've tested it on the following Elixir versions:
 
 * 1.9
+* 1.10
 
 We've tested it on the following OTP versions:
 
@@ -60,7 +66,7 @@ Add `pelemay` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pelemay, "~> 0.0.5"},
+    {:pelemay, "~> 0.0.6"},
   ]
 end
 ```
