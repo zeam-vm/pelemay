@@ -54,7 +54,8 @@ defmodule Analyzer do
     expr |> hd |> polynomial_map
   end
 
-  def supported?({:{}, [], list} = tuple) do
+  def supported?({:{}, [], list} = tuple) 
+    when is_list(list) do
     [var: tuple]
   end
 
