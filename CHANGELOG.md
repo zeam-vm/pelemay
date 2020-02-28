@@ -1,5 +1,10 @@
 # Changelog for Pelemay
 
+## v0.0.6
+
+* Support String.replace (only in the case that the global option is omitted)
+* Fix a bug related int64
+
 ## v0.0.5
 
 * Support Nerves
