@@ -56,7 +56,7 @@ defmodule Pelemay.Generator.Native.EnumCuda do
         return error_code;
       }
 
-      #{nif_name}_map_double_kernel <<< (vec_l + 255)/256, 256 >>> (vec_l, vec_double);
+      #{nif_name}_map_double_kernel <<< (vec_l + 255)/256, 256 >>> (vec_l, dev_vec_double);
 
       error_code = cudaMemcpy(vec_double, dev_vec_double, vec_l * sizeof(vec_double[0]), cudaMemcpyDeviceToHost);
       if (__builtin_expect((error_code != cudaSuccess), false)) {
@@ -91,7 +91,7 @@ defmodule Pelemay.Generator.Native.EnumCuda do
         return error_code;
       }
 
-      #{nif_name}_map_long_kernel <<< (vec_l + 255)/256, 256 >>> (vec_l, vec_long);
+      #{nif_name}_map_long_kernel <<< (vec_l + 255)/256, 256 >>> (vec_l, dev_vec_long);
 
       error_code = cudaMemcpy(vec_long, dev_vec_long, vec_l * sizeof(vec_long[0]), cudaMemcpyDeviceToHost);
       if (__builtin_expect((error_code != cudaSuccess), false)) {
