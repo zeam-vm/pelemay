@@ -15,6 +15,11 @@ defmodule Sample do
       |> Enum.map(&(&1 * &1))
     end
 
+    def list_square_fn(list) when is_list(list) do
+      list
+      |> Enum.map(fn x -> x * x end)
+    end
+
     def list_plus1(list) do
       list
       |> Enum.map(&(&1 + 1))

@@ -11,6 +11,10 @@ defmodule GeneratedCodeTest do
       assert [1, 4, 9] == Sample.list_square([1, 2, 3])
     end
 
+    test "One Enum.map/2: list_square_fn" do
+      assert [1, 4, 9] == Sample.list_square_fn([1, 2, 3])
+    end
+
     test "two Enum.map/2: list_plus1_mult2" do
       assert [4, 6, 8] == Sample.list_plus1_mult2([1, 2, 3])
     end
