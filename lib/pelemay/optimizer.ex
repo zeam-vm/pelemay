@@ -207,9 +207,6 @@ defmodule Optimizer do
     modules = module_info |> Keyword.keys()
     functions = module_info |> Keyword.values()
 
-    
-    
-
     func_name = Generator.Name.generate_function_name(functions, polymap)
 
     case Db.validate(func_name) do
