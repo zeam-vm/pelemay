@@ -18,6 +18,11 @@ defmodule Pelemay do
         |> Enum.map(& &1 * &1)
       end
     end
+
+    def string_replace(list) do
+      list
+      |> Enum.map(& String.replace(&1, "Fizz", "Buzz"))
+    end
   ```
 
   1. Find Enum.map with a specific macro
