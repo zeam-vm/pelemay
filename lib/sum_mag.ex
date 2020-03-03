@@ -273,13 +273,6 @@ defmodule SumMag do
 
   def quoted_vars?(left, right), do: quoted_var?(left) && quoted_var?(right)
 
-  def include_module?(ast, module_name) when is_atom(module_name) do
-    Macro.prewalk(ast, false, fn
-      {:__aliases__, _, [module_name]} = ast, _ -> {ast, true}
-      other, acc -> {other, acc}
-    end)
-  end
-
   # def include_func?(ast, module_name, func_list) 
   #   when is_atom(module_name) and is_list(func_name) do
 
@@ -299,9 +292,9 @@ defmodule SumMag do
   ```
   """
   @spec include_specified_func?(Macro.input(), atom, {atom, number}) :: boolean()
-  def include_specified_func?(ast_term, module, {func, arity}) do
+  def include_specified_func?(ast_term, module, {func, _arity}) do
     verify = fn
-      {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, args} = ast, acc ->
+      {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, _args} = ast, acc ->
         if code_module == module && code_func == func do
           {ast, true}
         else
@@ -333,13 +326,13 @@ defmodule SumMag do
   @spec include_specified_functions?(Macro.input(), [{atom, list}]) :: [...]
   def include_specified_functions?(ast_term, [{module, func}]) do
     verify = fn
-      {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, args} = ast, acc ->
+      {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, _args} = ast, acc ->
         if code_module != module do
           {ast, acc}
         else
           case Keyword.fetch(func, code_func) do
             {:ok, _} -> {ast, Keyword.update(acc, code_func, 1, &(&1 + 1))}
-            other -> {ast, acc}
+            _ -> {ast, acc}
           end
         end
 
@@ -354,7 +347,7 @@ defmodule SumMag do
 
   def include_specified_functions(ast_term, module_functions) do
     verify = fn
-      {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, args} = ast, acc ->
+      {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, _args} = ast, acc ->
         module_functions
         |> Enum.map(fn {module, functions} ->
           if code_module != module do
@@ -364,7 +357,7 @@ defmodule SumMag do
             |> Enum.map(fn {func, _arity} ->
               case Keyword.fetch(func, code_func) do
                 {:ok, _} -> {ast, Keyword.update(acc, code_func, 1, &(&1 + 1))}
-                other -> {ast, acc}
+                _ -> {ast, acc}
               end
             end)
           end
