@@ -36,7 +36,6 @@ defmodule Optimizer do
     |> consist_alias(nif_module)
   end
 
-  def consist_alias(definitions, module) do
     Macro.prewalk(
       definitions,
       fn
@@ -186,11 +185,11 @@ defmodule Optimizer do
     {_func, _meta, args} = ast
 
     optimized_ast =
-      Analyzer.parse(args)
+      args
+      |> Analyzer.parse()
       |> verify
       |> case do
         {:ok, polymap} ->
-          # polymap |> IO.inspect(label: "polymap")
           {:ok, format(polymap, module_info)}
 
         {:error, _} ->
@@ -237,31 +236,52 @@ defmodule Optimizer do
       |> List.flatten()
       |> Keyword.get_values(:var)
 
-    first_func_vars = generate_arguments(polymap)
 
     {
       {:., [], [{:__aliases__, [alias: false], [:ReplaceModule]}, func_name]},
       [],
-      flat_vars ++ first_func_vars
     }
   end
 
+  @doc """
+    Gets arguments of function which is passed as parameter in high order functions.
+  """
   def generate_arguments(func: %{operators: operators} = polymap) do
     operators
     |> Enum.filter(&(is_bitstring(&1) == true))
     |> case do
-      [] -> []
-      _ -> generate_arguments(polymap)
+      [] ->
+        []
+
+      _ ->
+        polymap
+        generate_arguments(polymap)
     end
   end
 
   def generate_arguments(%{args: args}) do
-    Enum.map(args, &generate_argument(&1))
+    args
+    |> Enum.map(&generate_argument(&1))
     |> List.flatten()
   end
 
   def generate_arguments(_), do: []
 
+  @doc """
+  Ignore captured variables because it is self-evident to work on elements of enumerable types with high order functions.
+  Other than that, returns its input value. 
+
+  ## Example 
+  iex> captured_val = quote do: &1
+  iex> Optimizer.generate_argument(captured_val)
+  []
+
+  iex> Optimizer.generate_argument(",")
+  ","
+
+  iex> Optimizer.generate_argument([","])
+  [","]
+  """
   def generate_argument({:&, _, [num]}) when is_number(num), do: []
   def generate_argument(other), do: other
 
