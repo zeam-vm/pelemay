@@ -236,10 +236,12 @@ defmodule Optimizer do
       |> List.flatten()
       |> Keyword.get_values(:var)
 
+    inner_func_vars = generate_arguments(polymap)
 
     {
       {:., [], [{:__aliases__, [alias: false], [:ReplaceModule]}, func_name]},
       [],
+      flat_vars ++ inner_func_vars
     }
   end
 
