@@ -2,6 +2,8 @@ defmodule Optimizer do
   @moduledoc """
     Provides a optimizer for [AST](https://elixirschool.com/en/lessons/advanced/metaprogramming/)
   """
+  @compile if Mix.env() == :test, do: :export_all
+
   import SumMag
   alias Pelemay.Db
 
@@ -36,6 +38,7 @@ defmodule Optimizer do
     |> consist_alias(nif_module)
   end
 
+  defp consist_alias(definitions, module) do
     Macro.prewalk(
       definitions,
       fn
@@ -252,12 +255,8 @@ defmodule Optimizer do
     operators
     |> Enum.filter(&(is_bitstring(&1) == true))
     |> case do
-      [] ->
-        []
-
-      _ ->
-        polymap
-        generate_arguments(polymap)
+      [] -> []
+      _ -> generate_arguments(polymap)
     end
   end
 
