@@ -32,10 +32,12 @@ defmodule Optimizer do
       |> String.to_atom()
 
     definitions
+    |> IO.inspect(label: "origin")
     |> melt_block
     |> Enum.map(&optimize_func(&1))
     |> iced_block
     |> consist_alias(nif_module)
+    |> IO.inspect(label: "ret")
   end
 
   defp consist_alias(definitions, module) do
@@ -159,7 +161,9 @@ defmodule Optimizer do
         term
 
       false ->
-        info = extract_module_informations(term, options)
+        info =
+          extract_module_informations(term, options)
+          |> IO.inspect(label: "info")
 
         init(term, info)
     end
@@ -182,7 +186,7 @@ defmodule Optimizer do
     end
   end
 
-  def init(ast, [{_, []}]), do: ast
+  def init(ast, []), do: ast
 
   def init(ast, module_info) do
     {_func, _meta, args} = ast
@@ -191,6 +195,7 @@ defmodule Optimizer do
       args
       |> Analyzer.parse()
       |> verify
+      |> IO.inspect(label: "verify")
       |> case do
         {:ok, polymap} ->
           {:ok, format(polymap, module_info)}
