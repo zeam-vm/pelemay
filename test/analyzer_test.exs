@@ -3,6 +3,7 @@ defmodule AnalyzerTest do
   doctest Analyzer
 
   @subject Analyzer
+  @context AnalyzerTest
 
   describe "supported?/1" do
     test "with pipe, anonymous function: fn, one argument" do
@@ -11,48 +12,46 @@ defmodule AnalyzerTest do
       assert {:|>, [context: _, import: Kernel], [[1, 2, 3], right]} = quoted
       assert {_enum_map, [], anonymous_function} = right
 
-      assert [func: %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}] ==
+      assert [func: %{args: [{:&, [], [1]}, 1], operators: [:+]}] ==
                @subject.parse(anonymous_function)
     end
 
     test "with pipe, anonymous function: fn, two arguments" do
-      quoted = quote do: [1, 2, 3] |> Enum.map(fn x, y -> x + y + 1 end)
+      quoted = quote do: [1, 2, 3] |> Enum.sort(&(&1 >= &2))
 
-      assert {:|>, [context: _, import: Kernel], [[1, 2, 3], right]} = quoted
-      assert {_enum_map, [], anonymous_function} = right
-
-      assert [
+      assert {:|>, [context: @context, import: Kernel], [[1, 2, 3], enum_func]} = quoted
+      assert {_enum_sort, [], func} = enum_func
+      assert  @subject.parse(func) == [
                func: %{
-                 args: [{:x, [], AnalyzerTest}, {:y, [], AnalyzerTest}, 1],
-                 operators: [:+, :+]
+                 args: [{:&, [], [1]}, {:&, [], [2]}],
+                 operators: [:>=]
                }
-             ] == @subject.parse(anonymous_function)
+             ]
     end
 
     test "with anonymous function: fn, one argument" do
       quoted = quote do: Enum.map([1, 2, 3], fn x -> x + 1 end)
 
-      assert {_enum_map, [], [[1, 2, 3], anonymous_function]} = quoted
+      assert {_enum_map, [], [[1, 2, 3], func]} = quoted
 
-      assert [
+      assert @subject.supported?(func) == [
                func: %{
-                 args: [{:x, [], AnalyzerTest}, 1],
+                 args: [{:&, [], [1]}, 1],
                  operators: [:+]
                }
-             ] == @subject.supported?(anonymous_function)
+             ]
     end
 
     test "with anonymous function: fn, two arguments" do
-      quoted = quote do: Enum.map([1, 2, 3], fn x, y -> x + y + 1 end)
+      quoted = quote do: Enum.sort([1, 2, 3], fn x, y -> x >= y end)
 
-      assert {_enum_map, [], [[1, 2, 3], anonymous_function]} = quoted
-
-      assert [
+      assert {enum_sort, [], [[1, 2, 3], func]} = quoted
+      assert  @subject.supported?(func) == [
                func: %{
-                 args: [{:x, [], AnalyzerTest}, {:y, [], AnalyzerTest}, 1],
-                 operators: [:+, :+]
+                 args: [{:&, [], [1]}, {:&, [], [2]}],
+                 operators: [:>=]
                }
-             ] == @subject.supported?(anonymous_function)
+              ]
     end
 
     test "with basic types w/o tuples" do

@@ -36,7 +36,7 @@ defmodule Analyzer do
   iex> quote do
   ...>   fn x -> x + 1 end
   ...> end |> Analyzer.supported?
-  [func: %{args: [{:x, [], AnalyzerTest}, 1], operators: [:+]}]
+  [func: %{args: [{:&, [], [1]}, 1], operators: [:+]}]
   """
   def supported?({_, _, atom} = var) when is_atom(atom) do
     [var: var]
@@ -46,8 +46,25 @@ defmodule Analyzer do
     [var: var]
   end
 
-  def supported?({:fn, _, [{:->, _, [_arg, expr]}]}) do
-    polynomial_map(expr)
+  def supported?({:fn, _, [{:->, _, [args, expr]}]}) do
+    a =
+      Macro.prewalk(expr, fn x ->
+        Enum.reduce(args, [], fn arg, list ->
+          if arg == x do
+            len = length(list) + 1
+            list ++ [{:&, [], [len]}]
+          else
+            list ++ [nil]
+          end
+        end)
+        |> Enum.filter(&(&1 != nil))
+        |> extract
+        |> case do
+          [] -> x
+          other -> other
+        end
+      end)
+      |> polynomial_map
   end
 
   def supported?({:&, _, expr}) do
@@ -71,6 +88,9 @@ defmodule Analyzer do
       true -> [var: other]
     end
   end
+
+  defp extract([elm]), do: elm
+  defp extract(other), do: other
 
   def polynomial_map(ast) do
     acc = %{
