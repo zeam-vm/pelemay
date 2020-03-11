@@ -21,7 +21,8 @@ defmodule AnalyzerTest do
 
       assert {:|>, [context: @context, import: Kernel], [[1, 2, 3], enum_func]} = quoted
       assert {_enum_sort, [], func} = enum_func
-      assert  @subject.parse(func) == [
+
+      assert @subject.parse(func) == [
                func: %{
                  args: [{:&, [], [1]}, {:&, [], [2]}],
                  operators: [:>=]
@@ -46,12 +47,13 @@ defmodule AnalyzerTest do
       quoted = quote do: Enum.sort([1, 2, 3], fn x, y -> x >= y end)
 
       assert {enum_sort, [], [[1, 2, 3], func]} = quoted
-      assert  @subject.supported?(func) == [
+
+      assert @subject.supported?(func) == [
                func: %{
                  args: [{:&, [], [1]}, {:&, [], [2]}],
                  operators: [:>=]
                }
-              ]
+             ]
     end
 
     test "with basic types w/o tuples" do
