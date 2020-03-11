@@ -4,7 +4,11 @@ defmodule Pelemay.Generator.Native do
   alias Pelemay.Generator.Native.Util, as: Util
 
   def generate(module) do
-    Pelemay.Generator.libc(module) |> write(module)
+    Db.get_functions()
+    |> case do
+      [] -> {:error, "Cannot optimize your functions"}
+      _ -> Pelemay.Generator.libc(module) |> write(module)
+    end
   end
 
   defp write(file, module) do
@@ -14,7 +18,7 @@ defmodule Pelemay.Generator.Native do
       |> generate_functions()
       |> erl_nif_init(module)
 
-    file |> File.write(str)
+    File.write(file, str)
   end
 
   defp generate_functions(str) do
@@ -67,11 +71,11 @@ defmodule Pelemay.Generator.Native do
       |> Enum.reduce(
         "",
         fn
-          [%{impl: true}] = info, acc ->
+          %{impl: true} = info, acc ->
             str = erl_nif_func(info)
             acc <> "#{str},\n  "
 
-          [%{impl: false}], acc ->
+          %{impl: false}, acc ->
             acc
         end
       )
@@ -86,7 +90,7 @@ defmodule Pelemay.Generator.Native do
     """
   end
 
-  defp erl_nif_func([%{nif_name: nif_name, arg_num: num}]) do
+  defp erl_nif_func(%{nif_name: nif_name, arg_num: num}) do
     ~s/{"#{nif_name}", #{num}, #{nif_name}}/
   end
 

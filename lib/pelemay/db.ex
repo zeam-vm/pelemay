@@ -63,7 +63,8 @@ defmodule Pelemay.Db do
     num = get_func_num() - 1
 
     1..num
-    |> Enum.map(&(&1 |> get_function))
+    |> Enum.map(&get_function(&1))
+    |> List.flatten()
   end
 
   def get_function([]), do: ""
