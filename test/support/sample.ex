@@ -10,6 +10,19 @@ defmodule Sample do
   @replacement "A"
 
   defpelemay do
+    # def list_square_plus1(list) do
+    #   sq = list
+    #   |> Enum.map(&(&1 * &1))
+
+    #   sq
+    #   |> Enum.map(&(&1 + 1))
+    # end
+
+    def afunc do
+      fun = fn x -> x + 1 end
+      fun.(1)
+    end
+
     def list_square(list) when is_list(list) do
       list
       |> Enum.map(&(&1 * &1))
@@ -75,6 +88,11 @@ defmodule Sample do
     def list_replace(subject, pattern, replacement) do
       subject
       |> Enum.map(&String.replace(&1, pattern, replacement))
+    end
+
+    def list_replace_fn(subject, pattern, replacement) do
+      subject
+      |> Enum.map(fn x -> String.replace(x, pattern, replacement) end)
     end
 
     def list_spilt do
