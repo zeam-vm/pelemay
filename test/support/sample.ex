@@ -10,14 +10,6 @@ defmodule Sample do
   @replacement "A"
 
   defpelemay do
-    # def list_square_plus1(list) do
-    #   sq = list
-    #   |> Enum.map(&(&1 * &1))
-
-    #   sq
-    #   |> Enum.map(&(&1 + 1))
-    # end
-
     def afunc do
       fun = fn x -> x + 1 end
       fun.(1)

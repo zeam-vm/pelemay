@@ -161,9 +161,7 @@ defmodule Optimizer do
         term
 
       false ->
-        info =
-          extract_module_informations(term, options)
-          |> IO.inspect(label: "info")
+        info = extract_module_informations(term, options)
 
         init(term, info)
     end
@@ -195,7 +193,6 @@ defmodule Optimizer do
       args
       |> Analyzer.parse()
       |> verify
-      |> IO.inspect(label: "verify")
       |> case do
         {:ok, polymap} ->
           {:ok, format(polymap, module_info)}
