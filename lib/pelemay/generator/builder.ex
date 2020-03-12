@@ -4,9 +4,9 @@ defmodule Pelemay.Generator.Builder do
   @clang "clang"
   @gcc "gcc"
   @cflags ["-Ofast", "-g", "-ansi", "-pedantic"]
-  @cflags_includes ["-I/usr/local/include", "-I/usr/include", "-L/usr/local/lib", "-L/usr/lib"]
+  @cflags_includes ["-I/usr/local/include", "-I/usr/include"]
   @cflags_after ["-std=c11", "-Wno-unused-function"]
-  @ldflags []
+  @ldflags ["-L/usr/local/lib", "-L/usr/lib"]
   @cflags_non_windows ["-fPIC"]
   @ldflags_non_windows ["-dynamiclib", "-undefined", "dynamic_lookup"]
 
