@@ -40,10 +40,13 @@ defmodule Pelemay.Generator.Native_CL do
 
   defp generate_function(list) do
     case Enum.empty?(list) do
-    true -> list
-    false -> list
-    |> Enum.map(&(&1 |> generate_expr))
-    |> Enum.reduce(fn x, acc -> acc <> x end)
+      true ->
+        list
+
+      false ->
+        list
+        |> Enum.map(&(&1 |> generate_expr))
+        |> Enum.reduce(fn x, acc -> acc <> x end)
     end
   end
 
