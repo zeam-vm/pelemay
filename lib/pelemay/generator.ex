@@ -1,6 +1,7 @@
 defmodule Pelemay.Generator do
   alias Pelemay.Generator.Interface
-  alias Pelemay.Generator.Native
+  alias Pelemay.Generator.Native_C
+  alias Pelemay.Generator.Native_CL
   alias Pelemay.Generator.Builder
 
   require Logger
@@ -116,6 +117,11 @@ defmodule Pelemay.Generator do
     end
   end
 
+  # make kernel code file for OpenCL
+  def libcl_func(func_name) do
+    Application.app_dir(:pelemay, "priv/#{func_name}.cl")
+  end
+
   def stub(module) do
     Application.app_dir(:pelemay, "priv/pelemay_nif_#{module_downcase_underscore(module)}.ex")
   end
@@ -133,7 +139,8 @@ defmodule Pelemay.Generator do
         Logger.warn(message)
 
       :ok ->
-        Native.generate(module)
+        Native_C.generate(module)
+        Native_CL.generate()
         Builder.generate(module)
     end
   end

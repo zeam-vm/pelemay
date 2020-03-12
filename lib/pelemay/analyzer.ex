@@ -53,11 +53,11 @@ defmodule Analyzer do
     Macro.prewalk(ast, acc, &numerical?/2) |> elem(1)
   end
 
-  defp operator(:+), do: :+
-  defp operator(:-), do: :-
-  defp operator(:/), do: :/
-  defp operator(:*), do: :*
-  defp operator(:rem), do: :rem
+  defp operator(:+), do: {:+, :arith}
+  defp operator(:-), do: {:-, :arith}
+  defp operator(:/), do: {:/, :arith}
+  defp operator(:*), do: {:*, :arith}
+  defp operator(:rem), do: {:rem, :arith}
   defp operator(_), do: false
 
   defp numerical?({atom, _, [left, right]} = ast, acc) do
@@ -69,7 +69,7 @@ defmodule Analyzer do
     operators =
       case operator(atom) do
         false -> operators
-        atom -> [atom | operators]
+        {atom, :arith} -> [atom | operators]
       end
 
     args =

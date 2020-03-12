@@ -17,11 +17,65 @@ defmodule Pelemay.Db do
       when info |> is_map do
     id = get_func_num()
     key = generate_key(id)
-
+    arg_info = get_arg_info()
+    regist_func_num(arg_info)
     update()
 
     @table_name
-    |> :ets.insert({key, info})
+    |> :ets.insert({key, arg_info, info})
+  end
+
+  # register arg_name and which function information
+  def regist_arg_info(info)
+      when info |> is_atom do
+    @table_name
+    |> :ets.insert({:arg_name, info})
+
+    @table_name
+    |> :ets.insert({info, [], :args})
+  end
+
+  # get arg_name from ETS now registered
+  def get_arg_info do
+    registered =
+      @table_name
+      |> :ets.match({:arg_name, :"$1"})
+      |> List.flatten()
+
+    case registered do
+      [] -> []
+      other -> hd(other)
+    end
+  end
+
+  # regist functions number to ETS which each module 
+  def regist_func_num(arg_name)
+      when arg_name |> is_atom do
+    number_list =
+      @table_name
+      |> :ets.match({arg_name, :"$1", :args})
+      |> List.flatten()
+
+    updated_list = number_list ++ [get_func_num()]
+
+    @table_name
+    |> :ets.update_element(arg_name, {2, updated_list})
+  end
+
+  # regist_func_num for same functions
+  def regist_func_num(num)
+      when num |> is_number do
+    arg_name = get_arg_info()
+
+    number_list =
+      @table_name
+      |> :ets.match({arg_name, :"$1", :args})
+      |> List.flatten()
+
+    updated_list = number_list ++ [num]
+
+    @table_name
+    |> :ets.update_element(arg_name, {2, updated_list})
   end
 
   def validate(func_name) do
@@ -40,8 +94,15 @@ defmodule Pelemay.Db do
     end
   end
 
+  # remake only_one? to identify index of functions when registered 
   defp only_one?(list) do
-    !Enum.find_value(list, false, &(&1 == true))
+    case Enum.find_index(list, &(&1 == true)) do
+      nil ->
+        true
+
+      other ->
+        other + 1
+    end
   end
 
   def get_functions do
@@ -51,12 +112,17 @@ defmodule Pelemay.Db do
     |> Enum.map(&(&1 |> get_function))
   end
 
+  def get_arguments do
+    @table_name
+    |> :ets.match({:"$1", :"$2", :args})
+  end
+
   def get_function([]), do: ""
 
   def get_function(id) do
     ret =
       @table_name
-      |> :ets.match({generate_key(id), :"$1"})
+      |> :ets.match({generate_key(id), :_, :"$1"})
 
     case ret do
       [] -> []

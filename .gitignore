@@ -39,3 +39,7 @@ pelemay-*.tar
 # Ignore NIF Code
 interact_nif.ex
 /native/
+
+# Ignore local file
+.DS_Store
+.vscode

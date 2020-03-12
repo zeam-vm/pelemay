@@ -3,8 +3,12 @@ defmodule Optimizer do
     Provides a optimizer for [AST](https://elixirschool.com/en/lessons/advanced/metaprogramming/)
   """
   import SumMag
+  alias Pelemay.Db
 
   @term_options [enum: true]
+  # @macro_patterna {{:., [], [{:__aliases__, [alias: false], [:ReplaceModule]}, :logistic_map]},[],[]}
+  # @macro_pattern_arg {:list, [], Elixir}
+  # @macro_pattern_b {:|>, [], [@macro_pattern_arg, @macro_patterna]}
 
   @doc """
   Optimize funcions which be enclosed `defptermay`, using `optimize_***` function.
@@ -28,12 +32,31 @@ defmodule Optimizer do
     |> consist_context(caller)
   end
 
-  defp consist_context(funcs, module) do
+  def consist_context(funcs, module) do
     Macro.prewalk(
       funcs,
       fn
         {:__aliases__, [alias: false], [:ReplaceModule]} -> module
         other -> other
+      end
+    )
+  end
+
+  def map_fold(funcs, value, arg_info) do
+    macro_pattern_a =
+      {{:., [], [{:__aliases__, [alias: false], [:ReplaceModule]}, arg_info]}, [], []}
+
+    macro_pattern_arg = value
+    macro_pattern_b = {:|>, [], [macro_pattern_arg, macro_pattern_a]}
+
+    Macro.postwalk(
+      funcs,
+      fn
+        {:|>, [], [macro_pattern_b, macro_pattern_a]} ->
+          {:|>, [], [macro_pattern_arg, macro_pattern_a]}
+
+        other ->
+          other
       end
     )
   end
@@ -50,11 +73,35 @@ defmodule Optimizer do
   ```
   """
   def optimize_func({def_key, meta, [arg_info, exprs]} = ast) do
-    case def_key do
-      :def -> {:def, meta, [arg_info, optimize_exprs(exprs)]}
-      :defp -> {:defp, meta, [arg_info, optimize_exprs(exprs)]}
-      _ -> raise ArgumentError, message: Macro.to_string(ast)
-    end
+    func =
+      case def_key do
+        :def -> {:def, meta, [regist_arg_info(arg_info), optimize_exprs(exprs)]}
+        :defp -> {:defp, meta, [arg_info, optimize_exprs(exprs)]}
+        _ -> raise ArgumentError, message: Macro.to_string(ast)
+      end
+
+    value = get_value(arg_info)
+    map_fold(func, value, arg_info)
+  end
+
+  def regist_arg_info({:when, _, arg_info}) do
+    def_name = arg_info |> hd
+    regist_arg_info(def_name)
+  end
+
+  def regist_arg_info({def_name, _, _} = arg_info) do
+    Db.regist_arg_info(def_name)
+    arg_info
+  end
+
+  def get_value({:when, _, arg_info}) do
+    def_info = arg_info |> hd
+    get_value(def_info)
+  end
+
+  def get_value({_, _, value_info}) do
+    value = value_info |> hd
+    value
   end
 
   @doc """

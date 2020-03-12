@@ -41,38 +41,27 @@ defmodule Pelemay.Generator.Interface do
   end
 
   defp generate_functions do
-    Db.get_functions()
-    |> Enum.map(&generate_function(&1))
+    Db.get_arguments()
+    |> Enum.map(&(&1 |> hd |> generate_function))
     |> List.to_string()
   end
 
-  defp generate_function([func_info]) do
-    %{
-      nif_name: nif_name,
-      module: _,
-      function: _,
-      arg_num: num,
-      args: _,
-      operators: _
-    } = func_info
-
-    args = generate_string_arguments(num)
-
+  defp generate_function(name) do
     """
-      def #{nif_name}(#{args}), do: raise "NIF #{nif_name}/#{num} not implemented"
+      def #{name}(_arg1), do: raise "NIF #{name}/1 not implemented"
     """
   end
 
-  defp generate_function([]), do: []
+  # defp generate_function([]), do: []
 
-  defp generate_string_arguments(num) do
-    1..num
-    |> Enum.reduce(
-      "",
-      fn
-        x, "" -> "_arg#{x}"
-        x, acc -> acc <> ", _arg#{x}"
-      end
-    )
-  end
+  # defp generate_string_arguments(num) do
+  # 1..num
+  # |> Enum.reduce(
+  #  "",
+  #  fn
+  #    x, "" -> "_arg#{x}"
+  #    x, acc -> acc <> ", _arg#{x}"
+  #  end
+  # )
+  # end
 end
