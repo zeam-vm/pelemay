@@ -28,10 +28,3 @@ use Mix.Config
 # here (which is why it is important to import them last).
 #
 #     import_config "#{Mix.env}.exs"
-case Mix.env() do
-  env when env in [:test, :dev] ->
-    config :logger, level: :info, backends: [Pelemay.Logger]
-
-  :prod ->
-    config :logger, level: :warn
-end

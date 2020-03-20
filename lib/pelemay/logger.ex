@@ -21,8 +21,6 @@ defmodule Pelemay.Logger do
   end
 
   def handle_event({level, _group_leader, {Logger, message, timestamp, metadata}}, state) do
-    IO.inspect("handle_event")
-
     state.path |> Path.dirname() |> File.mkdir_p()
 
     log_line =

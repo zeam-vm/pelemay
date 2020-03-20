@@ -3,6 +3,8 @@ defmodule Pelemay.Generator.Native do
   alias Pelemay.Generator
   alias Pelemay.Generator.Native.Util, as: Util
 
+  require Logger
+
   def generate(module) do
     Pelemay.Generator.libc(module) |> write(module)
   end
@@ -153,7 +155,9 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp error(e) do
-    IO.puts(
+    Logger.add_backend(Pelemay.Logger)
+
+    Logger.warn(
       "Please write a native code of the following code: #{e.module}.#{e.function}/#{e.arity}"
     )
 
