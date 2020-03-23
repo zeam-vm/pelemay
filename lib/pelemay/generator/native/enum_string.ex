@@ -18,7 +18,7 @@ defmodule Pelemay.Generator.Native.EnumString do
 
     """
     static ERL_NIF_TERM
-    #{nif_name}(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+    #{nif_name}_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     {
       return enum_string_replace(env, argv[0], argv[1], argv[2], true);
     }

@@ -89,7 +89,7 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp erl_nif_func([%{nif_name: nif_name, arg_num: num}]) do
-    ~s/{"#{nif_name}", #{num}, #{nif_name}}/
+    ~s/{"#{nif_name}_nif", #{num}, #{nif_name}_nif}/
   end
 
   defp init_nif do

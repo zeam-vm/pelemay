@@ -20,7 +20,7 @@ defmodule Pelemay.Generator.Native.Enum do
 
     """
     static ERL_NIF_TERM
-    #{nif_name}(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+    #{nif_name}_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     {
       if (__builtin_expect((argc != 1), false)) {
         return enif_make_badarg(env);
@@ -62,7 +62,7 @@ defmodule Pelemay.Generator.Native.Enum do
     |> Map.update(:arg_num, nil, fn _ -> 2 end)
     |> Db.register()
 
-    String.replace(ret, "chunk_every", "#{nif_name}")
+    String.replace(ret, "chunk_every", "#{nif_name}_nif")
   end
 
   # Add here
