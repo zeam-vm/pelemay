@@ -158,7 +158,7 @@ defmodule Pelemay.Generator.Native do
     Logger.warn(
       "Please write a native code of the following code: #{e.module}.#{e.function}/#{e.arity}"
     )
-    
+
     {nil, []}
   end
 end
