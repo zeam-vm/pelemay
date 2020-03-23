@@ -155,8 +155,6 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp error(e) do
-    Logger.add_backend(Pelemay.Logger)
-
     Logger.warn(
       "Please write a native code of the following code: #{e.module}.#{e.function}/#{e.arity}"
     )

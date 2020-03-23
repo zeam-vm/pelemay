@@ -40,11 +40,17 @@ defmodule Pelemay do
   9. Compile NIF as Custom Mix Task, using Clang
   """
   defmacro defpelemay(functions) do
+    Logger.add_backend(Pelemay.Logger)
+
     Db.init()
 
     ret = Optimizer.replace(functions, __CALLER__.module)
 
     Generator.generate(__CALLER__.module)
-    Optimizer.consist_context(ret)
+    result = Optimizer.consist_context(ret)
+
+    Logger.flush()
+
+    result
   end
 end
