@@ -6,7 +6,7 @@ defmodule Pelemay.Generator.Interface do
   require Logger
 
   def generate(module) when is_atom(module) do
-    case generate_functions() do
+    case generate_functions(module) do
       "" ->
         {:error, "Don't need defpelemay"}
 
@@ -49,17 +49,17 @@ defmodule Pelemay.Generator.Interface do
     end
   end
 
-  defp generate_functions do
+  defp generate_functions(module) do
     Db.get_functions()
-    |> Enum.map(&generate_function(&1))
+    |> Enum.map(&generate_function(module, &1))
     |> List.to_string()
   end
 
-  defp generate_function([func_info]) do
-    generate_function(func_info)
+  defp generate_function(module, [func_info]) do
+    generate_function(module, func_info)
   end
 
-  defp generate_function(%{impl: true} = func_info) do
+  defp generate_function(module, %{impl: true} = func_info) do
     %{
       nif_name: nif_name,
       module: _,
@@ -83,7 +83,7 @@ defmodule Pelemay.Generator.Interface do
                 init_cpu_info()
                 :ets.lookup(:cpu_info, :runtime_info)
             end
-            Logger.error("badarg: runtime_info = #\{runtime_info |> inspect}")
+            Logger.error("badarg on #{Generator.nif_module(module)}.#{nif_name}: runtime_info = #\{runtime_info |> inspect}")
             :erlang.error(:badarg)
         end
       end
@@ -93,11 +93,11 @@ defmodule Pelemay.Generator.Interface do
     """
   end
 
-  defp generate_function(%{impl: false}) do
+  defp generate_function(_module, %{impl: false}) do
     ""
   end
 
-  defp generate_function([]), do: []
+  defp generate_function(_module, []), do: []
 
   defp generate_string_arguments(num) do
     1..num
