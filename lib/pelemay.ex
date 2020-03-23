@@ -2,6 +2,20 @@ defmodule Pelemay do
   alias Pelemay.Generator
   alias Pelemay.Db
 
+  require Logger
+
+  @log_path "#{Mix.Project.build_path()}/log/info.log"
+  @compile_time_info "#{Mix.Project.build_path()}/log/compile_time_info"
+
+  @on_load :init
+
+  def init() do
+    File.mkdir(Path.dirname(@log_path))
+    File.mkdir(Path.dirname(@compile_time_info))
+    File.rm(@log_path)
+    :ok
+  end
+
   @moduledoc """
   ## Pelemay: The Penta (Five) “Elemental Way”: Freedom, Insight, Beauty, Efficiency and Robustness
 
@@ -40,7 +54,8 @@ defmodule Pelemay do
   9. Compile NIF as Custom Mix Task, using Clang
   """
   defmacro defpelemay(functions) do
-    Logger.add_backend(Pelemay.Logger)
+    Logger.add_backend({Pelemay.Logger, @log_path})
+    File.write!(@compile_time_info, "compile_time_info = #{CpuInfo.all_profile() |> inspect()}")
 
     Db.init()
 
@@ -52,5 +67,9 @@ defmodule Pelemay do
     Logger.flush()
 
     result
+  end
+
+  def compile_time_info() do
+    File.read!(@compile_time_info)
   end
 end

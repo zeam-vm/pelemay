@@ -1,12 +1,11 @@
 defmodule Pelemay.Logger do
   @behaviour :gen_event
-  @path "#{Mix.Project.build_path()}/log/info.log"
   @format "$date $time [$level] $message"
 
   require Logger
 
-  def init(__MODULE__) do
-    init(__MODULE__, @path)
+  def init({__MODULE__, path}) do
+    init(__MODULE__, path)
   end
 
   def init(__MODULE__, path) do
