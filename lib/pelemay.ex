@@ -13,6 +13,7 @@ defmodule Pelemay do
     File.mkdir(Path.dirname(@log_path))
     File.mkdir(Path.dirname(@compile_time_info))
     File.rm(@log_path)
+    File.touch(@log_path)
     :ok
   end
 
