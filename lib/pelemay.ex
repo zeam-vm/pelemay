@@ -4,8 +4,8 @@ defmodule Pelemay do
 
   require Logger
 
-  @log_path "#{Mix.Project.build_path()}/log/info.log"
-  @compile_time_info "#{Mix.Project.build_path()}/log/compile_time_info"
+  @log_path Path.join(Mix.Project.build_path(), "lib/pelemay/priv/info.log")
+  @compile_time_info Path.join(Mix.Project.build_path(), "lib/pelemay/priv/compile_time_info")
 
   @on_load :init
 
