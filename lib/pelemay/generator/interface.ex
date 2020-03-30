@@ -69,6 +69,7 @@ defmodule Pelemay.Generator.Interface do
 
     args = generate_string_arguments(num)
     args_active = generate_string_arguments_active(num)
+    args_inspect = generate_string_arguments_inspect(num)
 
     """
       def #{nif_name}(#{args_active}) do
@@ -83,7 +84,10 @@ defmodule Pelemay.Generator.Interface do
                 init_cpu_info()
                 :ets.lookup(:cpu_info, :runtime_info)
             end
-            Logger.error("badarg on #{Generator.nif_module(module)}.#{nif_name}: runtime_info = #\{runtime_info |> inspect}")
+            Logger.error("badarg on #{Generator.nif_module(module)}.#{nif_name}")
+            Logger.error("args: #{args_inspect}")
+            Logger.error("compile_time_info = \#{Pelemay.eval_compile_time_info() |> elem(1) |> Keyword.get(:compile_time_info) |> inspect}")
+            Logger.error("runtime_info = #\{runtime_info |> inspect}")
             :erlang.error(:badarg)
         end
       end
@@ -117,6 +121,17 @@ defmodule Pelemay.Generator.Interface do
       fn
         x, "" -> "arg#{x}"
         x, acc -> acc <> ", arg#{x}"
+      end
+    )
+  end
+
+  def generate_string_arguments_inspect(num) do
+    1..num
+    |> Enum.reduce(
+      "",
+      fn
+        x, "" -> "arg#{x} = \#{arg#{x} |> inspect}"
+        x, acc -> acc <> ", arg#{x} = \#{arg#{x} |> inspect}"
       end
     )
   end
