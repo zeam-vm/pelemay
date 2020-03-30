@@ -73,4 +73,8 @@ defmodule Pelemay do
   def compile_time_info() do
     File.read!(@compile_time_info)
   end
+
+  def eval_compile_time_info() do
+    Code.eval_file(@compile_time_info)
+  end
 end
