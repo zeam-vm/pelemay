@@ -20,6 +20,7 @@ defmodule Pelemay.Generator.Interface do
           require Logger
 
           def init do
+            init_logger()
             init_cpu_info()
             load_nifs()
           end
@@ -35,6 +36,11 @@ defmodule Pelemay.Generator.Interface do
           def init_cpu_info do
             :ets.new(:cpu_info, [:set, :public, :named_table])
             :ets.insert(:cpu_info, {:runtime_info, CpuInfo.all_profile()})
+          end
+
+          def init_logger do
+            Logger.add_backend(RingLogger)
+            Logger.configure_backend(RingLogger, max_size: 4096)
           end
 
         #{funcs}

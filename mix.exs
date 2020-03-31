@@ -29,6 +29,7 @@ defmodule Pelemay.MixProject do
   defp deps do
     [
       {:cpu_info, "~> 0.1.2"},
+      {:ring_logger, "~> 0.6"},
 
       # Docs dependencies
       {:ex_doc, ">= 0.0.0", only: :dev},
