@@ -4,8 +4,8 @@ defmodule Pelemay.Logger do
 
   require Logger
 
-  def init({__MODULE__, path}) do
-    init(__MODULE__, path)
+  def init(__MODULE__) do
+  	{:ok, %{path: nil, format: @format}}
   end
 
   def init(__MODULE__, path) do

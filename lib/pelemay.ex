@@ -55,7 +55,9 @@ defmodule Pelemay do
   9. Compile NIF as Custom Mix Task, using Clang
   """
   defmacro defpelemay(functions) do
-    Logger.add_backend({Pelemay.Logger, @log_path})
+    Logger.add_backend(Pelemay.Logger)
+    Logger.configure_backend(Pelemay.Logger, path: @log_path)
+    
     File.write!(@compile_time_info, "compile_time_info = #{CpuInfo.all_profile() |> inspect()}")
 
     Db.init()
