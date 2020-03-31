@@ -23,24 +23,29 @@ defmodule Pelemay.Generator.Interface do
             init_logger()
             init_cpu_info()
             load_nifs()
+            :ok
           end
 
           def load_nifs do
-            nif_file = "#{Pelemay.Generator.libnif(module)}"
+            nif_file = "\#{Pelemay.Generator.libnif(#{module})}"
             case :erlang.load_nif(nif_file, 0) do
-              :ok -> :ok
-              other -> Logger.debug(#{~S/"Failed to load NIF:#{other}"/})
+              :ok ->
+                Logger.debug("[Pelemay] load_nif success")
+                :ok
+              other -> Logger.debug(#{~S/"[Pelemay] Failed to load NIF:#{other}"/})
             end
           end
 
           def init_cpu_info do
             :ets.new(:cpu_info, [:set, :public, :named_table])
             :ets.insert(:cpu_info, {:runtime_info, CpuInfo.all_profile()})
+            Logger.debug("[Pelemay] init_cpu_info success")
           end
 
           def init_logger do
             Logger.add_backend(RingLogger)
             Logger.configure_backend(RingLogger, max_size: 4096)
+            Logger.debug("[Pelemay] init_logger success")
           end
 
         #{funcs}
@@ -90,10 +95,10 @@ defmodule Pelemay.Generator.Interface do
                 init_cpu_info()
                 :ets.lookup(:cpu_info, :runtime_info)
             end
-            Logger.error("badarg on #{Generator.nif_module(module)}.#{nif_name}")
-            Logger.error("args: #{args_inspect}")
-            Logger.error("compile_time_info = \#{Pelemay.eval_compile_time_info() |> elem(1) |> Keyword.get(:compile_time_info) |> inspect}")
-            Logger.error("runtime_info = #\{runtime_info |> inspect}")
+            Logger.error("[Pelemay] badarg on #{Generator.nif_module(module)}.#{nif_name}")
+            Logger.error("[Pelemay] args: #{args_inspect}")
+            Logger.error("[Pelemay] compile_time_info = \#{Pelemay.eval_compile_time_info() |> elem(1) |> Keyword.get(:compile_time_info) |> inspect}")
+            Logger.error("[Pelemay] runtime_info = #\{runtime_info |> inspect}")
             :erlang.error(:badarg)
         end
       end
