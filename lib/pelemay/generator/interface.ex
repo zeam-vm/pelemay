@@ -20,7 +20,6 @@ defmodule Pelemay.Generator.Interface do
           require Logger
 
           def init do
-            init_logger()
             init_cpu_info()
             load_nifs()
             :ok
@@ -28,6 +27,7 @@ defmodule Pelemay.Generator.Interface do
 
           def load_nifs do
             nif_file = "\#{Pelemay.Generator.libnif(#{module})}"
+            Logger.debug("[Pelemay] \#{File.exists?(nif_file)}")
             case :erlang.load_nif(nif_file, 0) do
               :ok ->
                 Logger.debug("[Pelemay] load_nif success")
@@ -40,12 +40,6 @@ defmodule Pelemay.Generator.Interface do
             :ets.new(:cpu_info, [:set, :public, :named_table])
             :ets.insert(:cpu_info, {:runtime_info, CpuInfo.all_profile()})
             Logger.debug("[Pelemay] init_cpu_info success")
-          end
-
-          def init_logger do
-            Logger.add_backend(RingLogger)
-            Logger.configure_backend(RingLogger, max_size: 4096)
-            Logger.debug("[Pelemay] init_logger success")
           end
 
         #{funcs}
@@ -97,7 +91,11 @@ defmodule Pelemay.Generator.Interface do
             end
             Logger.error("[Pelemay] badarg on #{Generator.nif_module(module)}.#{nif_name}")
             Logger.error("[Pelemay] args: #{args_inspect}")
-            Logger.error("[Pelemay] compile_time_info = \#{Pelemay.eval_compile_time_info() |> elem(1) |> Keyword.get(:compile_time_info) |> inspect}")
+            try do
+              Logger.error("[Pelemay] compile_time_info = \#{Pelemay.eval_compile_time_info() |> elem(1) |> Keyword.get(:compile_time_info) |> inspect}")
+            rescue
+              _e in Code.LoadError -> Logger.error("[Pelemay] compile_time_info = nil")
+            end
             Logger.error("[Pelemay] runtime_info = #\{runtime_info |> inspect}")
             :erlang.error(:badarg)
         end

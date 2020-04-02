@@ -4,16 +4,14 @@ defmodule Pelemay do
 
   require Logger
 
-  @log_path Application.app_dir(:pelemay, "priv/info.log")
-  @compile_time_info Application.app_dir(:pelemay, "priv/compile_time_info")
-
   @on_load :init
 
   def init() do
-    File.mkdir(Path.dirname(@log_path))
-    File.mkdir(Path.dirname(@compile_time_info))
-    File.rm(@log_path)
-    File.touch(@log_path)
+    log_path = Application.app_dir(:pelemay, "priv/info.log")
+    File.mkdir(Path.dirname(log_path))
+    File.mkdir(Path.dirname(Application.app_dir(:pelemay, "priv/compile_time_info")))
+    File.rm(log_path)
+    File.touch(log_path)
     :ok
   end
 
@@ -73,10 +71,10 @@ defmodule Pelemay do
   end
 
   def compile_time_info() do
-    File.read!(@compile_time_info)
+    File.read!(Application.app_dir(:pelemay, "priv/compile_time_info"))
   end
 
   def eval_compile_time_info() do
-    Code.eval_file(@compile_time_info)
+    Code.eval_file(Application.app_dir(:pelemay, "priv/compile_time_info"))
   end
 end
