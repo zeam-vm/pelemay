@@ -54,9 +54,11 @@ defmodule Pelemay do
   """
   defmacro defpelemay(functions) do
     Logger.add_backend(Pelemay.Logger)
-    Logger.configure_backend(Pelemay.Logger, path: @log_path)
+    log_path = Application.app_dir(:pelemay, "priv/info.log")
+    Logger.configure_backend(Pelemay.Logger, path: log_path)
 
-    File.write!(@compile_time_info, "compile_time_info = #{CpuInfo.all_profile() |> inspect()}")
+    Application.app_dir(:pelemay, "priv/compile_time_info")
+    |> File.write!("compile_time_info = #{CpuInfo.all_profile() |> inspect()}")
 
     Db.init()
 
