@@ -20,7 +20,9 @@ defmodule Pelemay.Logger do
   end
 
   def handle_event({level, _group_leader, {Logger, message, timestamp, metadata}}, state) do
-    state.path |> Path.dirname() |> File.mkdir_p()
+    unless is_nil(state.path) do
+      state.path |> Path.dirname() |> File.mkdir_p()
+    end
 
     log_line =
       Logger.Formatter.format(
