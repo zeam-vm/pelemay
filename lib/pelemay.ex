@@ -2,6 +2,19 @@ defmodule Pelemay do
   alias Pelemay.Generator
   alias Pelemay.Db
 
+  require Logger
+
+  @on_load :init
+
+  def init() do
+    log_path = Application.app_dir(:pelemay, "priv/info.log")
+    File.mkdir(Path.dirname(log_path))
+    File.mkdir(Path.dirname(Application.app_dir(:pelemay, "priv/compile_time_info")))
+    File.rm(log_path)
+    File.touch(log_path)
+    :ok
+  end
+
   @moduledoc """
   ## Pelemay: The Penta (Five) “Elemental Way”: Freedom, Insight, Beauty, Efficiency and Robustness
 
@@ -40,11 +53,30 @@ defmodule Pelemay do
   9. Compile NIF as Custom Mix Task, using Clang
   """
   defmacro defpelemay(functions) do
+    Logger.add_backend(Pelemay.Logger)
+    log_path = Application.app_dir(:pelemay, "priv/info.log")
+    Logger.configure_backend(Pelemay.Logger, path: log_path)
+
+    Application.app_dir(:pelemay, "priv/compile_time_info")
+    |> File.write!("compile_time_info = #{CpuInfo.all_profile() |> inspect()}")
+
     Db.init()
 
     ret = Optimizer.replace(functions, __CALLER__.module)
 
     Generator.generate(__CALLER__.module)
-    Optimizer.consist_context(ret)
+    result = Optimizer.consist_context(ret)
+
+    Logger.flush()
+
+    result
+  end
+
+  def compile_time_info() do
+    File.read!(Application.app_dir(:pelemay, "priv/compile_time_info"))
+  end
+
+  def eval_compile_time_info() do
+    Code.eval_file(Application.app_dir(:pelemay, "priv/compile_time_info"))
   end
 end

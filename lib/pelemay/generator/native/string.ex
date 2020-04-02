@@ -18,7 +18,7 @@ defmodule Pelemay.Generator.Native.String do
 
     """
     static
-    ERL_NIF_TERM #{nif_name}(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+    ERL_NIF_TERM #{nif_name}_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     {
       if(__builtin_expect(argc != 3, false)) {
         return enif_make_badarg(env);

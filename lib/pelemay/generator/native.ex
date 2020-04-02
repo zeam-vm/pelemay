@@ -3,6 +3,8 @@ defmodule Pelemay.Generator.Native do
   alias Pelemay.Generator
   alias Pelemay.Generator.Native.Util, as: Util
 
+  require Logger
+
   def generate(module) do
     Pelemay.Generator.libc(module) |> write(module)
   end
@@ -87,7 +89,7 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp erl_nif_func([%{nif_name: nif_name, arg_num: num}]) do
-    ~s/{"#{nif_name}", #{num}, #{nif_name}}/
+    ~s/{"#{nif_name}_nif", #{num}, #{nif_name}_nif}/
   end
 
   defp init_nif do
@@ -153,7 +155,7 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp error(e) do
-    IO.puts(
+    Logger.warn(
       "Please write a native code of the following code: #{e.module}.#{e.function}/#{e.arity}"
     )
 

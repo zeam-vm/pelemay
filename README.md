@@ -36,6 +36,7 @@ We've tested it well on the following OS:
 * macOS (64bit)
 * Linux (64bit)
 * Windows (64bit)
+* Nerves (Raspberry 3)
 
 We've tested it on the following Elixir versions:
 
@@ -66,7 +67,7 @@ Add `pelemay` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pelemay, "~> 0.0.6"},
+    {:pelemay, "~> 0.0.7"},
   ]
 end
 ```
