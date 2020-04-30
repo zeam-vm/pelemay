@@ -4,7 +4,7 @@ defmodule Pelemay.MixProject do
   def project do
     [
       app: :pelemay,
-      version: "0.0.7",
+      version: "0.0.8",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       description: description(),
@@ -28,7 +28,7 @@ defmodule Pelemay.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:cpu_info, "~> 0.1.2"},
+      {:cpu_info, "~> 0.2.1"},
       {:ring_logger, "~> 0.6"},
 
       # Docs dependencies
