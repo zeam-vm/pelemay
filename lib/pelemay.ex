@@ -77,6 +77,11 @@ defmodule Pelemay do
   end
 
   def eval_compile_time_info() do
+    unless File.exists?(Application.app_dir(:pelemay, "priv/compile_time_info")) do
+      Application.app_dir(:pelemay, "priv/compile_time_info")
+      |> File.write!("compile_time_info = #{CpuInfo.all_profile() |> inspect()}")
+    end
+
     Code.eval_file(Application.app_dir(:pelemay, "priv/compile_time_info"))
   end
 end
