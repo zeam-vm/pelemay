@@ -54,9 +54,12 @@ defmodule Pelemay.Generator.Builder do
   end
 
   def generate(module) do
-    cc =
+    cpu_info =
       Pelemay.eval_compile_time_info()
       |> elem(0)
+
+    cc =
+      cpu_info
       |> parse_info()
       |> select_latest()
       |> Map.get(:bin)
@@ -65,15 +68,18 @@ defmodule Pelemay.Generator.Builder do
       raise CompileError, message: "#{cc} is not installed."
     end
 
+    cflags = cpu_info |> Map.get(:compiler) |> Map.get(:cflags_env) |> String.split()
+
     {cflags_t, ldflags_t} =
       if is_nil(System.get_env("CROSSCOMPILE")) do
         {
-          @cflags ++ ["-I#{erlang_include_path()}"] ++ @cflags_includes ++ @cflags_after,
+          cflags ++
+            @cflags ++ ["-I#{erlang_include_path()}"] ++ @cflags_includes ++ @cflags_after,
           @ldflags
         }
       else
         {
-          String.split(System.get_env("CFLAGS")) ++ String.split(System.get_env("ERL_CFLAGS")),
+          cflags ++ String.split(System.get_env("ERL_CFLAGS")),
           @ldflags ++ String.split(System.get_env("ERL_LDFLAGS"))
         }
       end
