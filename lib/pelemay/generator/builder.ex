@@ -1,5 +1,6 @@
 defmodule Pelemay.Generator.Builder do
   alias Pelemay.Generator
+  require Logger
 
   @mac_error_msg """
   You need to have gcc and make installed. Try running the
@@ -101,8 +102,9 @@ defmodule Pelemay.Generator.Builder do
       .phony: all clean
 
       CFLAGS += -Ofast -g -ansi -pedantic
-      ifdef $(CROSSCOMPILE)
+      ifdef CROSSCOMPILE
         CFLAGS += $(ERL_CFLAGS)
+        LDFLAGS += $(ERL_LDFLAGS)
       else
         CFLAGS += -I#{erlang_include_path()}
       endif
@@ -113,7 +115,7 @@ defmodule Pelemay.Generator.Builder do
       else
         TARGET =#{Generator.libnif_name(module)}.so
         CFLAGS += -fPIC
-        ifndef $(CROSSCOMPILE)
+        ifndef CROSSCOMPILE
           LDFLAGS += -dynamiclib -undefined dynamic_lookup
         endif
       endif
@@ -121,7 +123,7 @@ defmodule Pelemay.Generator.Builder do
       OBJS=#{Generator.libnif_name(module)}.o
 
       $(TARGET): $(OBJS)
-      \t$(CC) $^ -o $@ $(LDFLAGS)
+      \t$(CC) $^ -o $@ -shared $(LDFLAGS)
 
       #{deps}
 
@@ -156,18 +158,37 @@ defmodule Pelemay.Generator.Builder do
     ldflags = cpu_info |> Map.get(:compiler) |> Map.get(:ldflags_env) |> String.split()
 
     erl_cflags = System.get_env("ERL_CFLAGS") || ""
+    erl_ldflags = System.get_env("ERL_LDFLAGS") || ""
 
-    generate_makefile(module, os_specific_make(), cc)
+    crosscompile = System.get_env("CROSSCOMPILE")
 
-    make(
-      args_for_makefile(os_specific_make(), Generator.makefile(module)),
+    env =
       %{
         "CC" => cc,
         "CFLAGS" => cflags |> Enum.join(" "),
         "LDFLAGS" => ldflags |> Enum.join(" "),
-        "ERL_CFLAGS" => erl_cflags
+        "ERL_CFLAGS" => erl_cflags,
+        "ERL_LDFLAGS" => erl_ldflags
       }
-    )
+      |> Map.merge(
+        if is_nil(crosscompile) do
+          %{}
+        else
+          %{"CROSSCOMPILE" => crosscompile}
+        end
+      )
+
+    generate_makefile(module, os_specific_make(), cc)
+
+    Logger.debug(env |> inspect)
+
+    {result, _} =
+      make(
+        args_for_makefile(os_specific_make(), Generator.makefile(module)),
+        env
+      )
+
+    Logger.debug(result)
   end
 
   def erlang_include_path() do
