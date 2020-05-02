@@ -115,8 +115,10 @@ defmodule Pelemay.Generator.Builder do
       else
         TARGET =#{Generator.libnif_name(module)}.so
         CFLAGS += -fPIC
-        ifndef CROSSCOMPILE
-          LDFLAGS += -dynamiclib -undefined dynamic_lookup
+        ifeq ($(shell uname),Darwin)
+          ifndef CROSSCOMPILE
+            LDFLAGS += -dynamiclib -undefined dynamic_lookup
+          endif
         endif
       endif
 
