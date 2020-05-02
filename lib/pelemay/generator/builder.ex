@@ -1,6 +1,5 @@
 defmodule Pelemay.Generator.Builder do
   alias Pelemay.Generator
-  require Logger
 
   @mac_error_msg """
   You need to have gcc and make installed. Try running the
@@ -182,15 +181,11 @@ defmodule Pelemay.Generator.Builder do
 
     generate_makefile(module, os_specific_make(), cc)
 
-    Logger.debug(env |> inspect)
-
-    {result, _} =
+    {_result, 0} =
       make(
         args_for_makefile(os_specific_make(), Generator.makefile(module)),
         env
       )
-
-    Logger.debug(result)
   end
 
   def erlang_include_path() do
