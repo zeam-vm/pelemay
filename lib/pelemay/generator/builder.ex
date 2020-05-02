@@ -1,12 +1,35 @@
 defmodule Pelemay.Generator.Builder do
   alias Pelemay.Generator
 
-  @cflags ["-Ofast", "-g", "-ansi", "-pedantic"]
-  @cflags_includes ["-I/usr/local/include", "-I/usr/include"]
-  @cflags_after ["-std=c11", "-Wno-unused-function"]
-  @ldflags ["-L/usr/local/lib", "-L/usr/lib"]
-  @cflags_non_windows ["-fPIC"]
-  @ldflags_non_windows ["-dynamiclib", "-undefined", "dynamic_lookup"]
+  @mac_error_msg """
+  You need to have gcc and make installed. Try running the
+  commands "gcc --version" and / or "make --version". If these programs
+  are not installed, you will be prompted to install them.
+  """
+
+  @unix_error_msg """
+  You need to have gcc and make installed. If you are using
+  Ubuntu or any other Debian-based system, install the packages
+  "build-essential". Also install "erlang-dev" package if not
+  included in your Erlang/OTP version. If you're on Fedora, run
+  "dnf group install 'Development Tools'".
+  """
+
+  @windows_error_msg ~S"""
+  One option is to install a recent version of
+  [Visual C++ Build Tools](http://landinghub.visualstudio.com/visual-cpp-build-tools)
+  either manually or using [Chocolatey](https://chocolatey.org/) -
+  `choco install VisualCppBuildTools`.
+  After installing Visual C++ Build Tools, look in the "Program Files (x86)"
+  directory and search for "Microsoft Visual Studio". Note down the full path
+  of the folder with the highest version number. Open the "run" command and
+  type in the following command (make sure that the path and version number
+  are correct):
+      cmd /K "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+  This should open up a command prompt with the necessary environment variables
+  set, and from which you will be able to run the "mix compile", "mix deps.compile",
+  and "mix test" commands.
+  """
 
   def parse_info(compile_time_info) do
     Map.get(compile_time_info, :compiler) |> parse_compiler()
@@ -53,6 +76,66 @@ defmodule Pelemay.Generator.Builder do
     end)
   end
 
+  def depend(module, cc) do
+    cmd(
+      cc,
+      ["-MM", "-I#{erlang_include_path()}", Generator.libc(module)],
+      Application.app_dir(:pelemay, "priv"),
+      %{}
+    )
+  end
+
+  def generate_makefile("", _, _) do
+    {:error, "Don't need defpelemay"}
+  end
+
+  def generate_makefile(_module, "nmake", _) do
+    {:error, "Pelemay for Windows haven't been implemented, yet."}
+  end
+
+  def generate_makefile(module, _, cc) do
+    {deps, status} = depend(module, cc)
+
+    if status == 0 do
+      str = """
+      .phony: all clean
+
+      CFLAGS += -Ofast -g -ansi -pedantic
+      ifdef $(CROSSCOMPILE)
+        CFLAGS += $(ERL_CFLAGS)
+      else
+        CFLAGS += -I#{erlang_include_path()}
+      endif
+      CFLAGS += -std=c11 -Wno-unused-function
+
+      ifeq ($(OS), Windows_NT)
+        TARGET=#{Generator.libnif_name(module)}.dll
+      else
+        TARGET =#{Generator.libnif_name(module)}.so
+        CFLAGS += -fPIC
+        ifndef $(CROSSCOMPILE)
+          LDFLAGS += -dynamiclib -undefined dynamic_lookup
+        endif
+      endif
+
+      OBJS=#{Generator.libnif_name(module)}.o
+
+      $(TARGET): $(OBJS)
+      \t$(CC) $^ -o $@ $(LDFLAGS)
+
+      #{deps}
+
+      %.o %.c:
+      \t$(CC) -c $< -o $@ $(CFLAGS)
+
+      clean:
+      \trm $(TARGET) $(OBJS)
+      """
+
+      File.write(Generator.makefile(module), str)
+    end
+  end
+
   def generate(module) do
     cpu_info =
       Pelemay.eval_compile_time_info()
@@ -70,49 +153,72 @@ defmodule Pelemay.Generator.Builder do
 
     cflags = cpu_info |> Map.get(:compiler) |> Map.get(:cflags_env) |> String.split()
 
-    {cflags_t, ldflags_t} =
-      if is_nil(System.get_env("CROSSCOMPILE")) do
-        {
-          cflags ++
-            @cflags ++ ["-I#{erlang_include_path()}"] ++ @cflags_includes ++ @cflags_after,
-          @ldflags
-        }
-      else
-        {
-          cflags ++ String.split(System.get_env("ERL_CFLAGS")),
-          @ldflags ++ String.split(System.get_env("ERL_LDFLAGS"))
-        }
-      end
+    ldflags = cpu_info |> Map.get(:compiler) |> Map.get(:ldflags_env) |> String.split()
 
-    cflags =
-      case :os.type() do
-        {:win32, :nt} -> cflags_t
-        _ -> cflags_t ++ @cflags_non_windows
-      end
+    erl_cflags = System.get_env("ERL_CFLAGS") || ""
 
-    ldflags =
-      case :os.type() do
-        {:win32, :nt} ->
-          ldflags_t
+    generate_makefile(module, os_specific_make(), cc)
 
-        {:unix, :darwin} ->
-          if is_nil(System.get_env("CROSSCOMPILE")) do
-            ldflags_t ++ @ldflags_non_windows
-          else
-            ldflags_t
-          end
-
-        _ ->
-          ldflags_t
-      end
-
-    options =
-      cflags ++ ["-shared"] ++ ldflags ++ ["-o", Generator.libso(module), Generator.libc(module)]
-
-    {_result, 0} = System.cmd(cc, options)
+    make(
+      args_for_makefile(os_specific_make(), Generator.makefile(module)),
+      %{
+        "CC" => cc,
+        "CFLAGS" => cflags |> Enum.join(" "),
+        "LDFLAGS" => ldflags |> Enum.join(" "),
+        "ERL_CFLAGS" => erl_cflags
+      }
+    )
   end
 
   def erlang_include_path() do
     "#{:code.root_dir()}/erts-#{:erlang.system_info(:version)}/include"
   end
+
+  def make(args, env) do
+    case cmd(
+           os_specific_make(),
+           args,
+           Application.app_dir(:pelemay, "priv"),
+           env
+         ) do
+      {_, :enoent} -> {os_specific_error_msg(), :enoent}
+      {result, status} -> {result, status}
+    end
+  end
+
+  def cmd(exec, args, cwd, env) do
+    opts = [
+      stderr_to_stdout: true,
+      cd: cwd,
+      env: env
+    ]
+
+    if is_nil(System.find_executable(exec)) do
+      {"", :enoent}
+    else
+      System.cmd(exec, args, opts)
+    end
+  end
+
+  def os_specific_make() do
+    case :os.type() do
+      {:win32, _} -> "nmake"
+      {:unix, type} when type in [:freebsd, :openbsd] -> "gmake"
+      _ -> "make"
+    end
+  end
+
+  def os_specific_error_msg() do
+    case :os.type() do
+      {:unix, :darwin} -> @mac_error_msg
+      {:unix, _} -> @unix_error_msg
+      {:win32, _} -> @windows_error_msg
+      _ -> ""
+    end
+  end
+
+  def args_for_makefile("nmake", :default), do: ["/F", "Makefile.win"]
+  def args_for_makefile("nmake", makefile), do: ["/F", makefile]
+  def args_for_makefile(_, :default), do: []
+  def args_for_makefile(_, makefile), do: ["-f", makefile]
 end

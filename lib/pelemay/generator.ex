@@ -98,7 +98,11 @@ defmodule Pelemay.Generator do
     
   """
   def libnif_priv_name(module) do
-    "priv/libnif#{module_downcase_non(module)}"
+    "priv/#{libnif_name(module)}"
+  end
+
+  def libnif_name(module) do
+    "libnif#{module_downcase_non(module)}"
   end
 
   def libnif(module) do
@@ -114,6 +118,10 @@ defmodule Pelemay.Generator do
       {:win32, :nt} -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.dll")
       _ -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.so")
     end
+  end
+
+  def makefile(module) do
+    Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.mk")
   end
 
   def stub(module) do
