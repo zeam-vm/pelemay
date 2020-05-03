@@ -1,28 +1,7 @@
-const int fail = 0;
-const int success = 1;
-const int empty = 0;
-const size_t cache_line_size = 64;
-const size_t size_t_max = -1;
-#define INIT_SIZE_INT64 (cache_line_size / sizeof(ErlNifSInt64))
-#define INIT_SIZE_DOUBLE (cache_line_size / sizeof(double))
-#define SIZE_T_HIGHEST_BIT (~(size_t_max >> 1))
-
-#define loop_vectorize_width 4
-
-int enif_get_int64_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ErlNifSInt64 **vec, size_t *vec_l);
-int enif_get_double_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, size_t *vec_l);
-int enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, size_t *vec_l);
-int enif_get_range(ErlNifEnv *env, ERL_NIF_TERM list, ErlNifSInt64 *from, ErlNifSInt64 *to);
-int enif_get_term_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ERL_NIF_TERM **vec, unsigned *vec_l);
-int get_replace_option(ErlNifEnv *env, ERL_NIF_TERM options, int *global);
-int string_replace_binary(ErlNifBinary subject, ErlNifBinary pattern, ErlNifBinary replacement, bool global, ErlNifBinary *object);
-int get_replace_option(ErlNifEnv *env, ERL_NIF_TERM options, int *global);
-
-ERL_NIF_TERM enif_make_list_from_int64_vec(ErlNifEnv *env, const ErlNifSInt64 *vec, const size_t vec_l);
-ERL_NIF_TERM enif_make_list_from_double_vec(ErlNifEnv *env, const double *vec, const size_t vec_l);
-ERL_NIF_TERM enif_make_list_from_term_vec(ErlNifEnv *env, ERL_NIF_TERM *vec, const unsigned vec_l);
-ERL_NIF_TERM string_replace(ErlNifEnv *env, ERL_NIF_TERM subject, ERL_NIF_TERM pattern, ERL_NIF_TERM replacement, bool global);
-ERL_NIF_TERM enum_string_replace(ErlNifEnv *env, ERL_NIF_TERM subject, ERL_NIF_TERM pattern, ERL_NIF_TERM replacement, bool global);
+#include <stdbool.h>
+#include <string.h>
+#include <erl_nif.h>
+#include "basic.h"
 
 ERL_NIF_TERM
 enif_make_list_from_int64_vec(ErlNifEnv *env, const ErlNifSInt64 *vec, const size_t vec_l)
@@ -63,16 +42,16 @@ enif_get_int64_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ErlNifSInt64 **v
 {
   ERL_NIF_TERM head, tail;
 
-  if (__builtin_expect((enif_get_list_cell(env, list, &head, &tail) == fail),
+  if (__builtin_expect((enif_get_list_cell(env, list, &head, &tail) == FAIL),
                        true)) {
-    if (__builtin_expect((enif_is_empty_list(env, list) == success), true)) {
-      *vec_l = empty;
+    if (__builtin_expect((enif_is_empty_list(env, list) == SUCCESS), true)) {
+      *vec_l = EMPTY;
       *vec = NULL;
-      return success;
+      return SUCCESS;
     }
     ErlNifSInt64 from, to;
-    if (__builtin_expect((enif_get_range(env, list, &from, &to) == fail), false)) {
-      return fail;
+    if (__builtin_expect((enif_get_range(env, list, &from, &to) == FAIL), false)) {
+      return FAIL;
     }
     if (__builtin_expect((from <= to), true)) {
       *vec_l = (size_t)(to - from + 1);
@@ -81,7 +60,7 @@ enif_get_int64_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ErlNifSInt64 **v
     }
     *vec = (ErlNifSInt64 *)enif_alloc(sizeof(ErlNifSInt64) * *vec_l);
     if (__builtin_expect((*vec == NULL), false)) {
-      return fail;
+      return FAIL;
     }
     if (__builtin_expect((from <= to), true)) {
 //#pragma clang loop vectorize(enable)
@@ -94,78 +73,78 @@ enif_get_int64_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ErlNifSInt64 **v
         *(*vec + i) = from - (ErlNifSInt64) i;
       }
     }
-    return success;
+    return SUCCESS;
   }
   size_t n = INIT_SIZE_INT64;
-  size_t nn = cache_line_size;
+  size_t nn = CACHE_LINE_SIZE;
   ErlNifSInt64 *t = (ErlNifSInt64 *)enif_alloc(nn);
   if (__builtin_expect((t == NULL), false)) {
-    return fail;
+    return FAIL;
   }
 
   size_t i = 0;
-  ERL_NIF_TERM tmp[loop_vectorize_width];
-  int tmp_r[loop_vectorize_width];
+  ERL_NIF_TERM tmp[LOOP_VECTORIZE_WIDTH];
+  int tmp_r[LOOP_VECTORIZE_WIDTH];
   while (true) {
 #pragma clang loop vectorize(disable)
-    for (size_t count = 0; count < loop_vectorize_width; count++) {
+    for (size_t count = 0; count < LOOP_VECTORIZE_WIDTH; count++) {
       tmp[count] = head;
       if (__builtin_expect(
-              (enif_get_list_cell(env, tail, &head, &tail) == fail), false)) {
+              (enif_get_list_cell(env, tail, &head, &tail) == FAIL), false)) {
         for (size_t c = 0; c <= count; c++) {
           tmp_r[c] = enif_get_int64(env, tmp[c], &t[i++]);
         }
         int acc = true;
 #pragma clang loop vectorize(enable)
         for (size_t c = 0; c <= count; c++) {
-          acc &= (tmp_r[c] == success);
+          acc &= (tmp_r[c] == SUCCESS);
         }
         if (__builtin_expect((acc == false), false)) {
           enif_free(t);
-          return fail;
+          return FAIL;
         }
 
         *vec_l = i;
         *vec = t;
-        return success;
+        return SUCCESS;
       }
     }
-    if (__builtin_expect((i > size_t_max - loop_vectorize_width), false)) {
+    if (__builtin_expect((i > SIZE_T_MAX - LOOP_VECTORIZE_WIDTH), false)) {
       enif_free(t);
-      return fail;
+      return FAIL;
     }
-    if (__builtin_expect((i + loop_vectorize_width > n), false)) {
+    if (__builtin_expect((i + LOOP_VECTORIZE_WIDTH > n), false)) {
       size_t old_nn = nn;
       if (__builtin_expect(((nn & SIZE_T_HIGHEST_BIT) == 0), true)) {
         nn <<= 1;
         n <<= 1;
       } else {
-        nn = size_t_max;
+        nn = SIZE_T_MAX;
         n = nn / sizeof(ErlNifSInt64);
       }
       ErlNifSInt64 *new_t = (ErlNifSInt64 *)enif_alloc(nn);
       if(__builtin_expect((new_t == NULL), false)) {
         enif_free(t);
-        return fail;
+        return FAIL;
       }
       memcpy(new_t, t, old_nn);
       enif_free(t);
       t = new_t;
     }
 #pragma clang loop vectorize(enable) unroll(enable)
-    for (size_t count = 0; count < loop_vectorize_width; count++) {
+    for (size_t count = 0; count < LOOP_VECTORIZE_WIDTH; count++) {
       tmp_r[count] = enif_get_int64(env, tmp[count], &t[i + count]);
     }
     int acc = true;
 #pragma clang loop vectorize(enable) unroll(enable)
-    for (size_t count = 0; count < loop_vectorize_width; count++) {
-      acc &= (tmp_r[count] == success);
+    for (size_t count = 0; count < LOOP_VECTORIZE_WIDTH; count++) {
+      acc &= (tmp_r[count] == SUCCESS);
     }
     if (__builtin_expect((acc == false), false)) {
       enif_free(t);
-      return fail;
+      return FAIL;
     }
-    i += loop_vectorize_width;
+    i += LOOP_VECTORIZE_WIDTH;
   }
 }
 
@@ -174,85 +153,85 @@ enif_get_double_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, double **vec, s
 {
   ERL_NIF_TERM head, tail;
 
-  if (__builtin_expect((enif_get_list_cell(env, list, &head, &tail) == fail),
+  if (__builtin_expect((enif_get_list_cell(env, list, &head, &tail) == FAIL),
                        true)) {
-    if (__builtin_expect((enif_is_empty_list(env, list) == success), true)) {
-      *vec_l = empty;
+    if (__builtin_expect((enif_is_empty_list(env, list) == SUCCESS), true)) {
+      *vec_l = EMPTY;
       *vec = NULL;
-      return success;
+      return SUCCESS;
     }
-    return fail;
+    return FAIL;
   }
   size_t n = INIT_SIZE_INT64;
-  size_t nn = cache_line_size;
+  size_t nn = CACHE_LINE_SIZE;
   double *t = (double *)enif_alloc(nn);
   if (__builtin_expect((t == NULL), false)) {
-    return fail;
+    return FAIL;
   }
 
   size_t i = 0;
-  ERL_NIF_TERM tmp[loop_vectorize_width];
-  int tmp_r[loop_vectorize_width];
+  ERL_NIF_TERM tmp[LOOP_VECTORIZE_WIDTH];
+  int tmp_r[LOOP_VECTORIZE_WIDTH];
   while (true) {
 #pragma clang loop vectorize(disable)
-    for (size_t count = 0; count < loop_vectorize_width; count++) {
+    for (size_t count = 0; count < LOOP_VECTORIZE_WIDTH; count++) {
       tmp[count] = head;
       if (__builtin_expect(
-              (enif_get_list_cell(env, tail, &head, &tail) == fail), false)) {
+              (enif_get_list_cell(env, tail, &head, &tail) == FAIL), false)) {
         for (size_t c = 0; c <= count; c++) {
           tmp_r[c] = enif_get_double(env, tmp[c], &t[i++]);
         }
         int acc = true;
 #pragma clang loop vectorize(enable)
         for (size_t c = 0; c <= count; c++) {
-          acc &= (tmp_r[c] == success);
+          acc &= (tmp_r[c] == SUCCESS);
         }
         if (__builtin_expect((acc == false), false)) {
           enif_free(t);
-          return fail;
+          return FAIL;
         }
 
         *vec_l = i;
         *vec = t;
-        return success;
+        return SUCCESS;
       }
     }
-    if (__builtin_expect((i > size_t_max - loop_vectorize_width), false)) {
+    if (__builtin_expect((i > SIZE_T_MAX - LOOP_VECTORIZE_WIDTH), false)) {
       enif_free(t);
-      return fail;
+      return FAIL;
     }
-    if (__builtin_expect((i + loop_vectorize_width > n), false)) {
+    if (__builtin_expect((i + LOOP_VECTORIZE_WIDTH > n), false)) {
       size_t old_nn = nn;
       if (__builtin_expect(((nn & SIZE_T_HIGHEST_BIT) == 0), true)) {
         nn <<= 1;
         n <<= 1;
       } else {
-        nn = size_t_max;
+        nn = SIZE_T_MAX;
         n = nn / sizeof(ErlNifSInt64);
       }
       double *new_t = (double *)enif_alloc(nn);
       if(__builtin_expect((new_t == NULL), false)) {
         enif_free(t);
-        return fail;
+        return FAIL;
       }
       memcpy(new_t, t, old_nn);
       enif_free(t);
       t = new_t;
     }
 #pragma clang loop vectorize(enable) unroll(enable)
-    for (size_t count = 0; count < loop_vectorize_width; count++) {
+    for (size_t count = 0; count < LOOP_VECTORIZE_WIDTH; count++) {
       tmp_r[count] = enif_get_double(env, tmp[count], &t[i + count]);
     }
     int acc = true;
 #pragma clang loop vectorize(enable) unroll(enable)
-    for (size_t count = 0; count < loop_vectorize_width; count++) {
-      acc &= (tmp_r[count] == success);
+    for (size_t count = 0; count < LOOP_VECTORIZE_WIDTH; count++) {
+      acc &= (tmp_r[count] == SUCCESS);
     }
     if (__builtin_expect((acc == false), false)) {
       enif_free(t);
-      return fail;
+      return FAIL;
     }
-    i += loop_vectorize_width;
+    i += LOOP_VECTORIZE_WIDTH;
   }
 }
 
@@ -260,7 +239,7 @@ int
 enif_get_term_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ERL_NIF_TERM **vec, unsigned *vec_l)
 {
   if (__builtin_expect(enif_is_empty_list(env, list), false)) {
-    *vec_l = empty;
+    *vec_l = EMPTY;
     *vec = NULL;
     return true;
   }
@@ -273,7 +252,7 @@ enif_get_term_vec_from_list(ErlNifEnv *env, ERL_NIF_TERM list, ERL_NIF_TERM **ve
   }
   ERL_NIF_TERM *head = *vec;
   ERL_NIF_TERM tail = list;
-#pragma clang loop vectorize_width(loop_vectorize_width)
+#pragma clang loop vectorize_width(LOOP_VECTORIZE_WIDTH)
   for(size_t i = 0; i < *vec_l; i++) {
     if (__builtin_expect(!enif_get_list_cell(env, tail, head, &tail), false)) {
       return false;
@@ -288,38 +267,38 @@ enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double *
 {
   ERL_NIF_TERM head, tail;
 
-  if (__builtin_expect((enif_get_list_cell(env, list, &head, &tail) == fail),
+  if (__builtin_expect((enif_get_list_cell(env, list, &head, &tail) == FAIL),
                        true)) {
-    if (__builtin_expect((enif_is_empty_list(env, list) == success), true)) {
-      *vec_l = empty;
+    if (__builtin_expect((enif_is_empty_list(env, list) == SUCCESS), true)) {
+      *vec_l = EMPTY;
       *vec = NULL;
-      return success;
+      return SUCCESS;
     }
-    return fail;
+    return FAIL;
   }
   size_t n = INIT_SIZE_INT64;
-  size_t nn = cache_line_size;
+  size_t nn = CACHE_LINE_SIZE;
   double *t = (double *)enif_alloc(nn);
   if (__builtin_expect((t == NULL), false)) {
-    return fail;
+    return FAIL;
   }
 
   size_t i = 0;
   while (true) {
-    if (__builtin_expect((enif_get_double(env, head, &t[i]) == fail), false)) {
+    if (__builtin_expect((enif_get_double(env, head, &t[i]) == FAIL), false)) {
       ErlNifSInt64 tmp;
-      if (__builtin_expect((enif_get_int64(env, head, &tmp) == fail), false)) {
+      if (__builtin_expect((enif_get_int64(env, head, &tmp) == FAIL), false)) {
         enif_free(t);
-        return fail;
+        return FAIL;
       }
       t[i] = (double)tmp;
     }
     i++;
     if (__builtin_expect(
-          (enif_get_list_cell(env, tail, &head, &tail) == fail), false)) {
+          (enif_get_list_cell(env, tail, &head, &tail) == FAIL), false)) {
       *vec_l = i;
       *vec = t;
-      return success;
+      return SUCCESS;
     }
     if (__builtin_expect((i >= n), false)) {
       size_t old_nn = nn;
@@ -327,13 +306,13 @@ enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double *
         nn <<= 1;
         n <<= 1;
       } else {
-        nn = size_t_max;
+        nn = SIZE_T_MAX;
         n = nn / sizeof(ErlNifSInt64);
       }
       double *new_t = (double *)enif_alloc(nn);
       if (__builtin_expect((new_t == NULL), false)) {
         enif_free(t);
-        return fail;
+        return FAIL;
       }
       memcpy(new_t, t, old_nn);
       enif_free(t);
@@ -346,25 +325,25 @@ int
 enif_get_range(ErlNifEnv *env, ERL_NIF_TERM map, ErlNifSInt64 *from, ErlNifSInt64 *to)
 {
   ERL_NIF_TERM value; 
-  if(__builtin_expect((enif_get_map_value(env, map, atom_struct, &value) == fail), false)) {
-    return fail;
+  if(__builtin_expect((enif_get_map_value(env, map, atom_struct, &value) == FAIL), false)) {
+    return FAIL;
   }
   if(__builtin_expect(!enif_is_identical(value, atom_range), false)) {
-    return fail;
+    return FAIL;
   }
-  if(__builtin_expect((enif_get_map_value(env, map, atom_first, &value) == fail), false)) {
-    return fail;
+  if(__builtin_expect((enif_get_map_value(env, map, atom_first, &value) == FAIL), false)) {
+    return FAIL;
   }
-  if(__builtin_expect((enif_get_int64(env, value, from) == fail), false)) {
-    return fail;
+  if(__builtin_expect((enif_get_int64(env, value, from) == FAIL), false)) {
+    return FAIL;
   }
-  if(__builtin_expect((enif_get_map_value(env, map, atom_last, &value) == fail), false)) {
-    return fail;
+  if(__builtin_expect((enif_get_map_value(env, map, atom_last, &value) == FAIL), false)) {
+    return FAIL;
   }
-  if(__builtin_expect((enif_get_int64(env, value, to) == fail), false)) {
-    return fail;
+  if(__builtin_expect((enif_get_int64(env, value, to) == FAIL), false)) {
+    return FAIL;
   }
-  return success;
+  return SUCCESS;
 }
 
 int string_replace_binary(ErlNifBinary subject, ErlNifBinary pattern, ErlNifBinary replacement, bool global, ErlNifBinary *object)
@@ -373,7 +352,7 @@ int string_replace_binary(ErlNifBinary subject, ErlNifBinary pattern, ErlNifBina
     return false;
   }
   unsigned subject_i = 0, object_i = 0;
-#pragma clang loop vectorize_width(loop_vectorize_width)
+#pragma clang loop vectorize_width(LOOP_VECTORIZE_WIDTH)
   while(subject_i < subject.size) {
     while(subject_i < subject.size && subject.data[subject_i] != pattern.data[0]) {
       object->data[object_i++] = subject.data[subject_i++];
@@ -446,7 +425,7 @@ ERL_NIF_TERM enum_string_replace(ErlNifEnv *env, ERL_NIF_TERM subject, ERL_NIF_T
     enif_free(subject_vec);
     return enif_make_badarg(env);
   }
-#pragma clang loop vectorize_width(loop_vectorize_width)
+#pragma clang loop vectorize_width(LOOP_VECTORIZE_WIDTH)
   for(unsigned i = 0; i < vec_l; i++) {
     object_vec[i] = string_replace(env, subject_vec[i], pattern, replacement, global);
   } 

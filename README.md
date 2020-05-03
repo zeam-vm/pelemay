@@ -35,8 +35,9 @@ We've tested it well on the following OS:
 
 * macOS (64bit)
 * Linux (64bit)
-* Windows (64bit)
 * Nerves (Raspberry 3)
+
+I'm so sorry but Windows isn't be supported because of changing the builder of Pelemay.
 
 We've tested it on the following Elixir versions:
 
@@ -56,7 +57,7 @@ Pelemay also supports Nerves.
 
 ## Pre-installation
 
-Pelemay requires Clang or GCC.
+Pelemay requires Clang or GCC and make.
 
 Environment Variable `CC` is recommended being set the path of the C compiler you want to use.
 
@@ -67,7 +68,7 @@ Add `pelemay` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pelemay, "~> 0.0.9"},
+    {:pelemay, "~> 0.0.10"},
   ]
 end
 ```

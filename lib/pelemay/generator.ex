@@ -98,7 +98,11 @@ defmodule Pelemay.Generator do
     
   """
   def libnif_priv_name(module) do
-    "priv/libnif#{module_downcase_non(module)}"
+    "priv/#{libnif_name(module)}"
+  end
+
+  def libnif_src_name(module) do
+    "src/#{libnif_name(module)}"
   end
 
   def libnif(module) do
@@ -106,7 +110,7 @@ defmodule Pelemay.Generator do
   end
 
   def libc(module) do
-    Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.c")
+    Application.app_dir(:pelemay, "#{libnif_src_name(module)}.c")
   end
 
   def libso(module) do
@@ -114,6 +118,26 @@ defmodule Pelemay.Generator do
       {:win32, :nt} -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.dll")
       _ -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.so")
     end
+  end
+
+  def build_dir() do
+    Application.app_dir(:pelemay, "build")
+  end
+
+  def obj_dir() do
+    Application.app_dir(:pelemay, "obj")
+  end
+
+  def src_dir() do
+    Application.app_dir(:pelemay, "src")
+  end
+
+  def priv_dir() do
+    Application.app_dir(:pelemay, "priv")
+  end
+
+  def makefile(module) do
+    Application.app_dir(:pelemay, "build/#{libnif_name(module)}.mk")
   end
 
   def stub(module) do
@@ -125,8 +149,10 @@ defmodule Pelemay.Generator do
   end
 
   def generate(module) do
-    Application.app_dir(:pelemay, "priv")
-    |> File.mkdir()
+    File.mkdir(priv_dir())
+    File.mkdir(src_dir())
+    File.mkdir(build_dir())
+    File.mkdir(obj_dir())
 
     case Native.generate(module) do
       {:error, message} ->
