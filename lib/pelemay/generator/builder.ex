@@ -1,14 +1,6 @@
 defmodule Pelemay.Generator.Builder do
   alias Pelemay.Generator
 
-  @c_src [
-    path: "lib/pelemay/generator/native",
-    files: [
-      "basic.c",
-      "basic.h"
-    ]
-  ]
-
   @mac_error_msg """
   You need to have gcc and make installed. Try running the
   commands "gcc --version" and / or "make --version". If these programs
@@ -87,7 +79,7 @@ defmodule Pelemay.Generator.Builder do
   def depend(string, cc) when is_binary(string) do
     cmd(
       cc,
-      ["-MM", "-I#{erlang_include_path()}", string],
+      ["-MM", "-I#{erlang_include_path()}", "-I#{__DIR__}/native", string],
       Generator.build_dir(),
       %{}
     )
@@ -105,13 +97,13 @@ defmodule Pelemay.Generator.Builder do
 
   def generate_makefile(module, _, cc) do
     {deps, status} = depend(module, cc)
-    {deps_basic, status_basic} = depend(Application.app_dir(:pelemay, "src/basic.c"), cc)
+    {deps_basic, status_basic} = depend(__DIR__ <> "/native/basic.c", cc)
 
     if status == 0 and status_basic == 0 do
       str = """
       .phony: all clean
 
-      CFLAGS += -Ofast -g -ansi -pedantic
+      CFLAGS += -Ofast -g -ansi -pedantic -I#{__DIR__}/native
       ifdef CROSSCOMPILE
         CFLAGS += $(ERL_CFLAGS)
         LDFLAGS += $(ERL_LDFLAGS)
@@ -158,7 +150,7 @@ defmodule Pelemay.Generator.Builder do
   end
 
   def generate(module) do
-    copy_c_src()
+    # copy_c_src()
 
     cpu_info =
       Pelemay.eval_compile_time_info()
@@ -259,25 +251,4 @@ defmodule Pelemay.Generator.Builder do
   def args_for_makefile("nmake", makefile), do: ["/F", makefile]
   def args_for_makefile(_, :default), do: []
   def args_for_makefile(_, makefile), do: ["-f", makefile]
-
-  def c_src do
-    Keyword.get(@c_src, :files)
-    |> Enum.map(&(Keyword.get(@c_src, :path) <> "/" <> &1))
-  end
-
-  def c_dst do
-    Keyword.get(@c_src, :files)
-    |> Enum.map(&("src/" <> &1))
-  end
-
-  def copy_c_src do
-    Enum.zip(c_src(), c_dst())
-    |> Enum.each(fn {src, dst} ->
-      Mix.Generator.copy_file(
-        src,
-        Application.app_dir(:pelemay, dst),
-        quiet: true
-      )
-    end)
-  end
 end
