@@ -88,7 +88,7 @@ defmodule Pelemay.Generator.Builder do
     cmd(
       cc,
       ["-MM", "-I#{erlang_include_path()}", string],
-      Application.app_dir(:pelemay, "priv"),
+      Generator.build_dir(),
       %{}
     )
   end
@@ -105,7 +105,7 @@ defmodule Pelemay.Generator.Builder do
 
   def generate_makefile(module, _, cc) do
     {deps, status} = depend(module, cc)
-    {deps_basic, status_basic} = depend(Application.app_dir(:pelemay, "priv/basic.c"), cc)
+    {deps_basic, status_basic} = depend(Application.app_dir(:pelemay, "src/basic.c"), cc)
 
     if status == 0 and status_basic == 0 do
       str = """
@@ -121,9 +121,9 @@ defmodule Pelemay.Generator.Builder do
       CFLAGS += -std=c11 -Wno-unused-function
 
       ifeq ($(OS), Windows_NT)
-        TARGET=#{Generator.libnif_name(module)}.dll
+        TARGET = ../priv/#{Generator.libnif_name(module)}.dll
       else
-        TARGET =#{Generator.libnif_name(module)}.so
+        TARGET = ../priv/#{Generator.libnif_name(module)}.so
         CFLAGS += -fPIC
         ifeq ($(shell uname),Darwin)
           ifndef CROSSCOMPILE
@@ -132,8 +132,8 @@ defmodule Pelemay.Generator.Builder do
         endif
       endif
 
-      OBJS=#{Generator.libnif_name(module)}.o \
-        basic.o
+      OBJS=../obj/#{Generator.libnif_name(module)}.o \
+        ../obj/basic.o
 
       all: $(TARGET)
       \t
@@ -141,9 +141,9 @@ defmodule Pelemay.Generator.Builder do
       $(TARGET): $(OBJS)
       \t$(CC) $^ -o $@ -shared $(LDFLAGS)
 
-      #{deps}
+      ../obj/#{deps}
 
-      #{deps_basic}
+      ../obj/#{deps_basic}
 
       %.o %.c:
       \t$(CC) -c $< -o $@ $(CFLAGS)
@@ -215,7 +215,7 @@ defmodule Pelemay.Generator.Builder do
     case cmd(
            os_specific_make(),
            args,
-           Application.app_dir(:pelemay, "priv"),
+           Generator.build_dir(),
            env
          ) do
       {_, :enoent} -> {os_specific_error_msg(), :enoent}
@@ -266,7 +266,7 @@ defmodule Pelemay.Generator.Builder do
 
   def c_dst do
     Keyword.get(@c_src, :files)
-    |> Enum.map(&("priv/" <> &1))
+    |> Enum.map(&("src/" <> &1))
   end
 
   def copy_c_src do
