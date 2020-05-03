@@ -1,3 +1,8 @@
+#include <stdbool.h>
+#include <string.h>
+#include <erl_nif.h>
+#include "basic.h"
+
 static ERL_NIF_TERM
 chunk_every(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {

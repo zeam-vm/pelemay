@@ -1,3 +1,6 @@
+#include <erl_nif.h>
+#include "basic.h"
+
 static ERL_NIF_TERM
 add(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {

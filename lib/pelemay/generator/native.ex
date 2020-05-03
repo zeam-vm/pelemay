@@ -12,7 +12,6 @@ defmodule Pelemay.Generator.Native do
   defp write(file, module) do
     str =
       init_nif()
-      |> basic()
       |> generate_functions()
       |> erl_nif_init(module)
 
@@ -98,14 +97,11 @@ defmodule Pelemay.Generator.Native do
     #pragma clang diagnostic ignored "-Wnullability-completeness"
     #pragma clang diagnostic ignored "-Wnullability-extension"
 
-    #include<stdbool.h>
-    #include<erl_nif.h>
-    #include<string.h>
+    #include <stdbool.h>
+    #include <erl_nif.h>
+    #include <string.h>
+    #include "basic.h"
 
-    ERL_NIF_TERM atom_struct;
-    ERL_NIF_TERM atom_range;
-    ERL_NIF_TERM atom_first;
-    ERL_NIF_TERM atom_last;
 
     static int load(ErlNifEnv *env, void **priv, ERL_NIF_TERM info);
     static void unload(ErlNifEnv *env, void *priv);
@@ -146,12 +142,6 @@ defmodule Pelemay.Generator.Native do
       """
       ERL_NIF_INIT(Elixir.#{Generator.nif_module(module)}, nif_funcs, &load, &reload, &upgrade, &unload)
       """
-  end
-
-  defp basic(str) do
-    {:ok, ret} = File.read(__DIR__ <> "/native/basic.c")
-
-    str <> ret
   end
 
   defp error(e) do
