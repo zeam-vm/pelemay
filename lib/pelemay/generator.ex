@@ -101,10 +101,6 @@ defmodule Pelemay.Generator do
     "priv/#{libnif_name(module)}"
   end
 
-  def libnif_name(module) do
-    "libnif#{module_downcase_non(module)}"
-  end
-
   def libnif(module) do
     Application.app_dir(:pelemay, libnif_priv_name(module))
   end
