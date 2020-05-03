@@ -13,7 +13,7 @@
 #define INIT_SIZE_DOUBLE (CACHE_LINE_SIZE / sizeof(double))
 #define SIZE_T_HIGHEST_BIT (~(SIZE_T_MAX >> 1))
 
-#define loop_vectorize_width 4
+#define LOOP_VECTORIZE_WIDTH 4
 
 ERL_NIF_TERM atom_struct;
 ERL_NIF_TERM atom_range;
