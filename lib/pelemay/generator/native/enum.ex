@@ -28,8 +28,8 @@ defmodule Pelemay.Generator.Native.Enum do
       ErlNifSInt64 *vec_long;
       size_t vec_l;
       double *vec_double;
-      if (__builtin_expect((enif_get_int64_vec_from_list(env, argv[0], &vec_long, &vec_l) == fail), false)) {
-        if (__builtin_expect((enif_get_double_vec_from_list(env, argv[0], &vec_double, &vec_l) == fail), false)) {
+      if (__builtin_expect((enif_get_int64_vec_from_list(env, argv[0], &vec_long, &vec_l) == FAIL), false)) {
+        if (__builtin_expect((enif_get_double_vec_from_list(env, argv[0], &vec_double, &vec_l) == FAIL), false)) {
           return enif_make_badarg(env);
         }
     #pragma clang loop vectorize_width(loop_vectorize_width)
