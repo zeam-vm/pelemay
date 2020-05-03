@@ -123,6 +123,9 @@ defmodule Pelemay.Generator.Builder do
 
       OBJS=#{Generator.libnif_name(module)}.o
 
+      all: $(TARGET)
+      \t
+
       $(TARGET): $(OBJS)
       \t$(CC) $^ -o $@ -shared $(LDFLAGS)
 
