@@ -146,10 +146,11 @@ defmodule Pelemay.Generator.Builder do
       ../obj/#{deps_basic}
 
       %.o %.c:
+      \t$(CC) -S $< -o $*.s $(CFLAGS)
       \t$(CC) -c $< -o $@ $(CFLAGS)
 
       clean:
-      \trm $(TARGET) $(OBJS)
+      \t$(RM) $(TARGET) $(OBJS)
       """
 
       File.write(Generator.makefile(module), str)
