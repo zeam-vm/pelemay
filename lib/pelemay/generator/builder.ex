@@ -1,6 +1,14 @@
 defmodule Pelemay.Generator.Builder do
   alias Pelemay.Generator
 
+  @c_src [
+    path: "lib/pelemay/generator/native",
+    files: [
+      "basic.c",
+      "basic.h"
+    ]
+  ]
+
   @mac_error_msg """
   You need to have gcc and make installed. Try running the
   commands "gcc --version" and / or "make --version". If these programs
@@ -76,14 +84,16 @@ defmodule Pelemay.Generator.Builder do
     end)
   end
 
-  def depend(module, cc) do
+  def depend(string, cc) when is_binary(string) do
     cmd(
       cc,
-      ["-MM", "-I#{erlang_include_path()}", Generator.libc(module)],
+      ["-MM", "-I#{erlang_include_path()}", string],
       Application.app_dir(:pelemay, "priv"),
       %{}
     )
   end
+
+  def depend(module, cc), do: depend(Generator.libc(module), cc)
 
   def generate_makefile("", _, _) do
     {:error, "Don't need defpelemay"}
@@ -95,8 +105,9 @@ defmodule Pelemay.Generator.Builder do
 
   def generate_makefile(module, _, cc) do
     {deps, status} = depend(module, cc)
+    {deps_basic, status_basic} = depend(Application.app_dir(:pelemay, "priv/basic.c"), cc)
 
-    if status == 0 do
+    if status == 0 and status_basic == 0 do
       str = """
       .phony: all clean
 
@@ -121,7 +132,8 @@ defmodule Pelemay.Generator.Builder do
         endif
       endif
 
-      OBJS=#{Generator.libnif_name(module)}.o
+      OBJS=#{Generator.libnif_name(module)}.o \
+        basic.o
 
       all: $(TARGET)
       \t
@@ -130,6 +142,8 @@ defmodule Pelemay.Generator.Builder do
       \t$(CC) $^ -o $@ -shared $(LDFLAGS)
 
       #{deps}
+
+      #{deps_basic}
 
       %.o %.c:
       \t$(CC) -c $< -o $@ $(CFLAGS)
@@ -143,6 +157,8 @@ defmodule Pelemay.Generator.Builder do
   end
 
   def generate(module) do
+    copy_c_src()
+
     cpu_info =
       Pelemay.eval_compile_time_info()
       |> elem(0)
@@ -242,4 +258,25 @@ defmodule Pelemay.Generator.Builder do
   def args_for_makefile("nmake", makefile), do: ["/F", makefile]
   def args_for_makefile(_, :default), do: []
   def args_for_makefile(_, makefile), do: ["-f", makefile]
+
+  def c_src do
+    Keyword.get(@c_src, :files)
+    |> Enum.map(&(Keyword.get(@c_src, :path) <> "/" <> &1))
+  end
+
+  def c_dst do
+    Keyword.get(@c_src, :files)
+    |> Enum.map(&("priv/" <> &1))
+  end
+
+  def copy_c_src do
+    Enum.zip(c_src(), c_dst())
+    |> Enum.each(fn {src, dst} ->
+      Mix.Generator.copy_file(
+        src,
+        Application.app_dir(:pelemay, dst),
+        quiet: true
+      )
+    end)
+  end
 end
