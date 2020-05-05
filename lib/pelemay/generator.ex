@@ -148,6 +148,34 @@ defmodule Pelemay.Generator do
     Application.app_dir(:pelemay, "ebin")
   end
 
+  def kernel_name(nif_name) do
+    "#{nif_name}_kernel"
+  end
+
+  def kernel_h(nifname) do
+    "#{kernel_name(nifname)}.h"
+  end
+
+  def kernel_h_macro(nifname) do
+    "#{kernel_name(nifname)}_H" |> String.upcase()
+  end
+
+  def kernel_c(nifname) do
+    "#{kernel_name(nifname)}.c"
+  end
+
+  def kernel_o(nifname) do
+    "#{kernel_name(nifname)}.o"
+  end
+
+  def full_path_kernel_h(nifname) do
+    src_dir() <> "/" <> kernel_h(nifname)
+  end
+
+  def full_path_kernel_c(nifname) do
+    src_dir() <> "/" <> kernel_c(nifname)
+  end
+
   def generate(module) do
     File.mkdir(priv_dir())
     File.mkdir(src_dir())

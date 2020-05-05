@@ -26,8 +26,8 @@ defmodule Pelemay.Generator.Native do
     definition_func =
       code_info
       |> Enum.map(&generate_function(&1))
-      |> Enum.filter(& !is_nil(&1))
-      |> Enum.map(& &1 <> "\n")
+      |> Enum.filter(&(!is_nil(&1)))
+      |> Enum.map(&(&1 <> "\n"))
 
     str <> Util.to_str_code(definition_func) <> func_list()
   end
