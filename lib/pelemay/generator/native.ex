@@ -26,6 +26,8 @@ defmodule Pelemay.Generator.Native do
     definition_func =
       code_info
       |> Enum.map(&generate_function(&1))
+      |> Enum.filter(& !is_nil(&1))
+      |> Enum.map(& &1 <> "\n")
 
     str <> Util.to_str_code(definition_func) <> func_list()
   end
@@ -84,6 +86,7 @@ defmodule Pelemay.Generator.Native do
       // {erl_function_name, erl_function_arity, c_function}
       #{fl}
     };
+
     """
   end
 
@@ -134,6 +137,7 @@ defmodule Pelemay.Generator.Native do
     {
       return load(env, priv, info);
     }
+
     """
   end
 
