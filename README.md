@@ -42,7 +42,7 @@ I'm so sorry but Windows isn't be supported because of changing the builder of P
 We've tested it on the following Elixir versions:
 
 * 1.9
-* 1.10
+* 1.11
 
 We've tested it on the following OTP versions:
 
