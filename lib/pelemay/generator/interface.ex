@@ -89,14 +89,23 @@ defmodule Pelemay.Generator.Interface do
                 init_cpu_info()
                 :ets.lookup(:cpu_info, :runtime_info)
             end
-            Logger.error("[Pelemay] badarg on #{Generator.nif_module(module)}.#{nif_name}")
-            Logger.error("[Pelemay] args: #{args_inspect}")
-            try do
-              Logger.error("[Pelemay] compile_time_info = \#{Pelemay.eval_compile_time_info() |> elem(1) |> Keyword.get(:compile_time_info) |> inspect}")
-            rescue
-              _e in Code.LoadError -> Logger.error("[Pelemay] compile_time_info = nil")
+            if Pelemay.Db.get_flag(:put_error_log) do
+              Logger.error("[Pelemay] badarg on #{Generator.nif_module(module)}.#{nif_name}")
+              Logger.error("[Pelemay] args: #{args_inspect}")
             end
-            Logger.error("[Pelemay] runtime_info = #\{runtime_info |> inspect}")
+            try do
+              if Pelemay.Db.get_flag(:put_error_log) do
+                Logger.error("[Pelemay] compile_time_info = \#{Pelemay.eval_compile_time_info() |> elem(1) |> Keyword.get(:compile_time_info) |> inspect}")
+              end
+            rescue
+              _e in Code.LoadError -> 
+                if Pelemay.Db.get_flag(:put_error_log) do
+                  Logger.error("[Pelemay] compile_time_info = nil")
+                end
+            end
+            if Pelemay.Db.get_flag(:put_error_log) do
+              Logger.error("[Pelemay] runtime_info = #\{runtime_info |> inspect}")
+            end
             :erlang.error(:badarg)
         end
       end
