@@ -2,6 +2,7 @@ defmodule Pelemay.Db do
   # @on_load :init
   @table_name :nif_func
   @flags :flags
+  @kernel :kernel
 
   @moduledoc """
   Documentation for Pelemay.Generator.
@@ -15,6 +16,12 @@ defmodule Pelemay.Db do
 
     @flags
     |> :ets.new([:set, :public, :named_table])
+
+    @kernel
+    |> :ets.new([:set, :public, :named_table])
+
+    @kernel
+    |> :ets.insert({:kernel, []})
   end
 
   def register(info)
@@ -129,5 +136,14 @@ defmodule Pelemay.Db do
     |> :ets.lookup(key)
     |> hd
     |> elem(1)
+  end
+
+  def get_kernels() do
+    @kernel |> :ets.lookup(:kernel) |> hd |> elem(1)
+  end
+
+  def append_kernel(kernel_file) do
+    @kernel
+    |> :ets.insert({:kernel, get_kernels() ++ [kernel_file]})
   end
 end

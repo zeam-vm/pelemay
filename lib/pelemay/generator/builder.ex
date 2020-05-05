@@ -99,7 +99,13 @@ defmodule Pelemay.Generator.Builder do
     {deps, status} = depend(module, cc)
     {deps_basic, status_basic} = depend(__DIR__ <> "/native/basic.c", cc)
 
-    if status == 0 and status_basic == 0 do
+    kernels = Pelemay.Db.get_kernels()
+    kernel_cs = kernels |> Enum.map(&Generator.full_path_kernel_c(&1))
+    deps_kernels = kernel_cs |> Enum.map(&depend(&1, cc))
+    status_kernels = Enum.reduce(deps_kernels, 1, fn {_, status}, acc -> status * acc end)
+    kernel_os = kernels |> Enum.map(&Generator.kernel_o(&1))
+
+    if status == 0 and status_basic == 0 and status_kernels == 0 do
       str = """
       .phony: all clean
 
@@ -125,6 +131,7 @@ defmodule Pelemay.Generator.Builder do
       endif
 
       OBJS=../obj/#{Generator.libnif_name(module)}.o \
+      #{kernel_os |> Enum.map(&"  ../obj/#{&1}") |> Enum.join(" \\\n")} \
         ../obj/basic.o
 
       all: $(TARGET)
@@ -136,6 +143,8 @@ defmodule Pelemay.Generator.Builder do
       ../obj/#{deps}
 
       ../obj/#{deps_basic}
+
+      #{deps_kernels |> Enum.map(fn {result, _} -> "../obj/#{result}" end) |> Enum.join("\n")}
 
       %.o %.c:
       \t$(CC) -S $< -o $*.s $(CFLAGS)
