@@ -1,5 +1,6 @@
 defmodule Pelemay.Generator.Builder do
   alias Pelemay.Generator
+  require Logger
 
   @mac_error_msg """
   You need to have gcc and make installed. Try running the
@@ -101,9 +102,17 @@ defmodule Pelemay.Generator.Builder do
 
     kernels = Pelemay.Db.get_kernels()
     kernel_cs = kernels |> Enum.map(&Generator.full_path_kernel_c(&1))
-    deps_kernels = kernel_cs |> Enum.map(&depend(&1, cc))
-    status_kernels = Enum.reduce(deps_kernels, 1, fn {_, status}, acc -> status * acc end)
+    kernel_dcs = kernels |> Enum.map(&Generator.full_path_kernel_dc(&1))
+
+    deps_kernels = (kernel_cs ++ kernel_dcs) |> Enum.map(&depend(&1, cc))
+    status_kernels = Enum.reduce(deps_kernels, 0, fn {_, status}, acc -> status + acc end)
+
+    if deps_kernels |> Enum.filter(fn {r, _} -> String.match?(r, ~r/error:/) end) != [] do
+      raise "Build error."
+    end
+
     kernel_os = kernels |> Enum.map(&Generator.kernel_o(&1))
+    kernel_dos = kernels |> Enum.map(&Generator.kernel_do(&1))
 
     if status == 0 and status_basic == 0 and status_kernels == 0 do
       str = """
@@ -131,7 +140,7 @@ defmodule Pelemay.Generator.Builder do
       endif
 
       OBJS=../obj/#{Generator.libnif_name(module)}.o \
-      #{kernel_os |> Enum.map(&"  ../obj/#{&1}") |> Enum.join(" \\\n")} \
+      #{(kernel_os ++ kernel_dos) |> Enum.map(&"  ../obj/#{&1}") |> Enum.join(" \\\n")} \
         ../obj/basic.o
 
       all: $(TARGET)
@@ -155,6 +164,8 @@ defmodule Pelemay.Generator.Builder do
       """
 
       File.write(Generator.makefile(module), str)
+    else
+      raise "Build error."
     end
   end
 
@@ -202,11 +213,16 @@ defmodule Pelemay.Generator.Builder do
 
     generate_makefile(module, os_specific_make(), cc)
 
-    {_result, 0} =
+    {result, status} =
       make(
         args_for_makefile(os_specific_make(), Generator.makefile(module)),
         env
       )
+
+    if status != 0 do
+      Logger.error(result)
+      raise "Build failed."
+    end
   end
 
   def erlang_include_path() do

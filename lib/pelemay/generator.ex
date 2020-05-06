@@ -152,6 +152,10 @@ defmodule Pelemay.Generator do
     "#{nif_name}_kernel"
   end
 
+  def kernel_driver_name(nif_name) do
+    "#{nif_name}_kernel_driver"
+  end
+
   def kernel_h(nifname) do
     "#{kernel_name(nifname)}.h"
   end
@@ -160,20 +164,44 @@ defmodule Pelemay.Generator do
     "#{kernel_name(nifname)}_H" |> String.upcase()
   end
 
+  def kernel_dh(nifname) do
+    "#{kernel_driver_name(nifname)}.h"
+  end
+
+  def kernel_dh_macro(nifname) do
+    "#{kernel_driver_name(nifname)}_H" |> String.upcase()
+  end
+
   def kernel_c(nifname) do
     "#{kernel_name(nifname)}.c"
+  end
+
+  def kernel_dc(nifname) do
+    "#{kernel_driver_name(nifname)}.c"
   end
 
   def kernel_o(nifname) do
     "#{kernel_name(nifname)}.o"
   end
 
+  def kernel_do(nifname) do
+    "#{kernel_driver_name(nifname)}.o"
+  end
+
   def full_path_kernel_h(nifname) do
     src_dir() <> "/" <> kernel_h(nifname)
   end
 
+  def full_path_kernel_dh(nifname) do
+    src_dir() <> "/" <> kernel_dh(nifname)
+  end
+
   def full_path_kernel_c(nifname) do
     src_dir() <> "/" <> kernel_c(nifname)
+  end
+
+  def full_path_kernel_dc(nifname) do
+    src_dir() <> "/" <> kernel_dc(nifname)
   end
 
   def generate(module) do

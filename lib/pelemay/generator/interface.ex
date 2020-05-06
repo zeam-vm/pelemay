@@ -27,7 +27,7 @@ defmodule Pelemay.Generator.Interface do
 
           def load_nifs do
             nif_file = "\#{Pelemay.Generator.libnif(#{module})}"
-            Logger.debug("[Pelemay] \#{File.exists?(nif_file)}")
+            Logger.debug("[Pelemay] library.exists? = \#{Path.wildcard(\"\#{nif_file}\.{dll,so}\") |> File.exists?()}")
             case :erlang.load_nif(nif_file, 0) do
               :ok ->
                 Logger.debug("[Pelemay] load_nif success")
