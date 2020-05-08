@@ -78,14 +78,34 @@ double *pelemay_lsm(ErlNifUInt64 *x, ErlNifUInt64 *y, size_t n) {
 }
 
 double *pelemay_lsm_drive(pelemay_driver driver) {
-  size_t size = LOOP_VECTORIZE_WIDTH;
-  ErlNifUInt64 *n = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
-  ErlNifUInt64 *time = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
-  for(unsigned i = 0; i < MAX_SHIFT_SIZE; i++, size <<= 1) {
-    for(unsigned j = 0; j < DRIVE_NUM; j++) {
-      n[j + i * DRIVE_NUM] = size;
-      time[j + i * DRIVE_NUM] = (* driver)(size);
+  ErlNifUInt64 *x = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
+  ErlNifUInt64 *y = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
+  ErlNifUInt64 *t = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM);
+  double *lsm;
+  do {
+    size_t size = LOOP_VECTORIZE_WIDTH;
+    size_t count = 0;
+    for(unsigned i = 0; i < MAX_SHIFT_SIZE; i++, size <<= SHIFT) {
+      for(unsigned j = 0; j < DRIVE_NUM; j++) {
+        t[j] = (* driver)((ErlNifUInt64)size);
+      }
+      ErlNifUInt64 sum_t = sum(t, DRIVE_NUM);
+      double avr_t = avr(sum_t, DRIVE_NUM);
+      double *diff_t = diff(t, DRIVE_NUM, avr_t);
+      double variance_t = variance(diff_t, DRIVE_NUM);
+      enif_free(diff_t);
+      for(unsigned j = 0; j < DRIVE_NUM; j++) {
+        if(fabs(t[j] - avr_t) / sqrt(variance_t) < OUTLIER_FACTOR) {
+          x[count] = size;
+          y[count] = t[j];
+          count++;
+        }
+      }
     }
-  }
-  return pelemay_lsm(n, time, MAX_SHIFT_SIZE);
+    lsm = pelemay_lsm(x, y, count);
+  } while(lsm[0] < 0.9 || lsm[1] <= 0 || lsm[2] < 0.0);
+  enif_free(x);
+  enif_free(y);
+  enif_free(t);
+  return lsm;
 }

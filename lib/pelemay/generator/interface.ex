@@ -82,6 +82,10 @@ defmodule Pelemay.Generator.Interface do
         def #{nif_name}_nif_driver_double(_size), do: raise "NIF #{nif_name}_nif_driver_double/1 not implemented"
 
         def #{nif_name}_nif_driver_i64(_size), do: raise "NIF #{nif_name}_nif_driver_i64/1 not implemented"
+
+        def #{nif_name}_nif_driver_lsm_double(), do: raise "NIF #{nif_name}_nif_driver_lsm_double/0 not implemented"
+
+        def #{nif_name}_nif_driver_lsm_i64(), do: raise "NIF #{nif_name}_nif_driver_lsm_i64/0 not implemented"
       """
     else
       ""

@@ -8,10 +8,12 @@ extern "C" {
 #include <stdlib.h>
 #include <erl_nif.h>
 
-#define DRIVE_NUM 10
+#define DRIVE_NUM 20
 #define MAX_SHIFT_SIZE 5
+#define OUTLIER_FACTOR 1.25
+#define SHIFT 2
 
-typedef ErlNifUInt64 (*pelemay_driver)(size_t vec_l);
+typedef ErlNifUInt64 (*pelemay_driver)(ErlNifUInt64 vec_l);
 
 double *pelemay_lsm(ErlNifUInt64 *x, ErlNifUInt64 *y, size_t n);
 

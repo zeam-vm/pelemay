@@ -169,6 +169,23 @@ defmodule Pelemay.Generator.Native.Enum do
       return enif_make_uint64(env, time);
     }
 
+    static ERL_NIF_TERM
+    #{nif_name}_nif_driver_lsm_double(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+    {
+      if (__builtin_expect((argc != 0), false)) {
+        return enif_make_badarg(env);
+      }
+      double *lsm = pelemay_lsm_drive(#{nif_name}_kernel_driver_double);
+      ERL_NIF_TERM kl =
+        enif_make_list3(
+          env,
+          enif_make_tuple2(env, enif_make_atom(env, "r"), enif_make_double(env, lsm[0])),
+          enif_make_tuple2(env, enif_make_atom(env, "a"), enif_make_double(env, lsm[1])),
+          enif_make_tuple2(env, enif_make_atom(env, "b"), enif_make_double(env, lsm[2]))
+        );
+      enif_free(lsm);
+      return kl;
+    }
 
     static ERL_NIF_TERM
     #{nif_name}_nif_driver_i64(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
@@ -182,6 +199,25 @@ defmodule Pelemay.Generator.Native.Enum do
       }
       ErlNifUInt64 time = #{Generator.kernel_driver_name(nif_name)}_i64((size_t) vec_l);
       return enif_make_uint64(env, time);
+    }
+
+
+    static ERL_NIF_TERM
+    #{nif_name}_nif_driver_lsm_i64(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+    {
+      if (__builtin_expect((argc != 0), false)) {
+        return enif_make_badarg(env);
+      }
+      double *lsm = pelemay_lsm_drive(#{nif_name}_kernel_driver_i64);
+      ERL_NIF_TERM kl =
+        enif_make_list3(
+          env,
+          enif_make_tuple2(env, enif_make_atom(env, "r"), enif_make_double(env, lsm[0])),
+          enif_make_tuple2(env, enif_make_atom(env, "a"), enif_make_double(env, lsm[1])),
+          enif_make_tuple2(env, enif_make_atom(env, "b"), enif_make_double(env, lsm[2]))
+        );
+      enif_free(lsm);
+      return kl;
     }
     """
   end
