@@ -6,8 +6,9 @@ defmodule Pelemay.Generator.Native.Util do
     |> Db.register()
   end
 
-  def push_impl_info(info, val) do
-    Map.update(info, :impl, nil, fn _ -> val end)
+  def push_impl_info(info, exists_impl?, exists_driver?) do
+    Map.update(info, :impl, false, fn _ -> exists_impl? end)
+    |> Map.update(:impl_drv, false, fn _ -> exists_driver? end)
     |> Db.register()
   end
 

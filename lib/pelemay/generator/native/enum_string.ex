@@ -14,7 +14,7 @@ defmodule Pelemay.Generator.Native.EnumString do
 
     info
     |> Map.update(:arg_num, nil, fn _ -> 3 end)
-    |> Util.push_impl_info(true)
+    |> Util.push_impl_info(true, false)
 
     """
     static ERL_NIF_TERM

@@ -12,7 +12,7 @@ defmodule Pelemay.Generator.Native.String do
 
     info
     |> Map.update(:arg_num, nil, fn _ -> 3 end)
-    |> Util.push_impl_info(true)
+    |> Util.push_impl_info(true, false)
 
     args |> Keyword.get_values(:var)
 
