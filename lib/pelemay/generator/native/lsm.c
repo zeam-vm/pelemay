@@ -76,3 +76,16 @@ double *pelemay_lsm(ErlNifUInt64 *x, ErlNifUInt64 *y, size_t n) {
   _lsm[2] = b;
   return _lsm;
 }
+
+double *pelemay_lsm_drive(pelemay_driver driver) {
+  size_t size = LOOP_VECTORIZE_WIDTH;
+  ErlNifUInt64 *n = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
+  ErlNifUInt64 *time = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
+  for(unsigned i = 0; i < MAX_SHIFT_SIZE; i++, size <<= 1) {
+    for(unsigned j = 0; j < DRIVE_NUM; j++) {
+      n[j + i * DRIVE_NUM] = size;
+      time[j + i * DRIVE_NUM] = (* driver)(size);
+    }
+  }
+  return pelemay_lsm(n, time, MAX_SHIFT_SIZE);
+}
