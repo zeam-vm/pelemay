@@ -73,8 +73,6 @@ defmodule Pelemay.Generator.Interface do
       impl_drv: exist_driver?
     } = func_info
 
-    Logger.debug("nif_name = #{nif_name}, impl_drv = #{exist_driver?}")
-
     args = generate_string_arguments(num)
     args_active = generate_string_arguments_active(num)
     args_inspect = generate_string_arguments_inspect(num)
