@@ -99,6 +99,7 @@ defmodule Pelemay.Generator.Builder do
   def generate_makefile(module, _, cc) do
     {deps, status} = depend(module, cc)
     {deps_basic, status_basic} = depend(__DIR__ <> "/native/basic.c", cc)
+    {deps_lsm, status_lsm} = depend(__DIR__ <> "/native/lsm.c", cc)
 
     kernels = Pelemay.Db.get_kernels()
     kernel_cs = kernels |> Enum.map(&Generator.full_path_kernel_c(&1))
@@ -114,7 +115,7 @@ defmodule Pelemay.Generator.Builder do
     kernel_os = kernels |> Enum.map(&Generator.kernel_o(&1))
     kernel_dos = kernels |> Enum.map(&Generator.kernel_do(&1))
 
-    if status == 0 and status_basic == 0 and status_kernels == 0 do
+    if status == 0 and status_basic == 0 and status_lsm == 0 and status_kernels == 0 do
       str = """
       .phony: all clean
 
@@ -141,7 +142,8 @@ defmodule Pelemay.Generator.Builder do
 
       OBJS=../obj/#{Generator.libnif_name(module)}.o \
       #{(kernel_os ++ kernel_dos) |> Enum.map(&"  ../obj/#{&1}") |> Enum.join(" \\\n")} \
-        ../obj/basic.o
+        ../obj/basic.o \
+        ../obj/lsm.o
 
       all: $(TARGET)
       \t
@@ -152,6 +154,8 @@ defmodule Pelemay.Generator.Builder do
       ../obj/#{deps}
 
       ../obj/#{deps_basic}
+
+      ../obj/#{deps_lsm}
 
       #{deps_kernels |> Enum.map(fn {result, _} -> "../obj/#{result}" end) |> Enum.join("\n")}
 
