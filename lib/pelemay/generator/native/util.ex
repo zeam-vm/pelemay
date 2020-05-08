@@ -2,13 +2,13 @@ defmodule Pelemay.Generator.Native.Util do
   alias Pelemay.Db
 
   def push_info(info, key, val) do
-    Map.update(info, key, nil, fn _ -> val end)
+    Map.update(info, key, val, fn _ -> val end)
     |> Db.register()
   end
 
   def push_impl_info(info, exists_impl?, exists_driver?) do
-    Map.update(info, :impl, false, fn _ -> exists_impl? end)
-    |> Map.update(:impl_drv, false, fn _ -> exists_driver? end)
+    Map.update(info, :impl, exists_impl?, fn _ -> exists_impl? end)
+    |> Map.update(:impl_drv, exists_driver?, fn _ -> exists_driver? end)
     |> Db.register()
   end
 

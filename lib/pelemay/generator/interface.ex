@@ -69,12 +69,25 @@ defmodule Pelemay.Generator.Interface do
       nif_name: nif_name,
       module: _,
       function: _,
-      arg_num: num
+      arg_num: num,
+      impl_drv: exist_driver?
     } = func_info
+
+    Logger.debug("nif_name = #{nif_name}, impl_drv = #{exist_driver?}")
 
     args = generate_string_arguments(num)
     args_active = generate_string_arguments_active(num)
     args_inspect = generate_string_arguments_inspect(num)
+
+    driver = if exist_driver? do
+      """
+        def #{nif_name}_nif_driver_double(_size), do: raise "NIF #{nif_name}_nif_driver_double/1 not implemented"
+
+        def #{nif_name}_nif_driver_i64(_size), do: raise "NIF #{nif_name}_nif_driver_i64/1 not implemented"
+      """
+    else
+      ""
+    end
 
     """
       def #{nif_name}(#{args_active}) do
@@ -110,8 +123,9 @@ defmodule Pelemay.Generator.Interface do
         end
       end
 
-      def #{nif_name}_nif(#{args}), do: raise "NIF #{nif_name}/#{num} not implemented"
+      def #{nif_name}_nif(#{args}), do: raise "NIF #{nif_name}_nif/#{num} not implemented"
 
+    #{driver}
     """
   end
 
