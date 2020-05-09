@@ -44,8 +44,8 @@ defmodule Pelemay.Generator.Native.Enum do
     #ifdef __cplusplus
     extern "C" {
     #endif // __cplusplus
-    ErlNifUInt64 #{Generator.kernel_driver_name(nif_name)}_double(size_t vec_l);
-    ErlNifUInt64 #{Generator.kernel_driver_name(nif_name)}_i64(size_t vec_l);
+    ErlNifUInt64 #{Generator.kernel_driver_name(nif_name)}_double(ErlNifUInt64 vec_l);
+    ErlNifUInt64 #{Generator.kernel_driver_name(nif_name)}_i64(ErlNifUInt64 vec_l);
     #ifdef __cplusplus
     }
     #endif // __cplusplus
@@ -97,10 +97,10 @@ defmodule Pelemay.Generator.Native.Enum do
     #ifdef __cplusplus
     extern "C" {
     #endif // __cplusplus
-    ErlNifUInt64 #{Generator.kernel_driver_name(nif_name)}_double(size_t vec_l)
+    ErlNifUInt64 #{Generator.kernel_driver_name(nif_name)}_double(ErlNifUInt64 vec_l)
     {
       double *vec_double = (double *)enif_alloc(sizeof(double) * vec_l);
-      for(size_t i = 0; i < vec_l; i++) {
+      for(ErlNifUInt64 i = 0; i < vec_l; i++) {
         vec_double[i] = (double)rand() / (rand() + 1);
       }
       ErlNifUInt64 start_time = now();
@@ -110,10 +110,10 @@ defmodule Pelemay.Generator.Native.Enum do
       return end_time - start_time;
     }
 
-    ErlNifUInt64 #{Generator.kernel_driver_name(nif_name)}_i64(size_t vec_l)
+    ErlNifUInt64 #{Generator.kernel_driver_name(nif_name)}_i64(ErlNifUInt64 vec_l)
     {
       ErlNifSInt64 *vec_long = (ErlNifSInt64 *)enif_alloc(sizeof(ErlNifSInt64) * vec_l);
-      for(size_t i = 0; i < vec_l; i++) {
+      for(ErlNifUInt64 i = 0; i < vec_l; i++) {
         vec_long[i] = rand();
       }
       ErlNifUInt64 start_time = now();
