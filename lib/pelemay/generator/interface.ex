@@ -24,6 +24,7 @@ defmodule Pelemay.Generator.Interface do
           def init do
             init_cpu_info()
             load_nifs()
+            register_module()
             :ok
           end
 
@@ -42,6 +43,35 @@ defmodule Pelemay.Generator.Interface do
             :ets.new(:cpu_info, [:set, :public, :named_table])
             :ets.insert(:cpu_info, {:runtime_info, CpuInfo.all_profile()})
             Logger.debug("[Pelemay] init_cpu_info success")
+          end
+
+          def register_module() do
+            try do
+              Logger.debug("[Pelemay] append pelemay_if __MODULE__")
+              :ets.insert(
+                :pelemay_if, 
+                {
+                  :modules, 
+                  Map.put(
+                    Keyword.get(:ets.lookup(:pelemay_if, :modules), :modules),
+                    __MODULE__,
+                    true
+                  )
+                }
+              )
+            rescue
+              _e in ArgumentError ->
+                Logger.debug("[Pelemay] init pelemay_if")
+                :ets.new(:pelemay_if, [:set, :public, :named_table])
+                Logger.debug("[Pelemay] append pelemay_if __MODULE__")
+                :ets.insert(
+                  :pelemay_if, 
+                  {
+                    :modules, 
+                    [{__MODULE__, true}] |> Map.new()
+                  }
+                )
+            end
           end
 
         #{bench}
