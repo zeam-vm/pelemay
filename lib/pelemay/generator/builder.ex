@@ -217,7 +217,7 @@ defmodule Pelemay.Generator.Builder do
         "ERL_CFLAGS" => erl_cflags,
         "ERL_LDFLAGS" => erl_ldflags,
         "ERL_EI_INCLUDE_DIR" => erl_ei_include_dir,
-        "ERL_EI_LIBDIR" => erl_ei_libdir        
+        "ERL_EI_LIBDIR" => erl_ei_libdir
       }
       |> Map.merge(
         if is_nil(crosscompile) do
