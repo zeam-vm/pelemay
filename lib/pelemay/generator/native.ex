@@ -71,18 +71,20 @@ defmodule Pelemay.Generator.Native do
         "",
         fn
           [%{impl: true, impl_drv: true}] = info, acc ->
-            acc <> """
-              #{erl_nif_func(info)},
-              #{erl_nif_driver_double_func(info)},
-              #{erl_nif_driver_i64_func(info)},
-              #{erl_nif_driver_lsm_double_func(info)},
-              #{erl_nif_driver_lsm_i64_func(info)},
-            """
+            acc <>
+              """
+                #{erl_nif_func(info)},
+                #{erl_nif_driver_double_func(info)},
+                #{erl_nif_driver_i64_func(info)},
+                #{erl_nif_driver_lsm_double_func(info)},
+                #{erl_nif_driver_lsm_i64_func(info)},
+              """
 
           [%{impl: true, impl_drv: false}] = info, acc ->
-            acc <> """
-              #{erl_nif_func(info)},
-            """
+            acc <>
+              """
+                #{erl_nif_func(info)},
+              """
 
           [%{impl: false}], acc ->
             acc

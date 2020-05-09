@@ -77,19 +77,20 @@ defmodule Pelemay.Generator.Interface do
     args_active = generate_string_arguments_active(num)
     args_inspect = generate_string_arguments_inspect(num)
 
-    driver = if exist_driver? do
-      """
-        def #{nif_name}_nif_driver_double(_size), do: raise "NIF #{nif_name}_nif_driver_double/1 not implemented"
+    driver =
+      if exist_driver? do
+        """
+          def #{nif_name}_nif_driver_double(_size), do: raise "NIF #{nif_name}_nif_driver_double/1 not implemented"
 
-        def #{nif_name}_nif_driver_i64(_size), do: raise "NIF #{nif_name}_nif_driver_i64/1 not implemented"
+          def #{nif_name}_nif_driver_i64(_size), do: raise "NIF #{nif_name}_nif_driver_i64/1 not implemented"
 
-        def #{nif_name}_nif_driver_lsm_double(), do: raise "NIF #{nif_name}_nif_driver_lsm_double/0 not implemented"
+          def #{nif_name}_nif_driver_lsm_double(), do: raise "NIF #{nif_name}_nif_driver_lsm_double/0 not implemented"
 
-        def #{nif_name}_nif_driver_lsm_i64(), do: raise "NIF #{nif_name}_nif_driver_lsm_i64/0 not implemented"
-      """
-    else
-      ""
-    end
+          def #{nif_name}_nif_driver_lsm_i64(), do: raise "NIF #{nif_name}_nif_driver_lsm_i64/0 not implemented"
+        """
+      else
+        ""
+      end
 
     """
       def #{nif_name}(#{args_active}) do
