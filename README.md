@@ -35,7 +35,7 @@ We've tested it well on the following OS:
 
 * macOS (64bit)
 * Linux (64bit)
-* Nerves (Raspberry 3)
+* Nerves (Raspberry Pi 3)
 
 I'm so sorry but Windows isn't be supported because of changing the builder of Pelemay.
 
