@@ -20,8 +20,6 @@ defmodule Mix.Tasks.Pelemay.Nerves.Bench do
     |> Enum.map(&"Elixir.#{&1}")
     |> Enum.map(&String.to_atom(&1))
     |> Enum.map(&Pelemay.Generator.nif_module(&1))
-    |> Enum.each(
-      &Mix.Shell.cmd("ssh nerves.local \"#{&1}.bench()\"", fn x -> IO.puts(x) end)
-    )
+    |> Enum.each(&Mix.Shell.cmd("ssh nerves.local \"#{&1}.bench()\"", fn x -> IO.puts(x) end))
   end
 end
