@@ -62,6 +62,17 @@ defmodule Pelemay do
 
     Db.init()
 
+    package = Mix.Project.config() |> Keyword.get(:package)
+
+    if is_nil(package) do
+      Db.set_flag(:put_error_log, true)
+    else
+      case {Mix.env(), package |> Keyword.get(:name)} do
+        {:test, "pelemay"} -> Db.set_flag(:put_error_log, false)
+        _ -> Db.set_flag(:put_error_log, true)
+      end
+    end
+
     ret = Optimizer.replace(functions, __CALLER__.module)
 
     Generator.generate(__CALLER__.module)

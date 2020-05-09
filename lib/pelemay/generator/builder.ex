@@ -1,5 +1,6 @@
 defmodule Pelemay.Generator.Builder do
   alias Pelemay.Generator
+  require Logger
 
   @mac_error_msg """
   You need to have gcc and make installed. Try running the
@@ -87,21 +88,43 @@ defmodule Pelemay.Generator.Builder do
 
   def depend(module, cc), do: depend(Generator.libc(module), cc)
 
-  def generate_makefile("", _, _) do
+  def generate_makefile("", _, _, _) do
     {:error, "Don't need defpelemay"}
   end
 
-  def generate_makefile(_module, "nmake", _) do
+  def generate_makefile(_module, "nmake", _, _) do
     {:error, "Pelemay for Windows haven't been implemented, yet."}
   end
 
-  def generate_makefile(module, _, cc) do
+  def generate_makefile(module, _, cc, env) do
     {deps, status} = depend(module, cc)
     {deps_basic, status_basic} = depend(__DIR__ <> "/native/basic.c", cc)
+    {deps_lsm, status_lsm} = depend(__DIR__ <> "/native/lsm.c", cc)
 
-    if status == 0 and status_basic == 0 do
+    kernels = Pelemay.Db.get_kernels()
+    kernel_cs = kernels |> Enum.map(&Generator.full_path_kernel_c(&1))
+    kernel_dcs = kernels |> Enum.map(&Generator.full_path_kernel_dc(&1))
+
+    deps_kernels = (kernel_cs ++ kernel_dcs) |> Enum.map(&depend(&1, cc))
+    status_kernels = Enum.reduce(deps_kernels, 0, fn {_, status}, acc -> status + acc end)
+
+    if deps_kernels |> Enum.filter(fn {r, _} -> String.match?(r, ~r/error:/) end) != [] do
+      raise "Build error."
+    end
+
+    kernel_os = kernels |> Enum.map(&Generator.kernel_o(&1))
+    kernel_dos = kernels |> Enum.map(&Generator.kernel_do(&1))
+
+    flags =
+      env
+      |> Enum.map(fn {key, value} -> "#{key} = #{value}" end)
+      |> Enum.join("\n")
+
+    if status == 0 and status_basic == 0 and status_lsm == 0 and status_kernels == 0 do
       str = """
       .phony: all clean
+
+      #{flags}
 
       CFLAGS += -Ofast -g -ansi -pedantic -I#{__DIR__}/native
       ifdef CROSSCOMPILE
@@ -125,7 +148,9 @@ defmodule Pelemay.Generator.Builder do
       endif
 
       OBJS=../obj/#{Generator.libnif_name(module)}.o \
-        ../obj/basic.o
+      #{(kernel_os ++ kernel_dos) |> Enum.map(&"  ../obj/#{&1}") |> Enum.join(" \\\n")} \
+        ../obj/basic.o \
+        ../obj/lsm.o
 
       all: $(TARGET)
       \t
@@ -137,6 +162,10 @@ defmodule Pelemay.Generator.Builder do
 
       ../obj/#{deps_basic}
 
+      ../obj/#{deps_lsm}
+
+      #{deps_kernels |> Enum.map(fn {result, _} -> "../obj/#{result}" end) |> Enum.join("\n")}
+
       %.o %.c:
       \t$(CC) -S $< -o $*.s $(CFLAGS)
       \t$(CC) -c $< -o $@ $(CFLAGS)
@@ -146,6 +175,8 @@ defmodule Pelemay.Generator.Builder do
       """
 
       File.write(Generator.makefile(module), str)
+    else
+      raise "Build error."
     end
   end
 
@@ -173,6 +204,9 @@ defmodule Pelemay.Generator.Builder do
     erl_cflags = System.get_env("ERL_CFLAGS") || ""
     erl_ldflags = System.get_env("ERL_LDFLAGS") || ""
 
+    erl_ei_include_dir = System.get_env("ERL_EI_INCLUDE_DIR") || ""
+    erl_ei_libdir = System.get_env("ERL_EI_LIBDIR") || ""
+
     crosscompile = System.get_env("CROSSCOMPILE")
 
     env =
@@ -181,7 +215,9 @@ defmodule Pelemay.Generator.Builder do
         "CFLAGS" => cflags |> Enum.join(" "),
         "LDFLAGS" => ldflags |> Enum.join(" "),
         "ERL_CFLAGS" => erl_cflags,
-        "ERL_LDFLAGS" => erl_ldflags
+        "ERL_LDFLAGS" => erl_ldflags,
+        "ERL_EI_INCLUDE_DIR" => erl_ei_include_dir,
+        "ERL_EI_LIBDIR" => erl_ei_libdir
       }
       |> Map.merge(
         if is_nil(crosscompile) do
@@ -191,13 +227,18 @@ defmodule Pelemay.Generator.Builder do
         end
       )
 
-    generate_makefile(module, os_specific_make(), cc)
+    generate_makefile(module, os_specific_make(), cc, env)
 
-    {_result, 0} =
+    {result, status} =
       make(
         args_for_makefile(os_specific_make(), Generator.makefile(module)),
         env
       )
+
+    if status != 0 do
+      Logger.error(result)
+      raise "Build failed."
+    end
   end
 
   def erlang_include_path() do

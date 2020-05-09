@@ -26,6 +26,8 @@ defmodule Pelemay.Generator.Native do
     definition_func =
       code_info
       |> Enum.map(&generate_function(&1))
+      |> Enum.filter(&(!is_nil(&1)))
+      |> Enum.map(&(&1 <> "\n"))
 
     str <> Util.to_str_code(definition_func) <> func_list()
   end
@@ -68,9 +70,21 @@ defmodule Pelemay.Generator.Native do
       |> Enum.reduce(
         "",
         fn
-          [%{impl: true}] = info, acc ->
-            str = erl_nif_func(info)
-            acc <> "#{str},\n  "
+          [%{impl: true, impl_drv: true}] = info, acc ->
+            acc <>
+              """
+                #{erl_nif_func(info)},
+                #{erl_nif_driver_double_func(info)},
+                #{erl_nif_driver_i64_func(info)},
+                #{erl_nif_driver_lsm_double_func(info)},
+                #{erl_nif_driver_lsm_i64_func(info)},
+              """
+
+          [%{impl: true, impl_drv: false}] = info, acc ->
+            acc <>
+              """
+                #{erl_nif_func(info)},
+              """
 
           [%{impl: false}], acc ->
             acc
@@ -82,13 +96,30 @@ defmodule Pelemay.Generator.Native do
     ErlNifFunc nif_funcs[] =
     {
       // {erl_function_name, erl_function_arity, c_function}
-      #{fl}
+    #{fl}
     };
+
     """
   end
 
   defp erl_nif_func([%{nif_name: nif_name, arg_num: num}]) do
     ~s/{"#{nif_name}_nif", #{num}, #{nif_name}_nif}/
+  end
+
+  defp erl_nif_driver_double_func([%{nif_name: nif_name}]) do
+    ~s/{"#{nif_name}_nif_driver_double", 1, #{nif_name}_nif_driver_double}/
+  end
+
+  defp erl_nif_driver_i64_func([%{nif_name: nif_name}]) do
+    ~s/{"#{nif_name}_nif_driver_i64", 1, #{nif_name}_nif_driver_i64}/
+  end
+
+  defp erl_nif_driver_lsm_double_func([%{nif_name: nif_name}]) do
+    ~s/{"#{nif_name}_nif_driver_lsm_double", 0, #{nif_name}_nif_driver_lsm_double}/
+  end
+
+  defp erl_nif_driver_lsm_i64_func([%{nif_name: nif_name}]) do
+    ~s/{"#{nif_name}_nif_driver_lsm_i64", 0, #{nif_name}_nif_driver_lsm_i64}/
   end
 
   defp init_nif do
@@ -101,6 +132,7 @@ defmodule Pelemay.Generator.Native do
     #include <erl_nif.h>
     #include <string.h>
     #include "basic.h"
+    #include "lsm.h"
 
 
     static int load(ErlNifEnv *env, void **priv, ERL_NIF_TERM info);
@@ -134,6 +166,7 @@ defmodule Pelemay.Generator.Native do
     {
       return load(env, priv, info);
     }
+
     """
   end
 
