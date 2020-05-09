@@ -88,15 +88,15 @@ defmodule Pelemay.Generator.Builder do
 
   def depend(module, cc), do: depend(Generator.libc(module), cc)
 
-  def generate_makefile("", _, _) do
+  def generate_makefile("", _, _, _) do
     {:error, "Don't need defpelemay"}
   end
 
-  def generate_makefile(_module, "nmake", _) do
+  def generate_makefile(_module, "nmake", _, _) do
     {:error, "Pelemay for Windows haven't been implemented, yet."}
   end
 
-  def generate_makefile(module, _, cc) do
+  def generate_makefile(module, _, cc, env) do
     {deps, status} = depend(module, cc)
     {deps_basic, status_basic} = depend(__DIR__ <> "/native/basic.c", cc)
     {deps_lsm, status_lsm} = depend(__DIR__ <> "/native/lsm.c", cc)
@@ -115,9 +115,16 @@ defmodule Pelemay.Generator.Builder do
     kernel_os = kernels |> Enum.map(&Generator.kernel_o(&1))
     kernel_dos = kernels |> Enum.map(&Generator.kernel_do(&1))
 
+    flags =
+      env
+      |> Enum.map(fn {key, value} -> "#{key} = #{value}" end)
+      |> Enum.join("\n")
+
     if status == 0 and status_basic == 0 and status_lsm == 0 and status_kernels == 0 do
       str = """
       .phony: all clean
+
+      #{flags}
 
       CFLAGS += -Ofast -g -ansi -pedantic -I#{__DIR__}/native
       ifdef CROSSCOMPILE
@@ -197,6 +204,9 @@ defmodule Pelemay.Generator.Builder do
     erl_cflags = System.get_env("ERL_CFLAGS") || ""
     erl_ldflags = System.get_env("ERL_LDFLAGS") || ""
 
+    erl_ei_include_dir = System.get_env("ERL_EI_INCLUDE_DIR") || ""
+    erl_ei_libdir = System.get_env("ERL_EI_LIBDIR") || ""
+
     crosscompile = System.get_env("CROSSCOMPILE")
 
     env =
@@ -205,7 +215,9 @@ defmodule Pelemay.Generator.Builder do
         "CFLAGS" => cflags |> Enum.join(" "),
         "LDFLAGS" => ldflags |> Enum.join(" "),
         "ERL_CFLAGS" => erl_cflags,
-        "ERL_LDFLAGS" => erl_ldflags
+        "ERL_LDFLAGS" => erl_ldflags,
+        "ERL_EI_INCLUDE_DIR" => erl_ei_include_dir,
+        "ERL_EI_LIBDIR" => erl_ei_libdir        
       }
       |> Map.merge(
         if is_nil(crosscompile) do
@@ -215,7 +227,7 @@ defmodule Pelemay.Generator.Builder do
         end
       )
 
-    generate_makefile(module, os_specific_make(), cc)
+    generate_makefile(module, os_specific_make(), cc, env)
 
     {result, status} =
       make(
