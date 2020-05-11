@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <erl_nif.h>
-#include "basic.h"
+#include <basic.h>
 
 ERL_NIF_TERM
 enif_make_list_from_int64_vec(ErlNifEnv *env, const ErlNifSInt64 *vec, const size_t vec_l)

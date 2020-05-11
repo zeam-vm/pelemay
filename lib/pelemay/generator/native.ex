@@ -131,8 +131,8 @@ defmodule Pelemay.Generator.Native do
     #include <stdbool.h>
     #include <erl_nif.h>
     #include <string.h>
-    #include "basic.h"
-    #include "lsm.h"
+    #include <basic.h>
+    #include <lsm.h>
 
 
     static int load(ErlNifEnv *env, void **priv, ERL_NIF_TERM info);
