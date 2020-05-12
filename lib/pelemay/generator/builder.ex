@@ -168,7 +168,7 @@ defmodule Pelemay.Generator.Builder do
     if status_kernels == 0 do
       File.write(
         "#{Generator.build_dir()}/kernels.d",
-       deps_kernels
+        deps_kernels
         |> Enum.map(fn {result, _} -> "../obj/#{result}" end)
         |> Enum.join("\n")
       )
