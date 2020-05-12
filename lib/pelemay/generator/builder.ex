@@ -97,21 +97,9 @@ defmodule Pelemay.Generator.Builder do
   end
 
   def generate_makefile(module, _, cc, env) do
-    {deps, status} = depend(module, cc)
-    {deps_basic, status_basic} = depend(__DIR__ <> "/native/basic.c", cc)
-    {deps_lsm, status_lsm} = depend(__DIR__ <> "/native/lsm.c", cc)
-
     kernels = Pelemay.Db.get_kernels()
     kernel_cs = kernels |> Enum.map(&Generator.full_path_kernel_c(&1))
     kernel_dcs = kernels |> Enum.map(&Generator.full_path_kernel_dc(&1))
-
-    deps_kernels = (kernel_cs ++ kernel_dcs) |> Enum.map(&depend(&1, cc))
-    status_kernels = Enum.reduce(deps_kernels, 0, fn {_, status}, acc -> status + acc end)
-
-    if deps_kernels |> Enum.filter(fn {r, _} -> String.match?(r, ~r/error:/) end) != [] do
-      raise "Build error."
-    end
-
     kernel_os = kernels |> Enum.map(&Generator.kernel_o(&1))
     kernel_dos = kernels |> Enum.map(&Generator.kernel_do(&1))
 
@@ -120,63 +108,103 @@ defmodule Pelemay.Generator.Builder do
       |> Enum.map(fn {key, value} -> "#{key} = #{value}" end)
       |> Enum.join("\n")
 
-    if status == 0 and status_basic == 0 and status_lsm == 0 and status_kernels == 0 do
-      str = """
-      .phony: all clean
+    str = """
+    .phony: all clean
 
-      #{flags}
+    #{flags}
 
-      CFLAGS += -Ofast -g -ansi -pedantic -I#{__DIR__}/native
-      ifdef CROSSCOMPILE
-        CFLAGS += $(ERL_CFLAGS)
-        LDFLAGS += $(ERL_LDFLAGS)
-      else
-        CFLAGS += -I#{erlang_include_path()}
-      endif
-      CFLAGS += -std=c11 -Wno-unused-function
+    CFLAGS += -Ofast -g -ansi -pedantic -I#{__DIR__}/native
+    ifdef CROSSCOMPILE
+      CFLAGS += $(ERL_CFLAGS)
+      LDFLAGS += $(ERL_LDFLAGS)
+    else
+      CFLAGS += -I#{erlang_include_path()}
+    endif
+    CFLAGS += -std=c11 -Wno-unused-function
 
-      ifeq ($(OS), Windows_NT)
-        TARGET = ../priv/#{Generator.libnif_name(module)}.dll
-      else
-        TARGET = ../priv/#{Generator.libnif_name(module)}.so
-        CFLAGS += -fPIC
-        ifeq ($(shell uname),Darwin)
-          ifndef CROSSCOMPILE
-            LDFLAGS += -dynamiclib -undefined dynamic_lookup
-          endif
+    ifeq ($(OS), Windows_NT)
+      TARGET = ../priv/#{Generator.libnif_name(module)}.dll
+    else
+      TARGET = ../priv/#{Generator.libnif_name(module)}.so
+      CFLAGS += -fPIC
+      ifeq ($(shell uname),Darwin)
+        ifndef CROSSCOMPILE
+          LDFLAGS += -dynamiclib -undefined dynamic_lookup
         endif
       endif
+    endif
 
-      OBJS=../obj/#{Generator.libnif_name(module)}.o \
-      #{(kernel_os ++ kernel_dos) |> Enum.map(&"  ../obj/#{&1}") |> Enum.join(" \\\n")} \
-        ../obj/basic.o \
-        ../obj/lsm.o
 
-      all: $(TARGET)
-      \t
+    OBJS = ../obj/#{Generator.libnif_name(module)}.o \\
+    #{(kernel_os ++ kernel_dos) |> Enum.map(&"  ../obj/#{&1}") |> Enum.join(" \\\n")} \\
+      ../obj/basic.o \\
+      ../obj/lsm.o
 
-      $(TARGET): $(OBJS)
-      \t$(CC) $^ -o $@ -shared $(LDFLAGS)
+    all: $(TARGET)
+    \t
 
-      ../obj/#{deps}
+    $(TARGET): $(OBJS)
+    \t$(CC) $^ -o $@ -shared $(LDFLAGS)
 
-      ../obj/#{deps_basic}
+    include $(shell ls *.d 2>/dev/null)
 
-      ../obj/#{deps_lsm}
+    %.o %.c:
+    \t$(CC) -S $< -o $*.s $(CFLAGS)
+    \t$(CC) -c $< -o $@ $(CFLAGS)
 
-      #{deps_kernels |> Enum.map(fn {result, _} -> "../obj/#{result}" end) |> Enum.join("\n")}
+    clean:
+    \t$(RM) $(TARGET) $(OBJS)
+    """
 
-      %.o %.c:
-      \t$(CC) -S $< -o $*.s $(CFLAGS)
-      \t$(CC) -c $< -o $@ $(CFLAGS)
+    File.write(Generator.makefile(module), str)
 
-      clean:
-      \t$(RM) $(TARGET) $(OBJS)
-      """
+    deps_kernels = (kernel_cs ++ kernel_dcs) |> Enum.map(&depend(&1, cc))
+    status_kernels = Enum.reduce(deps_kernels, 0, fn {_, status}, acc -> status + acc end)
 
-      File.write(Generator.makefile(module), str)
-    else
+    if deps_kernels |> Enum.filter(fn {r, _} -> String.match?(r, ~r/error:/) end) != [] do
       raise "Build error."
+    end
+
+    if status_kernels == 0 do
+      File.write(
+        "#{Generator.build_dir()}/kernels.d",
+       deps_kernels
+        |> Enum.map(fn {result, _} -> "../obj/#{result}" end)
+        |> Enum.join("\n")
+      )
+    end
+
+    case depend(module, cc) do
+      {deps, 0} ->
+        File.write(
+          "#{Generator.build_dir()}/#{Generator.libnif_name(module)}.d",
+          "../obj/#{deps}"
+        )
+
+      _ ->
+        raise "Build error."
+    end
+
+    case depend("#{__DIR__}/native/basic.c", cc) do
+      {deps_basic, 0} ->
+        File.write(
+          "#{Generator.build_dir()}/basic.d",
+          "../obj/#{deps_basic}"
+        )
+
+      _ ->
+        raise "Build error."
+    end
+
+    case depend("#{__DIR__}/native/lsm.c", cc) do
+      {deps_lsm, 0} ->
+        File.write(
+          "#{Generator.build_dir()}/lsm.d",
+          "../obj/#{deps_lsm}"
+        )
+
+      _ ->
+        raise "Build error."
     end
   end
 
