@@ -58,7 +58,7 @@ defmodule Pelemay do
     Logger.configure_backend(Pelemay.Logger, path: log_path)
 
     Application.app_dir(:pelemay, "priv/compile_time_info")
-    |> File.write!("compile_time_info = #{CpuInfo.all_profile() |> inspect()}")
+    |> File.write!("compile_time_info = #{CpuInfo.all_profile() |> inspect(limit: :infinity)}")
 
     Db.init()
 
