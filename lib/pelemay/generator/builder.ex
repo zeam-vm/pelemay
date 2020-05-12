@@ -128,9 +128,9 @@ defmodule Pelemay.Generator.Builder do
       TARGET = ../priv/#{Generator.libnif_name(module)}.so
       CFLAGS += -fPIC
       ifeq ($(shell uname),Darwin)
+        ifndef CROSSCOMPILE
           CFLAGS += -I`xcrun --show-sdk-path 2>/dev/null`/usr/include
           LDFLAGS += -L`xcrun --show-sdk-path 2>/dev/null`/usr/lib
-        ifndef CROSSCOMPILE
           LDFLAGS += -dynamiclib -undefined dynamic_lookup
         endif
       endif
