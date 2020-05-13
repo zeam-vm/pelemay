@@ -9,8 +9,10 @@ extern "C" {
 
 #include <erl_nif.h>
 
+#define LSM_NUM 10
 #define DRIVE_NUM 20
 #define MAX_SHIFT_SIZE 5
+#define MAX_SIZE (1L << 24)
 #define OUTLIER_FACTOR 1.25
 #define SHIFT 2
 

@@ -85,16 +85,30 @@ double *pelemay_lsm_drive(pelemay_driver driver) {
   ErlNifUInt64 *t1 = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM);
   ErlNifUInt64 *t2 = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM);
   ErlNifUInt64 *r;
-  double *lsm1, *lsm2;
-  do {
+  double **lsm1 = (double **)enif_alloc(sizeof(double *) * LSM_NUM);
+  double **lsm2 = (double **)enif_alloc(sizeof(double *) * LSM_NUM);
+  bool cannot_measure = false;
+  for(unsigned n = 0; n < LSM_NUM; n++) {
     size_t size = LOOP_VECTORIZE_WIDTH;
     size_t count = 0;
-    for(unsigned i = 0; i < MAX_SHIFT_SIZE; i++, size <<= SHIFT) {
+    for(unsigned i = 0; i < MAX_SHIFT_SIZE; i++) {
       for(unsigned j = 0; j < DRIVE_NUM; j++) {
         r = (* driver)((ErlNifUInt64)size);
         t1[j] = r[0];
         t2[j] = r[1];
         enif_free(r);
+        if(t2[j] == 0) {
+          if(size < MAX_SIZE) {
+            size <<= 1;
+            j = 0;
+          } else {
+            cannot_measure = true;
+            break;
+          }
+        }
+      }
+      if(cannot_measure) {
+        break;
       }
       ErlNifUInt64 sum_t1 = sum(t1, DRIVE_NUM);
       ErlNifUInt64 sum_t2 = sum(t2, DRIVE_NUM);
@@ -114,27 +128,52 @@ double *pelemay_lsm_drive(pelemay_driver driver) {
           count++;
         }
       }
+      size <<= 1;
     }
-    lsm1 = pelemay_lsm(x, y1, count);
-    lsm2 = pelemay_lsm(x, y2, count);
-    if (lsm1[0] > 0.9 && lsm1[1] > 0 && lsm1[2] > 0.0) {
+    if(cannot_measure) {
       break;
     }
-    enif_free(lsm1);
-    enif_free(lsm2);
-  } while(true);
+    lsm1[n] = pelemay_lsm(x, y1, count);
+    lsm2[n] = pelemay_lsm(x, y2, count);
+  }
   enif_free(x);
   enif_free(y1);
   enif_free(y2);
   enif_free(t1);
   enif_free(t2);
   double *result = (double *)enif_alloc(sizeof(double) * 6);
-  result[0] = lsm1[0];
-  result[1] = lsm1[1];
-  result[2] = lsm1[2];
-  result[3] = lsm2[0];
-  result[4] = lsm2[1];
-  result[5] = lsm2[2];
+  if(cannot_measure) {
+    result[0] = 0.0;
+    result[1] = 0.0;
+    result[2] = 0.0;
+    result[3] = 0.0;
+    result[4] = 0.0;
+    result[5] = 0.0;
+    enif_free(lsm1);
+    enif_free(lsm2);
+    return result;
+  }
+  result[0] = lsm1[0][0];
+  result[1] = lsm1[0][1];
+  result[2] = lsm1[0][2];
+  result[3] = lsm2[0][0];
+  result[4] = lsm2[0][1];
+  result[5] = lsm2[0][2];
+  enif_free(lsm1[0]);
+  enif_free(lsm2[0]);
+
+  for(unsigned n = 1; n < LSM_NUM; n++) {
+    if(result[0] < lsm1[n][0]) {
+      result[0] = lsm1[n][0];
+      result[1] = lsm1[n][1];
+      result[2] = lsm1[n][2];
+      result[3] = lsm2[n][0];
+      result[4] = lsm2[n][1];
+      result[5] = lsm2[n][2];
+    }
+    enif_free(lsm1[n]);
+    enif_free(lsm2[n]);
+  }
   enif_free(lsm1);
   enif_free(lsm2);
   return result;
