@@ -68,7 +68,7 @@ Add `pelemay` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pelemay, "~> 0.0.12"},
+    {:pelemay, "~> 0.0.13"},
   ]
 end
 ```
