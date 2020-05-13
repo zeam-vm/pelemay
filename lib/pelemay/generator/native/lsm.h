@@ -14,7 +14,7 @@ extern "C" {
 #define OUTLIER_FACTOR 1.25
 #define SHIFT 2
 
-typedef ErlNifUInt64 (*pelemay_driver)(ErlNifUInt64 vec_l);
+typedef ErlNifUInt64 *(*pelemay_driver)(ErlNifUInt64 vec_l);
 
 double *pelemay_lsm(ErlNifUInt64 *x, ErlNifUInt64 *y, size_t n);
 

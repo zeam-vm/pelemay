@@ -2,6 +2,7 @@
 #include <math.h>
 #include <erl_nif.h>
 #include <basic.h>
+#include <stdbool.h>
 
 static ErlNifUInt64 sum(ErlNifUInt64 *a, size_t n) {
   ErlNifUInt64 sum = 0;
@@ -79,33 +80,62 @@ double *pelemay_lsm(ErlNifUInt64 *x, ErlNifUInt64 *y, size_t n) {
 
 double *pelemay_lsm_drive(pelemay_driver driver) {
   ErlNifUInt64 *x = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
-  ErlNifUInt64 *y = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
-  ErlNifUInt64 *t = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM);
-  double *lsm;
+  ErlNifUInt64 *y1 = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
+  ErlNifUInt64 *y2 = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM * MAX_SHIFT_SIZE);
+  ErlNifUInt64 *t1 = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM);
+  ErlNifUInt64 *t2 = (ErlNifUInt64 *)enif_alloc(sizeof(ErlNifUInt64) * DRIVE_NUM);
+  ErlNifUInt64 *r;
+  double *lsm1, *lsm2;
   do {
     size_t size = LOOP_VECTORIZE_WIDTH;
     size_t count = 0;
     for(unsigned i = 0; i < MAX_SHIFT_SIZE; i++, size <<= SHIFT) {
       for(unsigned j = 0; j < DRIVE_NUM; j++) {
-        t[j] = (* driver)((ErlNifUInt64)size);
+        r = (* driver)((ErlNifUInt64)size);
+        t1[j] = r[0];
+        t2[j] = r[1];
+        enif_free(r);
       }
-      ErlNifUInt64 sum_t = sum(t, DRIVE_NUM);
-      double avr_t = avr(sum_t, DRIVE_NUM);
-      double *diff_t = diff(t, DRIVE_NUM, avr_t);
-      double variance_t = variance(diff_t, DRIVE_NUM);
-      enif_free(diff_t);
+      ErlNifUInt64 sum_t1 = sum(t1, DRIVE_NUM);
+      ErlNifUInt64 sum_t2 = sum(t2, DRIVE_NUM);
+      double avr_t1 = avr(sum_t1, DRIVE_NUM);
+      double avr_t2 = avr(sum_t2, DRIVE_NUM);
+      double *diff_t1 = diff(t1, DRIVE_NUM, avr_t1);
+      double *diff_t2 = diff(t2, DRIVE_NUM, avr_t2);
+      double variance_t1 = variance(diff_t1, DRIVE_NUM);
+      double variance_t2 = variance(diff_t2, DRIVE_NUM);
+      enif_free(diff_t1);
+      enif_free(diff_t2);
       for(unsigned j = 0; j < DRIVE_NUM; j++) {
-        if(fabs(t[j] - avr_t) / sqrt(variance_t) < OUTLIER_FACTOR) {
+        if(fabs(t1[j] - avr_t1) / sqrt(variance_t1) < OUTLIER_FACTOR) {
           x[count] = size;
-          y[count] = t[j];
+          y1[count] = t1[j];
+          y2[count] = t2[j];
           count++;
         }
       }
     }
-    lsm = pelemay_lsm(x, y, count);
-  } while(lsm[0] < 0.9 || lsm[1] <= 0 || lsm[2] < 0.0);
+    lsm1 = pelemay_lsm(x, y1, count);
+    lsm2 = pelemay_lsm(x, y2, count);
+    if (lsm1[0] > 0.9 && lsm1[1] > 0 && lsm1[2] > 0.0) {
+      break;
+    }
+    enif_free(lsm1);
+    enif_free(lsm2);
+  } while(true);
   enif_free(x);
-  enif_free(y);
-  enif_free(t);
-  return lsm;
+  enif_free(y1);
+  enif_free(y2);
+  enif_free(t1);
+  enif_free(t2);
+  double *result = (double *)enif_alloc(sizeof(double) * 6);
+  result[0] = lsm1[0];
+  result[1] = lsm1[1];
+  result[2] = lsm1[2];
+  result[3] = lsm2[0];
+  result[4] = lsm2[1];
+  result[5] = lsm2[2];
+  enif_free(lsm1);
+  enif_free(lsm2);
+  return result;
 }
