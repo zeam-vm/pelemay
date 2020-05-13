@@ -356,7 +356,11 @@ defmodule Pelemay.Generator.Builder do
 
     {result, status} =
       make(
-        args_for_makefile(os_specific_make(), Generator.makefile(module)),
+        args_for_makefile(
+          os_specific_make(),
+          Generator.makefile(module),
+          Map.get(cpu_info, :cpu) |> Map.get(:total_num_of_threads)
+        ),
         env
       )
 
@@ -413,8 +417,14 @@ defmodule Pelemay.Generator.Builder do
     end
   end
 
-  def args_for_makefile("nmake", :default), do: ["/F", "Makefile.win"]
-  def args_for_makefile("nmake", makefile), do: ["/F", makefile]
-  def args_for_makefile(_, :default), do: []
-  def args_for_makefile(_, makefile), do: ["-f", makefile]
+  def args_for_makefile("nmake", :default, _cpu_threads), do: ["/F", "Makefile.win"]
+  def args_for_makefile("nmake", makefile, _cpu_threads), do: ["/F", makefile]
+
+  def args_for_makefile(_, :default, cpu_threads) do
+    ["-j", Integer.to_string(cpu_threads)]
+  end
+
+  def args_for_makefile(_, makefile, cpu_threads) do
+    ["-f", makefile, "-j", Integer.to_string(cpu_threads)]
+  end
 end
