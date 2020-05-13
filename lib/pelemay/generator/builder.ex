@@ -135,9 +135,17 @@ defmodule Pelemay.Generator.Builder do
       kernels
       |> Enum.map(&"#{Generator.kernel_name(&1)}_bench")
 
+    kernel_perf =
+      kernels
+      |> Enum.map(&"#{Generator.kernel_name(&1)}_perf")
+
     kernel_bench_cs =
       kernels
       |> Enum.map(&"#{Generator.src_dir()}/#{Generator.kernel_name(&1)}_bench.c")
+
+    kernel_perf_cs =
+      kernels
+      |> Enum.map(&"#{Generator.src_dir()}/#{Generator.kernel_name(&1)}_perf.c")
 
     flags =
       env
@@ -149,6 +157,16 @@ defmodule Pelemay.Generator.Builder do
       |> Enum.map(fn {kb, kbo, kbdo} ->
         """
         ../priv/#{kb}: ../obj/#{kb}.o ../obj/#{kbo} ../obj/#{kbdo} ../obj/lsm_base.o
+        \t$(CC) $^ -o $@ $(LDFLAGS)
+
+        """
+      end)
+
+    perf_dep =
+      Enum.zip([kernel_perf, kernel_bos, kernel_dbos])
+      |> Enum.map(fn {kp, kbo, kbdo} ->
+        """
+        ../priv/#{kp}: ../obj/#{kp}.o ../obj/#{kbo} ../obj/#{kbdo}
         \t$(CC) $^ -o $@ $(LDFLAGS)
 
         """
@@ -170,8 +188,9 @@ defmodule Pelemay.Generator.Builder do
     endif
     CFLAGS += -std=c11 -Wno-unused-function
 
-    TARGET_BENCH = \\
-    #{kernel_bench |> Enum.map(&"  ../priv/#{&1}") |> Enum.join(" \\\n")}
+    TARGET_BENCH_PERF = \\
+    #{kernel_bench |> Enum.map(&"  ../priv/#{&1}") |> Enum.join(" \\\n")} \\
+    #{kernel_perf |> Enum.map(&"  ../priv/#{&1}") |> Enum.join(" \\\n")}
 
     ifeq ($(OS), Windows_NT)
       TARGET_LIB = ../priv/#{Generator.libnif_name(module)}.dll
@@ -195,13 +214,15 @@ defmodule Pelemay.Generator.Builder do
       ../obj/basic.o \\
       ../obj/lsm.o
 
-    all: $(TARGET_LIB) $(TARGET_BENCH)
+    all: $(TARGET_LIB) $(TARGET_BENCH_PERF)
     \t
 
     $(TARGET_LIB): $(OBJS)
     \t$(CC) $^ -o $@ -shared $(LDFLAGS) $(LINK)
 
     #{bench_dep}
+
+    #{perf_dep}
 
     include $(shell ls *.d 2>/dev/null)
 
@@ -216,7 +237,12 @@ defmodule Pelemay.Generator.Builder do
     File.write(Generator.makefile(module), str)
 
     deps_kernels =
-      (kernel_cs ++ kernel_dcs ++ kernel_bcs ++ kernel_dbcs ++ kernel_bench_cs)
+      (kernel_cs ++
+         kernel_dcs ++
+         kernel_bcs ++
+         kernel_dbcs ++
+         kernel_bench_cs ++
+         kernel_perf_cs)
       |> Enum.map(&depend(&1, cc))
 
     status_kernels = Enum.reduce(deps_kernels, 0, fn {_, status}, acc -> status + acc end)
