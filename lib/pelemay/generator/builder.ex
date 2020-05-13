@@ -98,20 +98,68 @@ defmodule Pelemay.Generator.Builder do
 
   def generate_makefile(module, _, cc, env) do
     kernels = Pelemay.Db.get_kernels()
-    kernel_cs = kernels |> Enum.map(&Generator.full_path_kernel_c(&1))
-    kernel_dcs = kernels |> Enum.map(&Generator.full_path_kernel_dc(&1))
-    kernel_os = kernels |> Enum.map(&Generator.kernel_o(&1))
-    kernel_dos = kernels |> Enum.map(&Generator.kernel_do(&1))
+
+    kernel_cs =
+      kernels
+      |> Enum.map(&"#{Generator.src_dir()}/#{Generator.kernel_name(&1)}.c")
+
+    kernel_dcs =
+      kernels
+      |> Enum.map(&"#{Generator.src_dir()}/#{Generator.kernel_driver_name(&1)}.c")
+
+    kernel_bcs =
+      kernels
+      |> Enum.map(&"#{Generator.src_dir()}/#{Generator.kernel_name(&1)}_base.c")
+
+    kernel_dbcs =
+      kernels
+      |> Enum.map(&"#{Generator.src_dir()}/#{Generator.kernel_driver_name(&1)}_base.c")
+
+    kernel_os =
+      kernels
+      |> Enum.map(&"#{Generator.kernel_name(&1)}.o")
+
+    kernel_dos =
+      kernels
+      |> Enum.map(&"#{Generator.kernel_driver_name(&1)}.o")
+
+    kernel_bos =
+      kernels
+      |> Enum.map(&"#{Generator.kernel_name(&1)}_base.o")
+
+    kernel_dbos =
+      kernels
+      |> Enum.map(&"#{Generator.kernel_driver_name(&1)}_base.o")
+
+    kernel_bench =
+      kernels
+      |> Enum.map(&"#{Generator.kernel_name(&1)}_bench")
+
+    kernel_bench_cs =
+      kernels
+      |> Enum.map(&"#{Generator.src_dir()}/#{Generator.kernel_name(&1)}_bench.c")
 
     flags =
       env
       |> Enum.map(fn {key, value} -> "#{key} = #{value}" end)
       |> Enum.join("\n")
 
+    bench_dep =
+      Enum.zip([kernel_bench, kernel_bos, kernel_dbos])
+      |> Enum.map(fn {kb, kbo, kbdo} ->
+        """
+        ../priv/#{kb}: ../obj/#{kb}.o ../obj/#{kbo} ../obj/#{kbdo} ../obj/lsm_base.o
+        \t$(CC) $^ -o $@ $(LDFLAGS)
+
+        """
+      end)
+
     str = """
     .phony: all clean
 
     #{flags}
+
+    LINK = 
 
     CFLAGS += -Ofast -g -ansi -pedantic -I#{__DIR__}/native
     ifdef CROSSCOMPILE
@@ -122,16 +170,21 @@ defmodule Pelemay.Generator.Builder do
     endif
     CFLAGS += -std=c11 -Wno-unused-function
 
+    TARGET_BENCH = \\
+    #{kernel_bench |> Enum.map(&"  ../priv/#{&1}") |> Enum.join(" \\\n")}
+
     ifeq ($(OS), Windows_NT)
-      TARGET = ../priv/#{Generator.libnif_name(module)}.dll
+      TARGET_LIB = ../priv/#{Generator.libnif_name(module)}.dll
+        
     else
-      TARGET = ../priv/#{Generator.libnif_name(module)}.so
+      TARGET_LIB = ../priv/#{Generator.libnif_name(module)}.so
+
       CFLAGS += -fPIC
       ifeq ($(shell uname),Darwin)
         ifndef CROSSCOMPILE
           CFLAGS += -I`xcrun --show-sdk-path 2>/dev/null`/usr/include
           LDFLAGS += -L`xcrun --show-sdk-path 2>/dev/null`/usr/lib
-          LDFLAGS += -dynamiclib -undefined dynamic_lookup
+          LINK += -dynamiclib -undefined dynamic_lookup
         endif
       endif
     endif
@@ -142,11 +195,13 @@ defmodule Pelemay.Generator.Builder do
       ../obj/basic.o \\
       ../obj/lsm.o
 
-    all: $(TARGET)
+    all: $(TARGET_LIB) $(TARGET_BENCH)
     \t
 
-    $(TARGET): $(OBJS)
-    \t$(CC) $^ -o $@ -shared $(LDFLAGS)
+    $(TARGET_LIB): $(OBJS)
+    \t$(CC) $^ -o $@ -shared $(LDFLAGS) $(LINK)
+
+    #{bench_dep}
 
     include $(shell ls *.d 2>/dev/null)
 
@@ -160,7 +215,10 @@ defmodule Pelemay.Generator.Builder do
 
     File.write(Generator.makefile(module), str)
 
-    deps_kernels = (kernel_cs ++ kernel_dcs) |> Enum.map(&depend(&1, cc))
+    deps_kernels =
+      (kernel_cs ++ kernel_dcs ++ kernel_bcs ++ kernel_dbcs ++ kernel_bench_cs)
+      |> Enum.map(&depend(&1, cc))
+
     status_kernels = Enum.reduce(deps_kernels, 0, fn {_, status}, acc -> status + acc end)
 
     if deps_kernels |> Enum.filter(fn {r, _} -> String.match?(r, ~r/error:/) end) != [] do
@@ -203,6 +261,17 @@ defmodule Pelemay.Generator.Builder do
         File.write(
           "#{Generator.build_dir()}/lsm.d",
           "../obj/#{deps_lsm}"
+        )
+
+      _ ->
+        raise "Build error."
+    end
+
+    case depend("#{__DIR__}/native/lsm_base.c", cc) do
+      {deps_lsm_base, 0} ->
+        File.write(
+          "#{Generator.build_dir()}/lsm_base.d",
+          "../obj/#{deps_lsm_base}"
         )
 
       _ ->

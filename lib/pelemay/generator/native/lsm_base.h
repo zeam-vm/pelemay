@@ -1,22 +1,21 @@
-#ifndef LSM_H
-#define LSM_H
+#ifndef LSM_BASE_H
+#define LSM_BASE_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-
-#include <erl_nif.h>
 
 #define DRIVE_NUM 20
 #define MAX_SHIFT_SIZE 5
 #define OUTLIER_FACTOR 1.25
 #define SHIFT 2
 
-typedef ErlNifUInt64 (*pelemay_driver)(ErlNifUInt64 vec_l);
+typedef uint64_t (*pelemay_driver)(uint64_t vec_l);
 
-double *pelemay_lsm(ErlNifUInt64 *x, ErlNifUInt64 *y, size_t n);
+double *pelemay_lsm(uint64_t *x, uint64_t *y, size_t n);
 
 double *pelemay_lsm_drive(pelemay_driver driver);
 
