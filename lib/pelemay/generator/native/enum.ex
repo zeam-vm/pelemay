@@ -463,8 +463,10 @@ defmodule Pelemay.Generator.Native.Enum do
       double *result_double = pelemay_lsm_drive(#{Generator.kernel_driver_name(nif_name)}_double);
       double *result_i64 = pelemay_lsm_drive(#{Generator.kernel_driver_name(nif_name)}_i64);
 
-      printf("#{Generator.kernel_name(nif_name)}_double: r = %lf, a = %lf, b = %lf\\n", result_double[0], result_double[1], result_double[2]);
-      printf("#{Generator.kernel_name(nif_name)}_i64: r = %lf, a = %lf, b = %lf\\n", result_i64[0], result_i64[1], result_i64[2]);
+      printf("#{Generator.kernel_name(nif_name)}_double: r_clock = %lf, a_clock = %lf, b_clock = %lf\\n", result_double[0], result_double[1], result_double[2]);
+      printf("#{Generator.kernel_name(nif_name)}_double: r_ns = %lf, a_ns = %lf, b_ns = %lf\\n", result_double[3], result_double[4], result_double[5]);
+      printf("#{Generator.kernel_name(nif_name)}_i64: r_clock = %lf, a_clock = %lf, b_clock = %lf\\n", result_i64[0], result_i64[1], result_i64[2]);
+      printf("#{Generator.kernel_name(nif_name)}_i64: r_ns = %lf, a_ns = %lf, b_ns = %lf\\n", result_i64[3], result_i64[4], result_i64[5]);
 
       free(result_double);
       free(result_i64);
