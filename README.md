@@ -33,7 +33,7 @@ We've tested it well on the following processor architectures:
 
 We've tested it well on the following OS:
 
-* macOS (64bit)
+* macOS (64bit, including Apple Silicon M1 Mac on ARM native mode (unfortunately, not works on Rosetta 2))
 * Linux (64bit)
 * Nerves (Raspberry Pi 3)
 
@@ -46,6 +46,7 @@ We've tested it on the following Elixir versions:
 
 We've tested it on the following OTP versions:
 
+* 23
 * 22
 * 21
 * 20
@@ -68,7 +69,7 @@ Add `pelemay` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pelemay, "~> 0.0.13"},
+    {:pelemay, "~> 0.0.14"},
   ]
 end
 ```
