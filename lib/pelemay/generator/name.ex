@@ -1,9 +1,11 @@
 defmodule Generator.Name do
   @doc """
+  ```
   iex> func_label = [[map: 1]]
   iex> polymap = [func: %{args: [{:&, [], [1]}, {:&, [], [1]}], operators: [:*]}]
   iex> Generator.Name.generate_function_name(func_label, polymap)
   "map_elem1_mult_elem1"
+  ```
   """
   def generate_function_name(functions, polymap)
       when is_list(functions) do
