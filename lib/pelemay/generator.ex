@@ -113,6 +113,14 @@ defmodule Pelemay.Generator do
     Application.app_dir(:pelemay, "#{libnif_src_name(module)}.c")
   end
 
+  def libh(module) do
+    Application.app_dir(:pelemay, libh_name(module))
+  end
+
+  def libh_name(module) do
+    "#{libnif_src_name(module)}.h"
+  end
+
   def libso(module) do
     case :os.type() do
       {:win32, :nt} -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.dll")
