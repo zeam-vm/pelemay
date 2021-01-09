@@ -38,7 +38,7 @@ defmodule Pelemay.Generator.Native do
     generate_function(func_info)
   end
 
-  defp generate_function(%{module: modules, function: funcs} = info) do
+  defp generate_function(%{module: modules, function: funcs, nif_name: nif_name} = info) do
     object_module = Enum.reduce(modules, "", fn module, acc -> acc <> Atom.to_string(module) end)
 
     [hd | tl] = funcs
@@ -63,7 +63,38 @@ defmodule Pelemay.Generator.Native do
           error(e)
       end
 
-    res
+    init_resource_type =
+      if is_nil(res) do
+        ""
+      else
+        """
+        
+        static ErlNifResourceType *
+        init_resource_type_#{nif_name}(ErlNifEnv *env)
+        {
+          ErlNifResourceFlags tried;
+          ErlNifResourceType *ret = enif_open_resource_type(
+            env,
+            NULL, // module_str (unused, must be NULL)
+            "#{Pelemay.Generator.resource_state(nif_name)}",
+            NULL, // No descructor
+            ERL_NIF_RT_CREATE,
+            &tried
+          );
+          return ret;
+        }
+
+        """
+      end
+
+    res = 
+      if is_nil(res) do
+        ""
+      else
+        res
+      end
+
+    res <> init_resource_type
   end
 
   defp func_list do
@@ -105,12 +136,33 @@ defmodule Pelemay.Generator.Native do
   end
 
   defp init_priv_data(str, module) do
+    fl =
+      Db.get_functions()
+      |> Enum.reduce(
+        "",
+        fn
+          [%{impl: true, nif_name: nif_name}], acc ->
+            acc <>
+              """
+                data->#{Pelemay.Generator.resource_state(nif_name)} = init_resource_type_#{nif_name}(env);
+                if(data->#{Pelemay.Generator.resource_state(nif_name)} == NULL) {
+                  enif_free(data);
+                  return NULL;
+                }
+              """
+          [%{impl: false}], acc ->
+            acc
+        end
+      )
+
     str <>
       """
       static
       struct #{Pelemay.Generator.priv_data(module)}* init_priv_data(ErlNifEnv *env)
       {
-        return NULL;
+        struct #{Pelemay.Generator.priv_data(module)} *data = enif_alloc(sizeof(struct #{Pelemay.Generator.priv_data(module)}));
+      #{fl}
+        return data;
       }
       """
   end
@@ -126,7 +178,7 @@ defmodule Pelemay.Generator.Native do
           [%{impl: true, nif_name: nif_name}], acc ->
             acc <>
               """
-                ErlNifResourceType *#{nif_name}_state;
+                ErlNifResourceType *#{Pelemay.Generator.resource_state(nif_name)};
               """
 
           [%{impl: false}], acc ->

@@ -132,6 +132,14 @@ defmodule Pelemay.Generator do
     "PrivData#{Pelemay.Generator.module_replaced_non(module)}"
   end
 
+  def resource_state(nif_name) do
+    "#{nif_name}_state"
+  end
+
+  def resource_state_type(nif_name) do
+    "#{resource_state(nif_name)}_type"
+  end
+
   def build_dir() do
     Application.app_dir(:pelemay, "build")
   end
