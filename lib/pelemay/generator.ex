@@ -114,11 +114,11 @@ defmodule Pelemay.Generator do
   end
 
   def libh(module) do
-    Application.app_dir(:pelemay, libh_name(module))
+    Application.app_dir(:pelemay, "src/#{libh_name(module)}")
   end
 
   def libh_name(module) do
-    "#{libnif_src_name(module)}.h"
+    "#{libnif_name(module)}.h"
   end
 
   def libso(module) do
@@ -126,6 +126,10 @@ defmodule Pelemay.Generator do
       {:win32, :nt} -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.dll")
       _ -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.so")
     end
+  end
+
+  def priv_data(module) do
+    "PrivData#{Pelemay.Generator.module_replaced_non(module)}"
   end
 
   def build_dir() do
