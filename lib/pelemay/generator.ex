@@ -140,6 +140,10 @@ defmodule Pelemay.Generator do
     "#{resource_state(nif_name)}_type"
   end
 
+  def struct_state(nif_name) do
+    resource_state(nif_name) |> Macro.camelize()
+  end
+
   def build_dir() do
     Application.app_dir(:pelemay, "build")
   end

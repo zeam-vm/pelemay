@@ -3,7 +3,7 @@ defmodule Pelemay.Generator.Native.Enum do
   alias Pelemay.Generator.Native.Util, as: Util
   alias Pelemay.Db
 
-  def map(info) do
+  def map(module, info) do
     %{
       nif_name: nif_name,
       args: [
@@ -43,6 +43,7 @@ defmodule Pelemay.Generator.Native.Enum do
       if (__builtin_expect((argc != 1), false)) {
         return enif_make_badarg(env);
       }
+      struct #{Generator.priv_data(module)} *priv_data = enif_priv_data(env);
       ErlNifSInt64 *vec_long;
       size_t vec_l;
       double *vec_double;
@@ -516,7 +517,7 @@ defmodule Pelemay.Generator.Native.Enum do
     )
   end
 
-  def chunk_every(info) do
+  def chunk_every(_module, info) do
     %{
       nif_name: nif_name,
       module: _,
@@ -534,13 +535,13 @@ defmodule Pelemay.Generator.Native.Enum do
   end
 
   # Add here
-  def sort(info) do
+  def sort(_module, info) do
     Util.push_impl_info(info, false, false)
 
     nil
   end
 
-  def filter(info) do
+  def filter(_module, info) do
     Util.push_impl_info(info, false, false)
 
     nil

@@ -17,28 +17,28 @@ defmodule Pelemay.Generator.Native do
   defp write(file, module, code_info) do
     str =
       init_nif(module)
-      |> generate_functions(code_info)
+      |> generate_functions(module, code_info)
       |> init_priv_data(module)
       |> erl_nif_init(module)
 
     file |> File.write(str)
   end
 
-  defp generate_functions(str, code_info) do
+  defp generate_functions(str, module, code_info) do
     definition_func =
       code_info
-      |> Enum.map(&generate_function(&1))
+      |> Enum.map(&generate_function(module, &1))
       |> Enum.filter(&(!is_nil(&1)))
       |> Enum.map(&(&1 <> "\n"))
 
     str <> Util.to_str_code(definition_func) <> func_list()
   end
 
-  defp generate_function([func_info]) do
-    generate_function(func_info)
+  defp generate_function(module, [func_info]) do
+    generate_function(module, func_info)
   end
 
-  defp generate_function(%{module: modules, function: funcs, nif_name: nif_name} = info) do
+  defp generate_function(module, %{module: modules, function: funcs, nif_name: nif_name} = info) do
     object_module = Enum.reduce(modules, "", fn module, acc -> acc <> Atom.to_string(module) end)
 
     [hd | tl] = funcs
@@ -56,7 +56,7 @@ defmodule Pelemay.Generator.Native do
 
     {res, _} =
       try do
-        Code.eval_string("#{prefix}(info)", info: info)
+        Code.eval_string("#{prefix}(module, info)", module: module, info: info)
       rescue
         e in UndefinedFunctionError ->
           Util.push_info(info, :impl, false)
