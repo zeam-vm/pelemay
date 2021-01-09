@@ -6,23 +6,22 @@ defmodule Pelemay.Generator.Native do
   require Logger
 
   def generate(module) do
-    Pelemay.Generator.libc(module) |> write(module)
+    code_info = Db.get_functions()
+    Db.clear()
+
+    Pelemay.Generator.libc(module) |> write(module, code_info)
   end
 
-  defp write(file, module) do
+  defp write(file, module, code_info) do
     str =
       init_nif()
-      |> generate_functions()
+      |> generate_functions(code_info)
       |> erl_nif_init(module)
 
     file |> File.write(str)
   end
 
-  defp generate_functions(str) do
-    code_info = Db.get_functions()
-
-    Db.clear()
-
+  defp generate_functions(str, code_info) do
     definition_func =
       code_info
       |> Enum.map(&generate_function(&1))
