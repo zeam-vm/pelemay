@@ -68,7 +68,7 @@ defmodule Pelemay.Generator.Native do
         ""
       else
         """
-        
+
         static ErlNifResourceType *
         init_resource_type_#{nif_name}(ErlNifEnv *env)
         {
@@ -87,7 +87,7 @@ defmodule Pelemay.Generator.Native do
         """
       end
 
-    res = 
+    res =
       if is_nil(res) do
         ""
       else
@@ -144,12 +144,15 @@ defmodule Pelemay.Generator.Native do
           [%{impl: true, nif_name: nif_name}], acc ->
             acc <>
               """
-                data->#{Pelemay.Generator.resource_state(nif_name)} = init_resource_type_#{nif_name}(env);
+                data->#{Pelemay.Generator.resource_state(nif_name)} = init_resource_type_#{
+                nif_name
+              }(env);
                 if(data->#{Pelemay.Generator.resource_state(nif_name)} == NULL) {
                   enif_free(data);
                   return NULL;
                 }
               """
+
           [%{impl: false}], acc ->
             acc
         end
@@ -160,7 +163,9 @@ defmodule Pelemay.Generator.Native do
       static
       struct #{Pelemay.Generator.priv_data(module)}* init_priv_data(ErlNifEnv *env)
       {
-        struct #{Pelemay.Generator.priv_data(module)} *data = enif_alloc(sizeof(struct #{Pelemay.Generator.priv_data(module)}));
+        struct #{Pelemay.Generator.priv_data(module)} *data = enif_alloc(sizeof(struct #{
+        Pelemay.Generator.priv_data(module)
+      }));
       #{fl}
         return data;
       }
@@ -229,6 +234,11 @@ defmodule Pelemay.Generator.Native do
     #include <basic.h>
     #include <lsm.h>
     #include "#{Pelemay.Generator.libh_name(module)}"
+
+    inline int min(int const x, int const y)
+    {
+      return y < x ? y : x;
+    }
 
     static struct #{Pelemay.Generator.priv_data(module)} *init_priv_data(ErlNifEnv *env);
     static int load(ErlNifEnv *env, void **priv, ERL_NIF_TERM info);

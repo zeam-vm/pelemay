@@ -38,24 +38,109 @@ defmodule Pelemay.Generator.Native.Enum do
     #include "#{Generator.kernel_driver_name(nif_name)}.h"
 
     static ERL_NIF_TERM
+    #{nif_name}_yielding_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
+    static ERL_NIF_TERM
     #{nif_name}_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     {
+      ErlNifTime start = enif_monotonic_time(ERL_NIF_USEC);
+
       if (__builtin_expect((argc != 1), false)) {
         return enif_make_badarg(env);
       }
+
       struct #{Generator.priv_data(module)} *priv_data = enif_priv_data(env);
-      ErlNifSInt64 *vec_long;
-      size_t vec_l;
-      double *vec_double;
-      if (__builtin_expect((enif_get_int64_vec_from_list(env, argv[0], &vec_long, &vec_l) == FAIL), false)) {
-        if (__builtin_expect((enif_get_double_vec_from_list(env, argv[0], &vec_double, &vec_l) == FAIL), false)) {
+      struct #{Generator.struct_state(nif_name)} *state = enif_alloc_resource(
+        priv_data->#{Generator.resource_state(nif_name)},
+        sizeof(struct #{Generator.struct_state(nif_name)})
+      );
+
+      if (__builtin_expect((enif_get_int64_vec_from_list(env, argv[0], &state->ptr.vec_long, &state->vec_l) == FAIL), false)) {
+        if (__builtin_expect((enif_get_double_vec_from_list(env, argv[0], &state->ptr.vec_double, &state->vec_l) == FAIL), false)) {
           return enif_make_badarg(env);
         }
-        #{Generator.kernel_name(nif_name)}_double(vec_double, vec_l);
-        return enif_make_list_from_double_vec(env, vec_double, vec_l);
+        state->is_double = true;
+      } else {
+        state->is_double = false;
       }
-      #{Generator.kernel_name(nif_name)}_i64(vec_long, vec_l);
-      return enif_make_list_from_int64_vec(env, vec_long, vec_l);
+
+      state->rest = state->vec_l;
+
+      ERL_NIF_TERM state_term = enif_make_resource(env, state);
+
+      ErlNifTime consume_time = enif_monotonic_time(ERL_NIF_USEC) - start;
+      int slice_percent = (consume_time * 100) / 1000;
+      if(slice_percent < 0) {
+        slice_percent = 0;
+      } else if(slice_percent > 100) {
+        slice_percent = 100;
+      }
+      enif_consume_timeslice(env, slice_percent);
+      const ERL_NIF_TERM args[] = {state_term};
+
+      return enif_schedule_nif(
+        env,
+        "#{nif_name}_yielding_nif",
+        0,
+        #{nif_name}_yielding_nif,
+        1,
+        args
+      );
+    }
+
+    static ERL_NIF_TERM
+    #{nif_name}_yielding_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+    {
+      ErlNifTime start = enif_monotonic_time(ERL_NIF_USEC);
+
+      if (__builtin_expect((argc != 1), false)) {
+        return enif_make_badarg(env);
+      }
+
+      struct #{Generator.priv_data(module)} *priv_data = enif_priv_data(env);
+      struct #{Generator.struct_state(nif_name)} *state;
+      if(!enif_get_resource(env, argv[0], priv_data->#{Generator.resource_state(nif_name)}, ((void*) (&state)))) {
+        return enif_make_badarg(env);
+      }
+
+      size_t chunk;
+      chunk = min(state->rest, 1024);
+
+      if(state->is_double) {
+        double *vec_double = state->ptr.vec_double;
+        vec_double = #{Generator.kernel_name(nif_name)}_double(vec_double, chunk);
+        state->ptr.vec_double = vec_double;
+        state->rest -= chunk;
+        if(state->rest == 0) {
+          return enif_make_list_from_double_vec(env, state->ptr.vec_double, state->vec_l);
+        }
+      } else {
+        ErlNifSInt64 *vec_long = state->ptr.vec_long;
+        vec_long = #{Generator.kernel_name(nif_name)}_i64(vec_long, chunk);
+        state->rest -= chunk;
+        if(state->rest == 0) {
+          return enif_make_list_from_int64_vec(env, state->ptr.vec_long, state->vec_l);
+        }                 
+      }
+
+      ERL_NIF_TERM state_term = enif_make_resource(env, state);
+      ErlNifTime consume_time = enif_monotonic_time(ERL_NIF_USEC) - start;
+      int slice_percent = (consume_time * 100) / 1000;
+      if(slice_percent < 0) {
+        slice_percent = 0;
+      } else if(slice_percent > 100) {
+        slice_percent = 100;
+      }
+      enif_consume_timeslice(env, slice_percent);
+      const ERL_NIF_TERM args[] = {state_term};
+      return enif_schedule_nif(
+        env,
+        "#{nif_name}_yielding_nif",
+        0,
+        #{nif_name}_yielding_nif,
+        1,
+        args
+      );
     }
 
     static ERL_NIF_TERM
@@ -170,8 +255,8 @@ defmodule Pelemay.Generator.Native.Enum do
   defp definition_struct_state(nif_name, type_int) do
     """
     struct #{Generator.struct_state(nif_name)} {
-      size_t i;
-      size_t vec_long;
+      size_t vec_l;
+      size_t rest;
       bool is_double;
       union {
         double *vec_double;
@@ -196,8 +281,8 @@ defmodule Pelemay.Generator.Native.Enum do
 
     #{definition_struct_state(nif_name, "ErlNifSInt64")}
 
-    void #{Generator.kernel_name(nif_name)}_double(double *vec_double, size_t vec_l);
-    void #{Generator.kernel_name(nif_name)}_i64(ErlNifSInt64 *vec_long, size_t vec_l);
+    double *#{Generator.kernel_name(nif_name)}_double(double *vec_double, size_t vec_l);
+    ErlNifSInt64 *#{Generator.kernel_name(nif_name)}_i64(ErlNifSInt64 *vec_long, size_t vec_l);
 
     #ifdef __cplusplus
     }
@@ -222,8 +307,8 @@ defmodule Pelemay.Generator.Native.Enum do
 
     #{definition_struct_state(nif_name, "int64_t")}
 
-    void #{Generator.kernel_name(nif_name)}_double(double *vec_double, size_t vec_l);
-    void #{Generator.kernel_name(nif_name)}_i64(int64_t *vec_long, size_t vec_l);
+    double *#{Generator.kernel_name(nif_name)}_double(double *vec_double, size_t vec_l);
+    int64_t *#{Generator.kernel_name(nif_name)}_i64(int64_t *vec_long, size_t vec_l);
 
     #ifdef __cplusplus
     }
@@ -298,20 +383,22 @@ defmodule Pelemay.Generator.Native.Enum do
 
     #include <erl_nif.h>
 
-    void #{Generator.kernel_name(nif_name)}_double(double *vec_double, size_t vec_l)
+    double *#{Generator.kernel_name(nif_name)}_double(double *vec_double, size_t vec_l)
     {
     #pragma clang loop vectorize_width(LOOP_VECTORIZE_WIDTH)
       for(size_t i = 0; i < vec_l; i++) {
         vec_double[i] = #{expr_d};
-      }      
+      }
+      return vec_double + vec_l;
     }
 
-    void #{Generator.kernel_name(nif_name)}_i64(ErlNifSInt64 *vec_long, size_t vec_l)
+    ErlNifSInt64 *#{Generator.kernel_name(nif_name)}_i64(ErlNifSInt64 *vec_long, size_t vec_l)
     {
     #pragma clang loop vectorize_width(LOOP_VECTORIZE_WIDTH)
       for(size_t i = 0; i < vec_l; i++) {
         vec_long[i] = #{expr_l};
-      }      
+      }
+      return vec_long + vec_l;      
     }
 
     #ifdef __cplusplus
@@ -334,20 +421,22 @@ defmodule Pelemay.Generator.Native.Enum do
 
     #include <erl_nif.h>
 
-    void #{Generator.kernel_name(nif_name)}_double(double *vec_double, size_t vec_l)
+    double *#{Generator.kernel_name(nif_name)}_double(double *vec_double, size_t vec_l)
     {
     #pragma clang loop vectorize_width(LOOP_VECTORIZE_WIDTH)
       for(size_t i = 0; i < vec_l; i++) {
         vec_double[i] = #{expr_d};
-      }      
+      }
+      return vec_double + vec_l;    
     }
 
-    void #{Generator.kernel_name(nif_name)}_i64(int64_t *vec_long, size_t vec_l)
+    int64_t *#{Generator.kernel_name(nif_name)}_i64(int64_t *vec_long, size_t vec_l)
     {
     #pragma clang loop vectorize_width(LOOP_VECTORIZE_WIDTH)
       for(size_t i = 0; i < vec_l; i++) {
         vec_long[i] = #{expr_l};
-      }      
+      }
+      return vec_long + vec_l;    
     }
 
     #ifdef __cplusplus
