@@ -4,7 +4,7 @@ defmodule Pelemay.MixProject do
   def project do
     [
       app: :pelemay,
-      version: "0.0.14",
+      version: "0.0.15",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       description: description(),
