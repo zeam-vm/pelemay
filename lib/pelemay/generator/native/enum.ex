@@ -56,7 +56,9 @@ defmodule Pelemay.Generator.Native.Enum do
       if (__builtin_expect((priv_data->#{Generator.resource_state(nif_name)} == NULL), false)) {
         return enif_make_badarg(env);
       }
-      struct #{Generator.struct_state(nif_name)} *state = (struct #{Generator.struct_state(nif_name)} *)enif_alloc_resource(
+      struct #{Generator.struct_state(nif_name)} *state = (struct #{
+      Generator.struct_state(nif_name)
+    } *)enif_alloc_resource(
         priv_data->#{Generator.resource_state(nif_name)},
         sizeof(struct #{Generator.struct_state(nif_name)})
       );
@@ -144,7 +146,9 @@ defmodule Pelemay.Generator.Native.Enum do
         return enif_make_badarg(env);
       }
       struct #{Generator.struct_state(nif_name)} *state;
-      if(__builtin_expect(!enif_get_resource(env, argv[0], priv_data->#{Generator.resource_state(nif_name)}, ((void*) (&state))), false)) {
+      if(__builtin_expect(!enif_get_resource(env, argv[0], priv_data->#{
+      Generator.resource_state(nif_name)
+    }, ((void*) (&state))), false)) {
         return enif_make_badarg(env);
       }
       if(__builtin_expect(state == NULL, false)) {
