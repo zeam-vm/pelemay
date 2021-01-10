@@ -19,6 +19,14 @@ defmodule GeneratedCodeTest do
       assert [4, 6, 8] == Sample.list_plus1_mult2([1, 2, 3])
     end
 
+    test "One Enum.map/2: list_square 10" do
+      assert Enum.map(1..16, &(&1 * &1)) == 1..16 |> Enum.to_list() |> Sample.list_square()
+    end
+
+    test "many Enum.map/2: list_logistic_map_10 1..16" do
+      assert Sample.logistic_map_10_enum(1..16) == Sample.logistic_map_10_pelemay(1..16)
+    end
+
     test "Other Enum-Funtion/2" do
       assert [[1], [2, 2], [3], [4, 4, 6], [7, 7]] ==
                Sample.list_chunk_by([1, 2, 2, 3, 4, 4, 6, 7, 7], &(rem(&1, 2) == 1))

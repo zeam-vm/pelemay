@@ -324,7 +324,7 @@ enif_get_double_vec_from_number_list(ErlNifEnv *env, ERL_NIF_TERM list, double *
 int
 enif_get_range(ErlNifEnv *env, ERL_NIF_TERM map, ErlNifSInt64 *from, ErlNifSInt64 *to)
 {
-  ERL_NIF_TERM value; 
+  ERL_NIF_TERM value;
   if(__builtin_expect((enif_get_map_value(env, map, atom_struct, &value) == FAIL), false)) {
     return FAIL;
   }

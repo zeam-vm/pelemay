@@ -9,6 +9,20 @@ defmodule Sample do
   @pattern "a"
   @replacement "A"
 
+  def logistic_map_10_enum(list) do
+    list
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+    |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+  end
+
   defpelemay do
     def list_square(list) when is_list(list) do
       list
@@ -29,6 +43,20 @@ defmodule Sample do
       list
       |> Enum.map(&(&1 + 1))
       |> Enum.map(&(&1 * 2))
+    end
+
+    def logistic_map_10_pelemay(list) do
+      list
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
+      |> Enum.map(&rem(22 * &1 * (&1 + 1), 6_700_417))
     end
 
     def list_chunk_by(list, num) do
