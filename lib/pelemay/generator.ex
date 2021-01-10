@@ -113,11 +113,35 @@ defmodule Pelemay.Generator do
     Application.app_dir(:pelemay, "#{libnif_src_name(module)}.c")
   end
 
+  def libh(module) do
+    Application.app_dir(:pelemay, "src/#{libh_name(module)}")
+  end
+
+  def libh_name(module) do
+    "#{libnif_name(module)}.h"
+  end
+
   def libso(module) do
     case :os.type() do
       {:win32, :nt} -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.dll")
       _ -> Application.app_dir(:pelemay, "#{libnif_priv_name(module)}.so")
     end
+  end
+
+  def priv_data(module) do
+    "PrivData#{Pelemay.Generator.module_replaced_non(module)}"
+  end
+
+  def resource_state(nif_name) do
+    "#{nif_name}_state"
+  end
+
+  def resource_state_type(nif_name) do
+    "#{resource_state(nif_name)}_type"
+  end
+
+  def struct_state(nif_name) do
+    resource_state(nif_name) |> Macro.camelize()
   end
 
   def build_dir() do

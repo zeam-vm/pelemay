@@ -1,7 +1,7 @@
 defmodule Pelemay.Generator.Native.String do
   alias Pelemay.Generator.Native.Util, as: Util
 
-  def replace(info) do
+  def replace(_module, info) do
     %{
       nif_name: nif_name,
       module: _,

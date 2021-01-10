@@ -1,7 +1,7 @@
 defmodule Pelemay.Generator.Native.EnumString do
   alias Pelemay.Generator.Native.Util, as: Util
 
-  def map_replace(info) do
+  def map_replace(_module, info) do
     %{
       nif_name: nif_name,
       args: [
