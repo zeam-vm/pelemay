@@ -77,7 +77,7 @@ defmodule Pelemay.Generator.Native do
             env,
             NULL, // module_str (unused, must be NULL)
             "#{Pelemay.Generator.resource_state(nif_name)}",
-            NULL, // No descructor
+            NULL, // No destructor
             ERL_NIF_RT_CREATE,
             &tried
           );
