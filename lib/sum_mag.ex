@@ -348,7 +348,8 @@ defmodule SumMag do
   [map: 2]
   ```
   """
-  @spec include_specified_functions?(Macro.input(), [{atom, list}]) :: [...]
+  @spec include_specified_functions?(Macro.input(), [{atom, list}]) ::
+          Keyword.t(non_neg_integer())
   def include_specified_functions?(ast_term, [{module, func}]) do
     verify = fn
       {{:., _, [{:__aliases__, _, [code_module]}, code_func]}, _, _args} = ast, acc ->
