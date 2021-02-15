@@ -413,7 +413,6 @@ defmodule Pelemay.Generator.Builder do
       {:unix, :darwin} -> @mac_error_msg
       {:unix, _} -> @unix_error_msg
       {:win32, _} -> @windows_error_msg
-      _ -> ""
     end
   end
 
