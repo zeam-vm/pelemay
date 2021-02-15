@@ -33,11 +33,7 @@ defmodule Pelemay.Logger do
         metadata
       )
 
-    File.write!(state.path, "#{log_line}\n", [:append])
-    |> case do
-      :ok -> nil
-      other -> Logger.warn("#{other}")
-    end
+    :ok = File.write!(state.path, "#{log_line}\n", [:append])
 
     {:ok, state}
   end
